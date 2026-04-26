@@ -1,17 +1,12 @@
-//
-//  Layout.swift
-//  Character Sheet
-//
-//  Created by Loris Thomas on 10.04.2026.
-//
 import SwiftUI
 
+let gridSpacing: CGFloat = 15
+
 struct GridItemKey: LayoutValueKey {
-    static let defaultValue: Section? = nil
+    static let defaultValue: LayoutSection? = nil
 }
 
 struct SpanningGridLayout: Layout {
-
     let columns: Int
     let cellSize: CGFloat
     let spacing: CGFloat
@@ -24,29 +19,21 @@ struct SpanningGridLayout: Layout {
         CacheData()
     }
 
-    func sizeThatFits(
-        proposal: ProposedViewSize,
-        subviews: Subviews,
-        cache: inout CacheData
-    ) -> CGSize {
-
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout CacheData) -> CGSize {
         let maxY = subviews
-            .compactMap { ($0[GridItemKey.self]?.gridOrigin.y ?? 0) + $0[GridItemKey.self]!.height }
+            .compactMap { sub -> Int? in
+                guard let item = sub[GridItemKey.self] else { return nil }
+                return item.gridOrigin.y + item.height
+            }
             .max() ?? 0
 
-        let width = CGFloat(columns) * cellSize + CGFloat(columns - 1) * spacing
-        let height = CGFloat(maxY) * cellSize + CGFloat(maxY - 1) * spacing
+        let width = CGFloat(columns) * cellSize + CGFloat(max(columns - 1, 0)) * spacing
+        let height = CGFloat(maxY) * cellSize + CGFloat(max(maxY - 1, 0)) * spacing
 
         return CGSize(width: width, height: height)
     }
 
-    func placeSubviews(
-        in bounds: CGRect,
-        proposal: ProposedViewSize,
-        subviews: Subviews,
-        cache: inout CacheData
-    ) {
-
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout CacheData) {
         for subview in subviews {
             guard let item = subview[GridItemKey.self] else { continue }
 
@@ -62,6 +49,4 @@ struct SpanningGridLayout: Layout {
             )
         }
     }
-    
-    
 }

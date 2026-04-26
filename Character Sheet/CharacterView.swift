@@ -1,176 +1,198 @@
-//
-//  Untitled.swift
-//  Character Sheet
-//
-//  Created by Loris Thomas on 10.04.2026.
-//
 import SwiftUI
-import UniformTypeIdentifiers
+import SwiftData
 
 struct CharacterView: View {
-    @EnvironmentObject var characterModel: CharacterModel
-    @StateObject var gridModel = GridModel()
-    
-    @State var character: Character
-    @State var characterLayout: CharacterLayout
-    
-    @State var editValues: Bool = false
-    @State var editLayout: Bool = false
-    
+    @Environment(\.modelContext) private var modelContext
+    @Bindable var character: Character
+
+    @State private var editValues = false
+    @State private var editLayout = false
+    @State private var showTemplateWarning = false
+    @State private var showTemplatePicker = false
+
     var body: some View {
-        NavigationStack {
-            GeometryReader { geometry in
-                CharacterGridView(
-                    character: $character,
-                    characterLayout: $characterLayout,
-                    cellSize: (
-                        geometry.size.width -
-                        CGFloat(gridModel.spacing * (characterLayout.gridColumns - 1))
-                    )
-                    / CGFloat(characterLayout.gridColumns),
-                    
-                    spacing: CGFloat(gridModel.spacing)
-                )
-                .environmentObject(gridModel)
-                .environmentObject(characterModel)
+        Group {
+            if let layout = character.layout {
+                characterSheet(layout: layout)
+            } else {
+                noLayoutView
             }
-            
-            .toolbar {
-                if editValues {
-                    Button(action: {
-                        editLayout.toggle()
-                    }) {
-//                        Image(systemName: editValues ? "square.and.pencil" : "square")
-                        Text("Edit layout")
+        }
+        .navigationTitle(character.fullName)
+        .toolbar {
+            ToolbarItemGroup(placement: .primaryAction) {
+                if character.layout != nil {
+                    Menu {
+                        if editValues {
+                            Button("Edit Layout") {
+                                openLayoutEditor()
+                            }
+                        }
+                        if let layout = character.layout, !layout.isTemplate {
+                            Button("Save as Template") {
+                                layout.isTemplate = true
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
+
+                    Button {
+                        withAnimation { editValues.toggle() }
+                    } label: {
+                        Image(systemName: editValues ? "pencil.slash" : "pencil")
                     }
                 }
-                Button(action: {
-                    withAnimation {
-                        editValues.toggle()
+            }
+        }
+        .sheet(isPresented: $editLayout) {
+            layoutEditorSheet
+        }
+        .sheet(isPresented: $showTemplatePicker) {
+            TemplatePicker(character: character)
+        }
+        .alert("Shared Template", isPresented: $showTemplateWarning) {
+            Button("Edit Template") { editLayout = true }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            let count = max((character.layout?.characters.count ?? 1) - 1, 0)
+            Text("This layout is a shared template used by \(count) other character\(count == 1 ? "" : "s"). Changes will affect all of them.")
+        }
+        .task {
+            character.ensureFieldValues()
+            character.layout?.recalculateGrid()
+        }
+    }
+
+    private func openLayoutEditor() {
+        if let layout = character.layout, layout.isTemplate, layout.characters.count > 1 {
+            showTemplateWarning = true
+        } else {
+            editLayout = true
+        }
+    }
+
+    @ViewBuilder
+    private func characterSheet(layout: CharacterLayout) -> some View {
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 16) {
+                    if editValues {
+                        characterInfoSection
                     }
-                }) {
-                    Image(systemName: editValues ? "square.and.pencil" : "square")
+
+                    let cellSize = (geometry.size.width - CGFloat(layout.gridColumns - 1) * gridSpacing) / CGFloat(layout.gridColumns)
+
+                    SpanningGridLayout(columns: layout.gridColumns, cellSize: cellSize, spacing: gridSpacing) {
+                        ForEach(layout.sortedSections) { section in
+                            SectionCardView(section: section, character: character, editValues: editValues)
+                                .layoutValue(key: GridItemKey.self, value: section)
+                        }
+                    }
                 }
             }
-            .sheet(isPresented: $editLayout) {
-                GridLayoutEditView(characterLayout: $characterLayout)
+        }
+        .padding(.horizontal)
+    }
+
+    @ViewBuilder
+    private var characterInfoSection: some View {
+        VStack(spacing: 8) {
+            TextField("First Name", text: Binding(
+                get: { character.firstName ?? "" },
+                set: { character.firstName = $0.isEmpty ? nil : $0 }
+            ))
+            .textFieldStyle(.roundedBorder)
+
+            TextField("Last Name", text: Binding(
+                get: { character.lastName ?? "" },
+                set: { character.lastName = $0.isEmpty ? nil : $0 }
+            ))
+            .textFieldStyle(.roundedBorder)
+        }
+    }
+
+    @ViewBuilder
+    private var layoutEditorSheet: some View {
+        if let layout = character.layout {
+            NavigationStack {
+                TemplateEditorView(layout: layout)
+                    .navigationTitle("Edit Layout")
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") {
+                                layout.recalculateGrid()
+                                character.ensureFieldValues()
+                                editLayout = false
+                            }
+                        }
+                    }
             }
-            .padding(.horizontal)
-            .navigationTitle(character.fullName)
+        }
+    }
+
+    @ViewBuilder
+    private var noLayoutView: some View {
+        ContentUnavailableView {
+            Label("No Layout", systemImage: "rectangle.grid.3x2")
+        } description: {
+            Text("This character has no layout assigned.")
+        } actions: {
+            Button("Create New Layout") {
+                let layout = CharacterLayout(name: "\(character.fullName)'s Layout", gridColumns: 3)
+                modelContext.insert(layout)
+                character.layout = layout
+                editLayout = true
+            }
+
+            Button("Choose Template") {
+                showTemplatePicker = true
+            }
         }
     }
 }
 
-struct CharacterGridView: View {
-    @EnvironmentObject var characterModel: CharacterModel
-    @EnvironmentObject var gridModel: GridModel
-    
-    @Binding var character: Character
-    @Binding var characterLayout: CharacterLayout
-    
-//    @Namespace var animation
-    @State private var draggedItem: UUID?
-    @State private var dragOffset: CGSize = .zero
-    
-    var cellSize: CGFloat
-    var spacing: CGFloat
-    
+struct TemplatePicker: View {
+    @Environment(\.dismiss) private var dismiss
+    @Query(filter: #Predicate<CharacterLayout> { $0.isTemplate == true }, sort: \CharacterLayout.name) private var templates: [CharacterLayout]
+    var character: Character
+
     var body: some View {
-            GeometryReader { geometry in
-                VStack {
-                    ScrollView {
-                        SpanningGridLayout(columns: characterLayout.gridColumns, cellSize: cellSize, spacing: spacing) {
-                            ForEach(characterLayout.sections.enumerated(), id: \.offset) { index, item in
-                                itemView(item, index: index)
-                                    .layoutValue(key: GridItemKey.self, value: characterLayout.sections[index])
-                                    .onAppear {
-                                    }
+        NavigationStack {
+            List {
+                if templates.isEmpty {
+                    Text("No templates available. Create one in the Templates tab.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(templates) { template in
+                        Button {
+                            character.layout = template
+                            character.ensureFieldValues()
+                            dismiss()
+                        } label: {
+                            VStack(alignment: .leading) {
+                                Text(template.name)
+                                if let system = template.gameSystem, !system.isEmpty {
+                                    Text(system).font(.footnote).foregroundStyle(.secondary)
+                                }
                             }
                         }
                     }
                 }
-        }
-    }
-    
-    func gridPosition(from location: CGPoint) -> GridPosition {
-        let col = Int(location.x / (cellSize + spacing))
-        let row = Int(location.y / (cellSize + spacing))
-        return GridPosition(x: col, y: row)
-    }
-    @State var x: Int = 0
-    @State var y: Int = 0
-    
-    
-    func itemView(_ section: Section, index: Int) -> some View {
-        RoundedRectangle(cornerRadius: 15)
-            .fill(Color.gray)
-            .overlay(
-                VStack {
-                    Text(section.title)
-            })
-    }
-}
-
-struct GridLayoutEditView: View {
-    @EnvironmentObject var characterModel: CharacterModel
-    @EnvironmentObject var gridModel: GridModel
-    
-    @Binding var characterLayout: CharacterLayout
-    @State var items = ["0", "1", "2"]
-    var body: some View {
-        GeometryReader { geometry in
-            HStack {
-                ScrollView {
-                    SpanningGridLayout(columns: characterLayout.gridColumns, cellSize: (geometry.size.width / 2 - 15 * CGFloat(characterLayout.gridColumns)) / CGFloat(characterLayout.gridColumns), spacing: 15) {
-                        ForEach(characterLayout.sections, id: \.id) { section in
-                            RoundedRectangle(cornerRadius: 15)
-                                .fill(.gray)
-                                .overlay {
-                                    Text(section.title)
-                                        .font(.title2)
-                                }
-                                .layoutValue(key: GridItemKey.self, value: section)
-                                .onAppear {
-                                    print(section.gridOrigin)
-                                }
-                        }
-                    }
-                    .padding()
+            }
+            .navigationTitle("Choose Template")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
                 }
-                List {
-                    ForEach(characterLayout.sections, id: \.id) { section in
-                        Text(section.title)
-                    }
-                    .onMove { previousOffset, newOffset in
-                        characterLayout.sections.move(fromOffsets: previousOffset, toOffset: newOffset)
-                        gridModel.calculateItems(characterLayout: $characterLayout)
-                        
-                    }
-                    .onDelete { section in
-                        characterLayout.sections.remove(atOffsets: section)
-                        gridModel.calculateItems(characterLayout: $characterLayout)
-                    }
-                    
-                }
-                .environment(\.editMode, .constant(.active))
-                
-                
-//                .moveDisabled(false)
             }
         }
     }
 }
 
-//struct CharacterView_Previews: PreviewProvider {
-//    static var previews: some View {
 #Preview {
-    @Previewable @State var characterModel = CharacterModel()
-    let id: UUID = UUID()
-    CharacterView(character: Character(id: UUID(), firstName: "John", lastName: "Smith", age: 29, characterLayout: id, fieldValues: [], creationDate: Date(), lastEditedDate: Date()),
-                  characterLayout: CharacterLayout(id: id, name: "Layout1", gameSystem: nil, template: false, gridColumns: 3, sections: [
-                    Section(title: "Header", order: 1, width: 3, height: 1,gridOrigin: GridPosition(x: 0, y: 0), fields: [Field(order: 1, kind: .text)]),
-                    Section(title: "Body", order: 2, width: 1, height: 2, gridOrigin: GridPosition(x: 0, y: 1), fields: []),
-                    Section(title: "Skills", order: 3, width: 2, height: 2, gridOrigin: GridPosition(x: 1, y: 1), fields: [])
-                  ]))
-    .environmentObject(characterModel)
+    NavigationStack {
+        CharacterView(character: Character(firstName: "Preview", lastName: "Character"))
     }
+    .modelContainer(for: [Character.self, CharacterLayout.self, LayoutSection.self, Field.self, CharacterFieldValue.self], inMemory: true)
+}
