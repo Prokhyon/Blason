@@ -11,6 +11,7 @@ struct CharacterCard: View {
                 .frame(height: 150)
                 .frame(maxWidth: .infinity)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(character.displayName)
                     .font(.headline)
@@ -67,6 +68,7 @@ struct TemplateCard: View {
             .frame(height: 110)
             .frame(maxWidth: .infinity)
             .clipShape(RoundedRectangle(cornerRadius: 10))
+            .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(template.name)

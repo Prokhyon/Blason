@@ -147,6 +147,7 @@ Interface en français, avec un String Catalog prêt pour l'anglais.
 | Prio | Fonction |
 |---|---|
 | V1.1 | Tables de correspondance dans les formules |
+| V1.1 | **Thèmes de fiche** : couleur du template, fiche papier ; d'autres pourront suivre |
 | V1.2 | Jets de dés (depuis un champ ou une ligne, ex. d100 contre la compétence) |
 | V1.2 | **Synchronisation iCloud** : prérequis pour iPhone et Mac |
 | V2 | iPhone et Mac ; inventaire avancé ; **journal de campagne et documents** de session |
@@ -238,7 +239,12 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-09 | M5 : dans un tableau, une référence désigne d'abord une colonne de la même ligne, puis `groupe` (valeur du groupe, 0 si vide), puis un champ. Une colonne peut porter une formule par défaut : le template BRP de démo calcule `% = base + groupe`. Référence à une ligne d'un autre tableau (ex. `Esquive.valeur`) : pas en V1. |
 | 2026-11-09 | M6 : un fichier `.json` par template ou personnage (format `character-sheet`, version 1), lisible et stable : clés triées, ordre des éléments donné par les tableaux, dates ISO 8601 à la milliseconde (arrondie : réexporter un fichier importé donne le même fichier), images en base64. Un test vérifie que chaque attribut du modèle figure dans le format. |
 | 2026-11-09 | M6 : « Exporter… » ouvre la feuille de partage (Enregistrer dans Fichiers, AirDrop, Mail…) depuis le menu d'une carte ou la barre de la fiche ; « Importer » dans la bibliothèque accepte plusieurs fichiers, templates et personnages mélangés, et ouvre l'élément s'il est seul. Un élément importé une deuxième fois reçoit un nouvel identifiant. Un fichier d'une version plus récente est refusé avec un message clair. |
+| 2026-11-09 | M7 : deux dispositions des pages, au choix dans le menu « Affichage » de la barre (préférence de l'appareil, commune aux fiches) : **une page à la fois** (onglets) ou **toutes les pages à la suite**, chacune sous son titre ; la barre des pages suit alors la page visible et un **Sommaire** mène à n'importe quelle section. |
+| 2026-11-09 | M7 : thème **natif** seul pour l'instant (couleurs et typographie du système, clair / sombre). Les couleurs, formes et polices de la fiche passent toutes par un thème (`SheetTheme`), pour ajouter ensuite « couleur du template » et « fiche papier » sans toucher aux vues. |
+| 2026-11-09 | M7 : les nombres se mettent à jour pendant la frappe (les formules qui en dépendent aussi). La virgule est décimale ; les séparateurs de milliers (espace, apostrophe suisse) sont acceptés. Une valeur vide s'affiche « — » estompé, partout. |
+| 2026-11-09 | M7 : une section de champs trop étroite (inspecteur ouvert, grand texte) passe à moins de colonnes plutôt que de couper ses libellés ; dans un tableau, la précision (« Hautes sphères ») est coupée avant le nom de la compétence. |
+| 2026-11-09 | M7 : accessibilité de base : chaque saisie, case et ressource porte le nom de son champ (ou « ligne, colonne » dans un tableau) ; en lecture, libellé et valeur sont lus ensemble ; une ressource s'ajuste par balayage avec VoiceOver ; titres de page et de section annoncés comme titres ; tailles qui suivent la taille du texte. |
 
 ## 10. Questions ouvertes
 
-Aucune pour l'instant.
+- **Nom de l'app et icône** : réflexion à part. L'icône actuelle (feuille + dé, sources dans `Design/IconeProvisoire`) est provisoire.

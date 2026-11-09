@@ -45,11 +45,12 @@ public enum ListImport {
 
     /// Nombre saisi à la française ou non : `25`, `25%`, `1,5`, `−3`, `+2`. Nil si ce n'est pas un nombre.
     public static func number(from text: String) -> Double? {
-        var cleaned = text.trimmingCharacters(in: .whitespaces)
+        // Séparateurs de milliers : espaces (dont insécables, fr_FR) et apostrophes (fr_CH, « 1’234 »).
+        var cleaned = String(text.unicodeScalars.filter {
+            !CharacterSet.whitespaces.contains($0) && !["'", "’"].contains($0)
+        })
             .replacingOccurrences(of: "−", with: "-")
             .replacingOccurrences(of: ",", with: ".")
-            .replacingOccurrences(of: "\u{00A0}", with: "")
-            .replacingOccurrences(of: " ", with: "")
         if cleaned.hasSuffix("%") { cleaned.removeLast() }
         if cleaned.hasPrefix("+") { cleaned.removeFirst() }
         guard !cleaned.isEmpty else { return nil }

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4657B0"/><stop offset="1" stop-color="#232F73"/></linearGradient>
+ <linearGradient id="die" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#EE5A5F"/><stop offset="1" stop-color="#B8262B"/></linearGradient>
+ <filter id="sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000" flood-opacity="0.35"/></filter>
+</defs>
+<rect width="1024" height="1024" fill="url(#bg)"/>
+<g transform="translate(-20 -30) rotate(-6 460 470)" filter="url(#sh)">
+ <rect x="240" y="180" width="430" height="580" rx="38" fill="#FBF8F1"/>
+ <rect x="290" y="240" width="230" height="36" rx="18" fill="#2F3C8C"/>
+ <rect x="290" y="351" width="190" height="18" rx="9" fill="#C9CCDB"/><rect x="540" y="340" width="86" height="42" rx="11" fill="none" stroke="#2F3C8C" stroke-width="7"/><rect x="290" y="421" width="150" height="18" rx="9" fill="#C9CCDB"/><rect x="540" y="410" width="86" height="42" rx="11" fill="none" stroke="#2F3C8C" stroke-width="7"/><rect x="290" y="491" width="210" height="18" rx="9" fill="#C9CCDB"/><rect x="540" y="480" width="86" height="42" rx="11" fill="none" stroke="#2F3C8C" stroke-width="7"/><rect x="290" y="561" width="170" height="18" rx="9" fill="#C9CCDB"/><rect x="540" y="550" width="86" height="42" rx="11" fill="none" stroke="#2F3C8C" stroke-width="7"/><rect x="290" y="631" width="130" height="18" rx="9" fill="#C9CCDB"/><rect x="540" y="620" width="86" height="42" rx="11" fill="none" stroke="#2F3C8C" stroke-width="7"/>
+</g>
+<g transform="translate(-20 -30) rotate(14 695 695)" filter="url(#sh)">
+ <rect x="550" y="550" width="290" height="290" rx="62" fill="url(#die)"/>
+ <circle cx="615" cy="615" r="27" fill="#FFFFFF"/><circle cx="775" cy="615" r="27" fill="#FFFFFF"/><circle cx="695" cy="695" r="27" fill="#FFFFFF"/><circle cx="615" cy="775" r="27" fill="#FFFFFF"/><circle cx="775" cy="775" r="27" fill="#FFFFFF"/>
+</g>
+</svg>

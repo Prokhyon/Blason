@@ -7,16 +7,18 @@ struct SectionCard: View {
 
     @Environment(\.sheetMode) private var mode
     @Environment(\.structureEditor) private var editor
+    @Environment(\.sheetTheme) private var theme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             if mode == .structure && section.title.isEmpty {
                 Text("Section sans titre")
-                    .font(.headline)
+                    .font(theme.sectionTitleFont)
                     .foregroundStyle(.tertiary)
             } else if !section.title.isEmpty {
                 Text(section.title)
-                    .font(.headline)
+                    .font(theme.sectionTitleFont)
+                    .accessibilityAddTraits(.isHeader)
             }
             switch section.kind {
             case .fields:
@@ -30,7 +32,7 @@ struct SectionCard: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        .background(theme.cardBackground, in: RoundedRectangle(cornerRadius: theme.cardCornerRadius))
         .structureItem(.section(section))
     }
 
@@ -84,10 +86,29 @@ struct FieldsSectionView: View {
     let section: SheetSection
 
     @Environment(\.sheetMode) private var mode
+    @State private var width: CGFloat = 0
 
     var body: some View {
+        content
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
+    }
+
+    /// Nombre de colonnes qui tiennent dans la largeur : une section étroite (colonne de page étroite,
+    /// inspecteur ouvert, grand texte) passe à moins de colonnes plutôt que de couper ses libellés.
+    private var fittingCount: Int {
+        let wanted = max(1, section.columnCount)
+        guard width > 0 else { return wanted }
+        let minimum: CGFloat = (mode == .fill ? 240 : 190) * scale
+        return min(wanted, max(1, Int((width + 20) / (minimum + 20))))
+    }
+
+    @ScaledMetric(relativeTo: .subheadline) private var scale: CGFloat = 1
+
+    @ViewBuilder
+    private var content: some View {
         let fields = section.sortedFields
-        let count = max(1, section.columnCount)
+        let count = fittingCount
         if fields.isEmpty {
             Text("Aucun champ").font(.callout).foregroundStyle(.secondary)
         } else {

@@ -270,6 +270,12 @@ struct ListImportTests {
         #expect(ListImport.number(from: "−3") == -3)
         #expect(ListImport.number(from: "+2") == 2)
         #expect(ListImport.number(from: "1d4") == nil)
+        // Séparateurs de milliers, tels que la fiche les affiche (fr_CH : « 1’234 », fr_FR : espace fine).
+        // La virgule est toujours décimale (app en français) : « 1,234.5 » (en_US) n’est pas reconnu.
+        for locale in ["fr_CH", "fr_FR", "de_CH"] {
+            #expect(ListImport.number(from: 1234.5.formatted(.number.locale(Locale(identifier: locale)))) == 1234.5, "\(locale)")
+        }
+        #expect(ListImport.number(from: "-") == nil)
         #expect(ListImport.splitSpecialization("Monter (Navire)") == ("Monter", "Navire", true))
         #expect(ListImport.splitSpecialization("Art (…)") == ("Art", nil, true))
         #expect(ListImport.splitSpecialization("Art ()") == ("Art", nil, true))

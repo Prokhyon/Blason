@@ -21,19 +21,27 @@ struct FieldView: View {
     }
 
     var body: some View {
-        if stacksVertically {
-            VStack(alignment: .leading, spacing: 4) {
-                if !hideLabel { label }
-                value
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        } else {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                if !hideLabel { label }
-                Spacer(minLength: 4)
-                value
+        Group {
+            if stacksVertically {
+                VStack(alignment: .leading, spacing: 4) {
+                    if !hideLabel { label }
+                    value
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    if !hideLabel { label }
+                    Spacer(minLength: 4)
+                    value
+                }
             }
         }
+        // En lecture, libellé et valeur forment un seul élément pour VoiceOver (« Force, 11 »).
+        .accessibilityElement(children: readsAsOneElement ? .combine : .contain)
+    }
+
+    private var readsAsOneElement: Bool {
+        !editable && field.kind != .image && field.kind != .resource
     }
 
     @ViewBuilder
@@ -57,8 +65,9 @@ struct FieldView: View {
                 TextField("", text: text, prompt: field.hint.map(Text.init))
                     .multilineTextAlignment(stacksVertically ? .leading : .trailing)
                     .inputBackground()
+                    .accessibilityLabel(field.label)
             } else {
-                Text(field.textValue ?? "")
+                ValueText(field.textValue)
             }
 
         case .longText:
@@ -66,9 +75,9 @@ struct FieldView: View {
                 TextField("", text: text, prompt: field.hint.map(Text.init), axis: .vertical)
                     .lineLimit(3...20)
                     .inputBackground()
+                    .accessibilityLabel(field.label)
             } else {
-                Text(field.textValue?.isEmpty == false ? field.textValue! : "—")
-                    .foregroundStyle(field.textValue?.isEmpty == false ? .primary : .tertiary)
+                ValueText(field.textValue)
             }
 
         case .integer, .decimal, .percentage:
@@ -76,7 +85,8 @@ struct FieldView: View {
                 if editable {
                     // Une formule donne la valeur par défaut, affichée en gris tant que rien n'est saisi.
                     let computed = engine.computed(field)
-                    NumberField(value: $field.numberValue, integer: field.kind != .decimal, prompt: computed?.promptText)
+                    NumberField(value: $field.numberValue, integer: field.kind != .decimal, prompt: computed?.promptText,
+                                accessibilityName: field.label)
                     if field.numberValue == nil, case .failure(let error)? = computed {
                         FormulaErrorBadge(error: error)
                     }
@@ -94,10 +104,12 @@ struct FieldView: View {
             if editable {
                 TextField("", text: modifierText, prompt: Text("+0"))
                     .multilineTextAlignment(.trailing)
-                    .frame(width: 70)
+                    .frame(minWidth: 70)
+                    .fixedSize()
                     .inputBackground()
+                    .accessibilityLabel(field.label)
             } else {
-                Text(field.displayValue.isEmpty ? "—" : field.displayValue)
+                ValueText(field.displayValue)
                     .monospacedDigit()
             }
 
@@ -108,7 +120,7 @@ struct FieldView: View {
             CheckboxButton(isOn: Binding(
                 get: { field.boolValue == true },
                 set: { field.boolValue = $0 }
-            ), enabled: editable)
+            ), enabled: editable, accessibilityName: field.label)
 
         case .choice:
             if editable {
@@ -123,7 +135,7 @@ struct FieldView: View {
                 }
                 .labelsHidden()
             } else {
-                Text(field.textValue ?? "—")
+                ValueText(field.textValue)
             }
 
         case .date:
@@ -138,7 +150,7 @@ struct FieldView: View {
                     .labelsHidden()
                 }
             } else {
-                Text(field.displayValue.isEmpty ? "—" : field.displayValue)
+                ValueText(field.displayValue)
             }
 
         case .image:
@@ -185,6 +197,25 @@ struct FieldView: View {
     }
 }
 
+/// Valeur en lecture ; « — » estompé quand elle est vide (lu « vide » par VoiceOver).
+struct ValueText: View {
+    let text: String?
+
+    init(_ text: String?) {
+        self.text = text
+    }
+
+    var body: some View {
+        if let text, !text.isEmpty {
+            Text(text)
+        } else {
+            Text("—")
+                .foregroundStyle(.tertiary)
+                .accessibilityLabel("vide")
+        }
+    }
+}
+
 /// Valeur calculée : nombre, « — » si une valeur dont elle dépend manque, ou l'erreur.
 struct ComputedValueText: View {
     let result: FormulaResult
@@ -194,7 +225,7 @@ struct ComputedValueText: View {
         case .success(let value?):
             Text(SheetFormat.number(value)).monospacedDigit()
         case .success(nil):
-            Text("—").foregroundStyle(.tertiary)
+            ValueText(nil)
         case .failure(let error):
             FormulaErrorBadge(error: error, showsMessage: true)
         }
@@ -236,25 +267,55 @@ enum SheetFormat {
     }
 }
 
-/// Saisie numérique compacte (validée à la fin de l'édition).
+/// Saisie numérique compacte. La valeur suit la frappe : les calculs qui en dépendent se mettent
+/// à jour aussitôt. Un texte qui n'est pas (encore) un nombre, comme « - », laisse la valeur telle quelle ;
+/// le texte est remis en forme en quittant le champ.
 struct NumberField: View {
     @Binding var value: Double?
     var integer = true
     var prompt: String?
     var width: CGFloat = 56
+    /// Nom lu par VoiceOver (le libellé du champ, de la colonne…).
+    var accessibilityName: String = ""
+
+    @State private var text = ""
+    @FocusState private var isFocused: Bool
+    /// La largeur suit la taille du texte choisie dans les réglages.
+    @ScaledMetric(relativeTo: .body) private var scale: CGFloat = 1
 
     var body: some View {
-        TextField(
-            "",
-            value: $value,
-            format: .number.precision(.fractionLength(0...(integer ? 0 : 2))),
-            prompt: prompt.map(Text.init)
-        )
-        .keyboardType(integer ? .numberPad : .decimalPad)
-        .multilineTextAlignment(.trailing)
-        .monospacedDigit()
-        .frame(width: width)
-        .inputBackground()
+        TextField("", text: $text, prompt: prompt.map(Text.init))
+            .focused($isFocused)
+            .keyboardType(integer ? .numberPad : .decimalPad)
+            .multilineTextAlignment(.trailing)
+            .monospacedDigit()
+            .frame(width: width * scale)
+            .inputBackground()
+            .accessibilityLabel(accessibilityName)
+            .onAppear { text = format(value) }
+            .onChange(of: value) { _, newValue in
+                // Changement venu d'ailleurs (annuler, boutons −/+, inspecteur).
+                if !isFocused { text = format(newValue) }
+            }
+            .onChange(of: isFocused) { _, focused in
+                if !focused { text = format(value) }
+            }
+            .onChange(of: text) { _, newText in
+                guard isFocused else { return }
+                let parsed: Double?
+                if newText.trimmingCharacters(in: .whitespaces).isEmpty {
+                    parsed = nil
+                } else if let number = ListImport.number(from: newText) {
+                    parsed = integer ? number.rounded() : number
+                } else {
+                    return
+                }
+                if parsed != value { value = parsed }
+            }
+    }
+
+    private func format(_ value: Double?) -> String {
+        value.map { $0.formatted(.number.precision(.fractionLength(0...(integer ? 0 : 2)))) } ?? ""
     }
 }
 
@@ -262,6 +323,10 @@ struct NumberField: View {
 struct CheckboxButton: View {
     @Binding var isOn: Bool
     let enabled: Bool
+    /// Nom lu par VoiceOver (« Esquive, Exp. »).
+    var accessibilityName: String = ""
+
+    @Environment(\.sheetTheme) private var theme
 
     var body: some View {
         Button {
@@ -269,10 +334,13 @@ struct CheckboxButton: View {
         } label: {
             Image(systemName: isOn ? "checkmark.square.fill" : "square")
                 .font(.title3)
-                .foregroundStyle(isOn ? Color.accentColor : Color.secondary)
+                .foregroundStyle(isOn ? theme.accent : Color.secondary)
         }
         .buttonStyle(.plain)
         .allowsHitTesting(enabled)
-        .accessibilityLabel(isOn ? "Coché" : "Non coché")
+        .accessibilityLabel(accessibilityName)
+        .accessibilityValue(isOn ? "coché" : "non coché")
+        .accessibilityAddTraits(.isToggle)
+        .disabled(!enabled)
     }
 }

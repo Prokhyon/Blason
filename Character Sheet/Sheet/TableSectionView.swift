@@ -156,7 +156,8 @@ private struct GroupHeader: View {
             Spacer(minLength: 8)
             if group.hasValue {
                 if mode == .fill {
-                    NumberField(value: $group.numberValue, prompt: "±", width: 48)
+                    NumberField(value: $group.numberValue, prompt: "±", width: 48,
+                                accessibilityName: "Bonus \(group.title)")
                 } else if let value = group.numberValue {
                     Text(SheetFormat.number(value)).monospacedDigit()
                 }
@@ -193,24 +194,27 @@ private struct RowLabel: View {
 
     private var editableLabel: some View {
         HStack(spacing: 4) {
-            if mode == .fill && !row.isFromTemplate {
-                TextField("", text: $row.label, prompt: Text("Nom"))
-                    .frame(minWidth: 80)
-                    .inputBackground()
-            } else {
-                Text(row.label)
-            }
-            if row.allowsSpecialization {
-                if mode == .fill {
+            if mode == .fill {
+                if row.isFromTemplate {
+                    Text(row.label).lineLimit(1)
+                } else {
+                    TextField("", text: $row.label, prompt: Text("Nom"))
+                        .frame(minWidth: 80)
+                        .inputBackground()
+                        .accessibilityLabel("Nom de la ligne")
+                }
+                if row.allowsSpecialization {
                     TextField("", text: specialization, prompt: Text("précision"))
                         .frame(minWidth: 70)
                         .inputBackground()
-                } else if let value = row.specialization, !value.isEmpty {
-                    Text("(\(value))").foregroundStyle(.secondary)
+                        .accessibilityLabel("Précision de \(row.label)")
                 }
+            } else {
+                // En lecture, un libellé long passe à la ligne plutôt que d'être coupé.
+                Text(readingLabel)
+                    .lineLimit(2)
             }
         }
-        .lineLimit(1)
         .contextMenu {
             if mode == .fill {
                 Button("Dupliquer la ligne", systemImage: "plus.square.on.square") {
@@ -221,6 +225,17 @@ private struct RowLabel: View {
                 }
             }
         }
+    }
+
+    /// « Monter (Navire) », la précision estompée.
+    private var readingLabel: AttributedString {
+        var text = AttributedString(row.label)
+        if row.allowsSpecialization, let value = row.specialization, !value.isEmpty {
+            var detail = AttributedString(" (\(value))")
+            detail.foregroundColor = Color.secondary
+            text += detail
+        }
+        return text
     }
 
     private var specialization: Binding<String> {
@@ -252,6 +267,7 @@ private struct CellView: View {
                 ))
                 .frame(minWidth: 60)
                 .inputBackground()
+                .accessibilityLabel(accessibilityName)
             } else {
                 Text(cell.textValue ?? "")
             }
@@ -259,7 +275,8 @@ private struct CellView: View {
             if editable {
                 let computed = engine.computed(cell)
                 HStack(spacing: 2) {
-                    NumberField(value: $cell.numberValue, prompt: computed?.promptText, width: 52)
+                    NumberField(value: $cell.numberValue, prompt: computed?.promptText, width: 52,
+                                accessibilityName: accessibilityName)
                     if cell.numberValue == nil, case .failure(let error)? = computed {
                         FormulaErrorBadge(error: error)
                     }
@@ -271,7 +288,7 @@ private struct CellView: View {
             CheckboxButton(isOn: Binding(
                 get: { cell.boolValue == true },
                 set: { cell.boolValue = $0 }
-            ), enabled: editable)
+            ), enabled: editable, accessibilityName: accessibilityName)
         case .formula:
             ComputedValueText(result: engine.value(of: cell))
         }
@@ -279,4 +296,9 @@ private struct CellView: View {
 
     /// Moteur neuf à chaque affichage (voir `FieldView.engine`).
     private var engine: FormulaEngine { FormulaEngine(sheet: cell.sheet) }
+
+    /// « Esquive, % » : la ligne puis la colonne.
+    private var accessibilityName: String {
+        [cell.row?.label ?? "", column.title].filter { !$0.isEmpty }.joined(separator: ", ")
+    }
 }

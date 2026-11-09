@@ -8,6 +8,7 @@ struct ImageFieldView: View {
     let editable: Bool
 
     @State private var selection: PhotosPickerItem?
+    @Environment(\.sheetTheme) private var theme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -17,15 +18,18 @@ struct ImageFieldView: View {
                     .scaledToFit()
                     .frame(maxHeight: 280)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .accessibilityLabel(field.label.isEmpty ? "Image" : field.label)
             } else {
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(Color(.tertiarySystemFill))
+                    .fill(theme.inputFill)
                     .frame(height: 140)
                     .overlay {
                         Image(systemName: "person.crop.square")
                             .font(.largeTitle)
                             .foregroundStyle(.secondary)
                     }
+                    .accessibilityElement()
+                    .accessibilityLabel("\(field.label.isEmpty ? "Image" : field.label), aucune image")
             }
             if editable {
                 HStack(spacing: 16) {

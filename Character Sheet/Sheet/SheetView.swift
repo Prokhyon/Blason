@@ -15,6 +15,7 @@ struct SheetView: View {
     @State private var mode: SheetMode
     @State private var editor: StructureEditor
     @State private var showsInspector = true
+    @AppStorage(SheetLayout.storageKey) private var layout: SheetLayout = .tabs
     @Environment(\.horizontalSizeClass) private var sizeClass
 
     init(title: String, sheet: Sheet?, initialMode: SheetMode, onEdit: @escaping () -> Void = {}) {
@@ -94,19 +95,16 @@ struct SheetView: View {
         )
     }
 
-    /// Onglets et page affichée.
+    /// Pages, en onglets ou à la suite.
     private var sheetContent: some View {
         Group {
-            if let page = editor.currentPage {
-                PageView(page: page)
-                    .id(page.persistentModelID)
-            } else {
+            if editor.pages.isEmpty {
                 emptySheet
-            }
-        }
-        .safeAreaInset(edge: .top, spacing: 0) {
-            if editor.pages.count > 1 || (mode == .structure && !editor.pages.isEmpty) {
-                PageTabs(editor: editor, isStructure: mode == .structure)
+            } else {
+                switch layout {
+                case .tabs: TabbedPages(editor: editor)
+                case .scroll: ContinuousPages(editor: editor)
+                }
             }
         }
         .overlay(alignment: .bottom) {
@@ -156,6 +154,18 @@ struct SheetView: View {
                 } label: {
                     Label("Inspecteur", systemImage: "sidebar.trailing")
                 }
+            }
+        }
+        ToolbarItem(placement: .primaryAction) {
+            Menu {
+                Picker("Pages", selection: $layout) {
+                    ForEach(SheetLayout.allCases) { layout in
+                        Label(layout.title, systemImage: layout.symbol).tag(layout)
+                    }
+                }
+                .pickerStyle(.inline)
+            } label: {
+                Label("Affichage", systemImage: layout.symbol)
             }
         }
         ToolbarItem(placement: .primaryAction) {
@@ -249,166 +259,6 @@ struct UndoRedoButtons: View {
         Button("Rétablir", systemImage: "arrow.uturn.forward") { manager?.redo() }
             .keyboardShortcut("z", modifiers: [.command, .shift])
             .disabled(manager?.canRedo != true)
-    }
-}
-
-/// Onglets des pages ; en mode Structure, ajout de page et réglages de la page affichée.
-private struct PageTabs: View {
-    @Bindable var editor: StructureEditor
-    let isStructure: Bool
-
-    var body: some View {
-        let pages = editor.pages
-        HStack(spacing: 12) {
-            if !pages.isEmpty {
-                Picker("Page", selection: $editor.pageIndex) {
-                    ForEach(pages.indices, id: \.self) { index in
-                        Text(pages[index].title.isEmpty ? "Sans titre" : pages[index].title).tag(index)
-                    }
-                }
-                .pickerStyle(.segmented)
-            }
-            if isStructure {
-                if let page = editor.currentPage {
-                    Button {
-                        editor.select(.page(page))
-                    } label: {
-                        Label("Réglages de la page", systemImage: "slider.horizontal.3")
-                    }
-                    .labelStyle(.iconOnly)
-                    .foregroundStyle(editor.isSelected(.page(page)) ? Color.accentColor : .secondary)
-                }
-                Button {
-                    editor.addPage()
-                } label: {
-                    Label("Ajouter une page", systemImage: "plus")
-                }
-                .labelStyle(.iconOnly)
-            }
-        }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-        .background(.bar)
-    }
-}
-
-/// Une page : ses rangées, de haut en bas.
-struct PageView: View {
-    let page: Page
-
-    @Environment(\.sheetMode) private var mode
-    @Environment(\.structureEditor) private var editor
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                ForEach(page.sortedRows) { row in
-                    RowView(row: row)
-                }
-                if mode == .structure, let editor {
-                    DashedAddZone {
-                        Menu {
-                            ForEach(1...3, id: \.self) { count in
-                                Button(count == 1 ? "1 colonne" : "\(count) colonnes") {
-                                    editor.addRow(columns: count, to: page)
-                                }
-                            }
-                        } label: {
-                            AddButtonLabel(title: "Rangée")
-                        }
-                    }
-                }
-            }
-            .padding()
-            .background {
-                if mode == .structure {
-                    Color.clear
-                        .contentShape(Rectangle())
-                        .onTapGesture { editor?.clearSelection() }
-                }
-            }
-        }
-        .scrollDismissesKeyboard(.interactively)
-        .background(Color(.systemGroupedBackground))
-    }
-}
-
-/// Une rangée : ses colonnes côte à côte, chacune empilant ses sections.
-/// En mode Structure : un en-tête sélectionnable et une zone d'ajout au bas de chaque colonne.
-struct RowView: View {
-    let row: SheetRow
-
-    @Environment(\.sheetMode) private var mode
-
-    var body: some View {
-        if mode == .structure {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 6) {
-                    Image(systemName: "rectangle.split.3x1")
-                    Text(row.columnCount == 1 ? "Rangée · 1 colonne" : "Rangée · \(row.columnCount) colonnes")
-                    Spacer()
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .structureItem(.row(row))
-                columns
-            }
-            .padding(8)
-            .background {
-                RoundedRectangle(cornerRadius: 16)
-                    .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [2, 4]))
-                    .foregroundStyle(.quaternary)
-            }
-        } else {
-            columns
-        }
-    }
-
-    private var columns: some View {
-        ColumnsLayout(weights: row.columnWeights, spacing: 16, minColumnWidth: 300) {
-            ForEach(0..<row.columnCount, id: \.self) { column in
-                VStack(spacing: 16) {
-                    ForEach(row.sections(inColumn: column)) { section in
-                        SectionCard(section: section)
-                    }
-                    if mode == .structure {
-                        ColumnAddZone(row: row, column: column)
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Bas de colonne : ajouter une section, ou y déposer une section glissée.
-private struct ColumnAddZone: View {
-    let row: SheetRow
-    let column: Int
-
-    @Environment(\.structureEditor) private var editor
-    @State private var isTargeted = false
-
-    var body: some View {
-        if let editor {
-            DashedAddZone {
-                Menu {
-                    Button("Section de champs", systemImage: "list.bullet.rectangle") {
-                        editor.addSection(.fields, to: row, column: column)
-                    }
-                    Button("Tableau", systemImage: "tablecells") {
-                        editor.addSection(.table, to: row, column: column)
-                    }
-                } label: {
-                    AddButtonLabel(title: "Section")
-                }
-            }
-            .background(isTargeted ? Color.accentColor.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 10))
-            .dropDestination(for: String.self) { tokens, _ in
-                tokens.contains(StructureEditor.dragToken) && editor.dropSection(into: row, column: column)
-            } isTargeted: {
-                isTargeted = $0
-            }
-        }
     }
 }
 

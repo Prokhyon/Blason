@@ -29,12 +29,3 @@ enum SheetMode: String, CaseIterable, Identifiable {
 extension EnvironmentValues {
     @Entry var sheetMode: SheetMode = .play
 }
-
-extension View {
-    /// Fond discret qui signale un champ de saisie.
-    func inputBackground() -> some View {
-        padding(.horizontal, 6)
-            .padding(.vertical, 3)
-            .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 6))
-    }
-}
