@@ -1,0 +1,26 @@
+import Foundation
+import SwiftData
+
+/// Plan de migration : une seule version pour l'instant. Chaque évolution du modèle
+/// ajoutera un `SheetSchemaV2` et une étape ici.
+public enum SheetMigrationPlan: SchemaMigrationPlan {
+    public static var schemas: [any VersionedSchema.Type] { [SheetSchemaV1.self] }
+    public static var stages: [MigrationStage] { [] }
+}
+
+public enum SheetStore {
+    public static var schema: Schema { Schema(versionedSchema: SheetSchemaV1.self) }
+
+    /// Conteneur de l'app. Stockage local uniquement (iCloud prévu en V1.2).
+    /// Le fichier s'appelle `CharacterSheet.store` : l'ancien `default.store` (modèle v0) est ignoré.
+    public static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {
+        let configuration = inMemory
+            ? ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
+            : ModelConfiguration("CharacterSheet", schema: schema, cloudKitDatabase: .none)
+        return try ModelContainer(
+            for: schema,
+            migrationPlan: SheetMigrationPlan.self,
+            configurations: configuration
+        )
+    }
+}

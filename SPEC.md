@@ -214,6 +214,11 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-09 | Données actuelles jetables ; export / import JSON en V1. |
 | 2026-11-09 | Fiche de Leo (BRP) comme référence et critère d'acceptation ; PDF exclu de git. |
 | 2026-11-09 | M0 : Swift 6 (concurrence stricte) ; entitlements iCloud et push retirés jusqu'à la V1.2 ; langue de développement `fr`. |
+| 2026-11-09 | M1 : modèle et logique dans un package local `SheetKit` (multiplateforme, testé par `swift test`). Types renommés pour éviter les collisions : `PlayerCharacter` (≠ `Swift.Character`), `SheetSection` (≠ `SwiftUI.Section`). |
+| 2026-11-09 | M1 : un champ de la fiche peut porter le nom du personnage (`isNameField`) ; c'est lui qu'affiche la bibliothèque. |
+| 2026-11-09 | M1 : « Enregistrer comme template » conserve les valeurs du personnage (elles deviennent les défauts), à nettoyer en mode Remplir. |
+| 2026-11-09 | M1 : syntaxe de formule pour le maximum d'une ressource : `PV.max`. Une ressource avec formule voit celle-ci calculer son maximum. |
+| 2026-11-09 | M1 : base stockée dans `CharacterSheet.store` ; l'ancienne `default.store` (modèle v0) est ignorée. |
 
 ## 10. Questions ouvertes
 
