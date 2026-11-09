@@ -7,6 +7,9 @@
     "—" : {
 
     },
+    "… et %lld autres" : {
+
+    },
     "(%@)" : {
 
     },
@@ -19,7 +22,23 @@
     "%" : {
 
     },
+    "%@ : %lld" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ : %2$lld"
+          }
+        }
+      }
+    },
     "%lld" : {
+
+    },
+    "%lld colonnes" : {
+
+    },
+    "%lld éléments" : {
 
     },
     "%lld personnages" : {
@@ -28,7 +47,34 @@
     "+0" : {
 
     },
+    "⌘ ou ⇧ + toucher : sélection multiple" : {
+
+    },
+    "⌘C ⌘V ⌘D ⌘⌫ : copier, coller, dupliquer, supprimer" : {
+
+    },
+    "1 colonne" : {
+
+    },
     "1 personnage" : {
+
+    },
+    "À gauche" : {
+
+    },
+    "Affichage" : {
+
+    },
+    "Ajouter" : {
+
+    },
+    "Ajouter %lld" : {
+
+    },
+    "Ajouter à la sélection" : {
+
+    },
+    "Ajouter une colonne" : {
 
     },
     "Ajouter une date" : {
@@ -37,7 +83,28 @@
     "Ajouter une ligne" : {
 
     },
+    "Ajouter une page" : {
+
+    },
+    "Ajouter une rangée" : {
+
+    },
+    "Ajouter une rangée en dessous" : {
+
+    },
+    "Ajoutez une première page pour construire la fiche." : {
+
+    },
     "Annuler" : {
+
+    },
+    "Aperçu" : {
+
+    },
+    "Astuces" : {
+
+    },
+    "Au-dessus" : {
 
     },
     "Aucun champ" : {
@@ -52,10 +119,31 @@
     "Augmenter" : {
 
     },
+    "Avec plusieurs colonnes d'affichage, les groupes se répartissent côte à côte quand la largeur le permet." : {
+
+    },
     "Bibliothèque" : {
 
     },
-    "Cette fiche n'a encore aucune page. La construction de la structure arrive avec l'éditeur." : {
+    "Calcul (formule)" : {
+
+    },
+    "Calcule le maximum de la ressource, ex. =plafond((CON+TAI)/2)." : {
+
+    },
+    "Case à cocher" : {
+
+    },
+    "Ce code est déjà utilisé par un autre champ de la fiche." : {
+
+    },
+    "Ce code est déjà utilisé par une autre colonne du tableau." : {
+
+    },
+    "Champ" : {
+
+    },
+    "Champs : `Force;11;FOR` (libellé, valeur, code)" : {
 
     },
     "Changer d'image" : {
@@ -64,7 +152,55 @@
     "Choisir une image" : {
 
     },
+    "Choix dans une liste" : {
+
+    },
     "Coché" : {
+
+    },
+    "Code" : {
+
+    },
+    "Coller" : {
+
+    },
+    "Coller dans %@" : {
+
+    },
+    "Coller des lignes" : {
+
+    },
+    "Coller une liste" : {
+
+    },
+    "Colonne" : {
+
+    },
+    "Colonne de la rangée" : {
+
+    },
+    "Colonne des libellés" : {
+
+    },
+    "Colonnes" : {
+
+    },
+    "Colonnes : %lld" : {
+
+    },
+    "Colonnes d'affichage : %lld" : {
+
+    },
+    "Compteur" : {
+
+    },
+    "Contenu" : {
+
+    },
+    "Copier" : {
+
+    },
+    "Copier, dupliquer ou supprimer agit sur toute la sélection." : {
 
     },
     "Crée un personnage à partir d'un template, ou une fiche vierge." : {
@@ -73,7 +209,28 @@
     "Créer" : {
 
     },
+    "Date" : {
+
+    },
+    "Déplacer vers un autre groupe…" : {
+
+    },
+    "Déplacer vers une autre rangée…" : {
+
+    },
+    "Déplacer vers une autre section…" : {
+
+    },
+    "Descendre" : {
+
+    },
+    "Désélectionner" : {
+
+    },
     "Diminuer" : {
+
+    },
+    "Disposition" : {
 
     },
     "Dupliquer" : {
@@ -82,7 +239,13 @@
     "Dupliquer la ligne" : {
 
     },
+    "Édition" : {
+
+    },
     "Enregistrer comme template" : {
+
+    },
+    "Entrée dans un libellé : crée l'élément suivant" : {
 
     },
     "Fiche" : {
@@ -94,28 +257,116 @@
     "Fiche vierge" : {
 
     },
+    "Formule" : {
+
+    },
+    "Grille" : {
+
+    },
+    "Groupe" : {
+
+    },
+    "Groupe sans titre" : {
+
+    },
+    "Image" : {
+
+    },
+    "Indication" : {
+
+    },
+    "Inspecteur" : {
+
+    },
     "Jouer" : {
 
     },
     "La fiche et toutes ses valeurs seront supprimées. Cette action est définitive." : {
 
     },
-    "La structure de la fiche se construit ensuite avec l'éditeur (à venir)." : {
+    "la section" : {
+
+    },
+    "La valeur est calculée et ne se saisit pas. Le calcul des formules arrive à l'étape suivante (M5)." : {
+
+    },
+    "Largeur de la colonne %lld : %lld" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Largeur de la colonne %1$lld : %2$lld"
+          }
+        }
+      }
+    },
+    "Largeurs relatives : 2 et 1 donnent ⅔ et ⅓. Sur un écran étroit, les colonnes s'empilent. Réduire le nombre de colonnes regroupe leurs sections dans la dernière." : {
+
+    },
+    "Le code sert dans les formules (ex. =FOR*5). Entrée dans le libellé crée le champ suivant, du même type." : {
+
+    },
+    "Le code sert dans les formules de ligne (ex. =valeur/2). Une formule de colonne s'applique à chaque ligne." : {
 
     },
     "Le personnage reçoit une copie du template : modifier le template plus tard ne changera pas ce personnage." : {
 
     },
+    "le tableau" : {
+
+    },
+    "Le template s'ouvre ensuite en mode Structure pour construire la fiche." : {
+
+    },
     "Les personnages déjà créés à partir de ce template sont conservés. Cette action est définitive." : {
+
+    },
+    "Libellé" : {
+
+    },
+    "Libellé puis une valeur par colonne saisissable, séparées par « ; » ou une tabulation. Exemple : Marchander;5. « # Communication » crée un groupe (« # Communication;5 » avec sa valeur). « Langue (…) » : spécialisation à préciser ; « Monter (Navire) » : déjà précisée." : {
+
+    },
+    "Ligne" : {
+
+    },
+    "Liste" : {
+
+    },
+    "Liste %lld" : {
+
+    },
+    "Listes côte à côte" : {
+
+    },
+    "Maintenir puis glisser : déplacer un élément" : {
+
+    },
+    "Masquer l'inspecteur" : {
 
     },
     "max %@" : {
 
     },
+    "Maximum" : {
+
+    },
+    "Minimum" : {
+
+    },
     "Mode" : {
 
     },
+    "Modifiable en mode Jouer" : {
+
+    },
+    "Modificateur (+/−)" : {
+
+    },
     "Modifié %@" : {
+
+    },
+    "Monter" : {
 
     },
     "Nom" : {
@@ -125,6 +376,15 @@
 
     },
     "Nom du template" : {
+
+    },
+    "Nombre" : {
+
+    },
+    "Nombre décimal" : {
+
+    },
+    "Nombre entier" : {
 
     },
     "Non coché" : {
@@ -139,19 +399,59 @@
     "OK" : {
 
     },
+    "Options" : {
+
+    },
     "Page" : {
+
+    },
+    "Passez en mode Structure pour construire la fiche." : {
 
     },
     "Personnages" : {
 
     },
+    "Piste numérotée" : {
+
+    },
+    "Placement" : {
+
+    },
+    "Pourcentage" : {
+
+    },
     "précision" : {
 
+    },
+    "Précision" : {
+
+    },
+    "Rangée" : {
+
+    },
+    "Rangée · %lld colonnes" : {
+
+    },
+    "Rangée · 1 colonne" : {
+
+    },
+    "Rangée %lld (%lld col.)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rangée %1$lld (%2$lld col.)"
+          }
+        }
+      }
     },
     "Rechercher un personnage" : {
 
     },
     "Rechercher un template" : {
+
+    },
+    "Réglages de la page" : {
 
     },
     "Remplir" : {
@@ -166,7 +466,40 @@
     "Renommer le template" : {
 
     },
+    "Ressource" : {
+
+    },
+    "Ressource (PV, PM…)" : {
+
+    },
+    "Rétablir" : {
+
+    },
     "Retirer" : {
+
+    },
+    "Retirer de la sélection" : {
+
+    },
+    "Sans libellé" : {
+
+    },
+    "Sans titre" : {
+
+    },
+    "Section" : {
+
+    },
+    "Section de champs" : {
+
+    },
+    "Section sans titre" : {
+
+    },
+    "Spécialisation" : {
+
+    },
+    "Structure" : {
 
     },
     "Supprimer" : {
@@ -184,16 +517,91 @@
     "Système de jeu" : {
 
     },
+    "Tableau" : {
+
+    },
+    "Tableau : `Marchander;5`, `# Communication` pour un groupe, `Langue (…)` pour une spécialisation à préciser" : {
+
+    },
     "Template" : {
 
     },
     "Templates" : {
 
     },
+    "Texte" : {
+
+    },
+    "Texte long" : {
+
+    },
+    "Titre" : {
+
+    },
+    "Touchez un élément de la fiche pour le modifier : page, rangée, section, champ, colonne, groupe ou ligne." : {
+
+    },
+    "Tout désélectionner" : {
+
+    },
+    "Type" : {
+
+    },
+    "Type des champs" : {
+
+    },
     "Un template décrit la fiche d'un système de jeu. Il sert ensuite à créer des personnages." : {
 
     },
     "Une erreur est survenue" : {
+
+    },
+    "Une ligne par élément" : {
+
+    },
+    "Une ligne par élément, valeurs séparées par « ; » ou une tabulation." : {
+
+    },
+    "Une option par ligne." : {
+
+    },
+    "Une spécialisation se précise sur la fiche : « Langue (Latin) », « Monter (Navire) »." : {
+
+    },
+    "Une valeur commençant par « = » est une formule (ex. =DEX*2)." : {
+
+    },
+    "Une valeur de groupe sert par exemple au bonus de catégorie de BRP." : {
+
+    },
+    "Unité" : {
+
+    },
+    "Valeur" : {
+
+    },
+    "Valeur de groupe" : {
+
+    },
+    "Valeur par défaut" : {
+
+    },
+    "Valeur par défaut calculée, modifiable à la main ensuite. Le calcul arrive à l'étape suivante (M5)." : {
+
+    },
+    "Valeurs" : {
+
+    },
+    "Valeurs par défaut" : {
+
+    },
+    "Valeurs séparées par « ; » ou une tabulation (copie depuis un tableur) : libellé;valeur;code. Exemple : Force;11;FOR. Une valeur commençant par « = » est une formule ; une ressource accepte 47/65." : {
+
+    },
+    "Vers la droite" : {
+
+    },
+    "Vers la gauche" : {
 
     }
   },
