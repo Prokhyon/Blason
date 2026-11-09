@@ -32,6 +32,22 @@
         }
       }
     },
+    "%@, %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@"
+          }
+        }
+      }
+    },
+    "%@, à préciser" : {
+
+    },
+    "%@, aucune image" : {
+
+    },
     "%lld" : {
 
     },
@@ -43,6 +59,16 @@
     },
     "%lld personnages" : {
 
+    },
+    "%lld sur %lld" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld sur %2$lld"
+          }
+        }
+      }
     },
     "+0" : {
 
@@ -60,6 +86,9 @@
 
     },
     "À gauche" : {
+
+    },
+    "à préciser" : {
 
     },
     "Affichage" : {
@@ -92,6 +121,12 @@
     "Ajouter une rangée en dessous" : {
 
     },
+    "Ajouter une spécialité" : {
+
+    },
+    "Ajouter une spécialité à %@" : {
+
+    },
     "Ajoutez une première page pour construire la fiche." : {
 
     },
@@ -116,7 +151,7 @@
     "Aucun template" : {
 
     },
-    "Augmenter" : {
+    "Augmenter %@" : {
 
     },
     "Avec plusieurs colonnes d'affichage, les groupes se répartissent côte à côte quand la largeur le permet." : {
@@ -128,7 +163,7 @@
     "Calcul (formule)" : {
 
     },
-    "Calcule le maximum de la ressource, ex. =plafond((CON+TAI)/2)." : {
+    "Calcule le maximum de la ressource, ex. =plafond((CON+TAI)/2). PV désigne la valeur actuelle, PV.max le maximum." : {
 
     },
     "Case à cocher" : {
@@ -155,7 +190,7 @@
     "Choix dans une liste" : {
 
     },
-    "Coché" : {
+    "coché" : {
 
     },
     "Code" : {
@@ -227,7 +262,7 @@
     "Désélectionner" : {
 
     },
-    "Diminuer" : {
+    "Diminuer %@" : {
 
     },
     "Disposition" : {
@@ -246,6 +281,12 @@
 
     },
     "Entrée dans un libellé : crée l'élément suivant" : {
+
+    },
+    "Exporter" : {
+
+    },
+    "Exporter…" : {
 
     },
     "Fiche" : {
@@ -272,6 +313,15 @@
     "Image" : {
 
     },
+    "Import impossible" : {
+
+    },
+    "Importer" : {
+
+    },
+    "Importer un fichier" : {
+
+    },
     "Indication" : {
 
     },
@@ -287,7 +337,7 @@
     "la section" : {
 
     },
-    "La valeur est calculée et ne se saisit pas. Le calcul des formules arrive à l'étape suivante (M5)." : {
+    "La valeur est calculée et ne se saisit pas. Codes des champs, + − × ÷, parenthèses, plafond, plancher, arrondi, min, max. Ex. =FOR*5." : {
 
     },
     "Largeur de la colonne %lld : %lld" : {
@@ -306,7 +356,7 @@
     "Le code sert dans les formules (ex. =FOR*5). Entrée dans le libellé crée le champ suivant, du même type." : {
 
     },
-    "Le code sert dans les formules de ligne (ex. =valeur/2). Une formule de colonne s'applique à chaque ligne." : {
+    "Le code sert dans les formules de ligne (ex. =valeur/2). La formule s'applique à chaque ligne : calculée pour une colonne « Calcul », valeur par défaut sinon. « groupe » désigne la valeur du groupe (ex. =base+groupe)." : {
 
     },
     "Le personnage reçoit une copie du template : modifier le template plus tard ne changera pas ce personnage." : {
@@ -345,9 +395,6 @@
     "Masquer l'inspecteur" : {
 
     },
-    "max %@" : {
-
-    },
     "Maximum" : {
 
     },
@@ -372,6 +419,9 @@
     "Nom" : {
 
     },
+    "Nom de la ligne" : {
+
+    },
     "Nom du personnage" : {
 
     },
@@ -387,7 +437,7 @@
     "Nombre entier" : {
 
     },
-    "Non coché" : {
+    "non coché" : {
 
     },
     "Nouveau personnage" : {
@@ -403,6 +453,12 @@
 
     },
     "Page" : {
+
+    },
+    "Page vide : ajoutez-y des sections en mode Structure." : {
+
+    },
+    "Pages" : {
 
     },
     "Passez en mode Structure pour construire la fiche." : {
@@ -424,6 +480,9 @@
 
     },
     "Précision" : {
+
+    },
+    "Précision de %@" : {
 
     },
     "Rangée" : {
@@ -472,6 +531,9 @@
     "Ressource (PV, PM…)" : {
 
     },
+    "Résultat" : {
+
+    },
     "Rétablir" : {
 
     },
@@ -494,6 +556,9 @@
 
     },
     "Section sans titre" : {
+
+    },
+    "Sommaire" : {
 
     },
     "Spécialisation" : {
@@ -544,6 +609,9 @@
     "Tout désélectionner" : {
 
     },
+    "Toutes les pages à la suite" : {
+
+    },
     "Type" : {
 
     },
@@ -563,6 +631,9 @@
 
     },
     "Une option par ligne." : {
+
+    },
+    "Une page à la fois" : {
 
     },
     "Une spécialisation se précise sur la fiche : « Langue (Latin) », « Monter (Navire) »." : {
@@ -586,7 +657,7 @@
     "Valeur par défaut" : {
 
     },
-    "Valeur par défaut calculée, modifiable à la main ensuite. Le calcul arrive à l'étape suivante (M5)." : {
+    "Valeur par défaut calculée (ex. =POU*5) ; une valeur saisie la remplace, l'effacer revient au calcul." : {
 
     },
     "Valeurs" : {
@@ -602,6 +673,9 @@
 
     },
     "Vers la gauche" : {
+
+    },
+    "vide" : {
 
     }
   },
