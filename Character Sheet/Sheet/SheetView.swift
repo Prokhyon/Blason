@@ -159,6 +159,13 @@ struct SheetView: View {
             }
         }
         ToolbarItem(placement: .primaryAction) {
+            if let file = exportFile {
+                ShareLink(item: file, preview: SharePreview(file.document.title)) {
+                    Label("Exporter", systemImage: "square.and.arrow.up")
+                }
+            }
+        }
+        ToolbarItem(placement: .primaryAction) {
             Picker("Mode", selection: $mode) {
                 ForEach(SheetMode.allCases) { mode in
                     Text(mode.title).tag(mode)
@@ -167,6 +174,13 @@ struct SheetView: View {
             .pickerStyle(.segmented)
             .fixedSize()
         }
+    }
+
+    /// Fichier d'export du personnage ou du template ouvert.
+    private var exportFile: SheetExportFile? {
+        if let character = sheet?.character { return SheetExportFile(character: character) }
+        if let template = sheet?.template { return SheetExportFile(template: template) }
+        return nil
     }
 
     /// Raccourcis clavier du mode Structure (inactifs pendant la saisie dans l'inspecteur,

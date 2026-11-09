@@ -12,6 +12,7 @@ struct CharacterGrid: View {
 
     @State private var search = ""
     @State private var showingNew = false
+    @State private var importing = false
     @State private var renaming: PlayerCharacter?
     @State private var newName = ""
     @State private var deleting: PlayerCharacter?
@@ -43,7 +44,14 @@ struct CharacterGrid: View {
         .navigationTitle("Personnages")
         .searchable(text: $search, prompt: "Rechercher un personnage")
         .toolbar {
+            Button("Importer", systemImage: "square.and.arrow.down") { importing = true }
             Button("Nouveau personnage", systemImage: "plus") { showingNew = true }
+        }
+        .sheetImporter(isPresented: $importing) { item in
+            switch item {
+            case .template(let template): path.append(template)
+            case .character(let character): path.append(character)
+            }
         }
         .sheet(isPresented: $showingNew) {
             NewCharacterView(templates: templates) { character in
@@ -81,6 +89,7 @@ struct CharacterGrid: View {
             let system = templates.first { $0.uid == character.sourceTemplateUID }?.system ?? ""
             character.makeTemplate(named: "\(character.displayName) — template", system: system, in: context)
         }
+        ExportButton(file: SheetExportFile(character: character))
         Divider()
         Button("Supprimer", systemImage: "trash", role: .destructive) {
             deleting = character
@@ -97,6 +106,7 @@ struct CharacterGrid: View {
             } actions: {
                 Button("Nouveau personnage") { showingNew = true }
                     .buttonStyle(.borderedProminent)
+                Button("Importer un fichier") { importing = true }
             }
         } else if filtered.isEmpty {
             ContentUnavailableView.search(text: search)

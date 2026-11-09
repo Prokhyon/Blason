@@ -72,6 +72,22 @@ struct LibraryView: View {
     /// (début du nom d'un personnage ou d'un template).
     private func openDemoTarget() async {
         let defaults = UserDefaults.standard
+        // -demoExport /chemin.json : écrit le JSON du premier personnage ;
+        // -demoImport /chemin.json : importe ce fichier et l'ouvre.
+        if let path = defaults.string(forKey: "demoExport"), let character = characters.first {
+            try? SheetDocument(character: character).jsonData().write(to: URL(filePath: path))
+        }
+        if let path = defaults.string(forKey: "demoImport"), let context = characters.first?.modelContext {
+            do {
+                switch try SheetDocument.decode(Data(contentsOf: URL(filePath: path))).insert(into: context) {
+                case .character(let character): self.path.append(character)
+                case .template(let template): self.path.append(template)
+                }
+                return
+            } catch {
+                print("Import de démo impossible : \(error)")
+            }
+        }
         if let raw = defaults.string(forKey: "demoCategory"), let value = Category(rawValue: raw) {
             category = value
             // Le changement de catégorie vide le chemin : on attend qu'il soit passé.

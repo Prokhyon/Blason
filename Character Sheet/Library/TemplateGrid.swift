@@ -12,6 +12,7 @@ struct TemplateGrid: View {
 
     @State private var search = ""
     @State private var showingNew = false
+    @State private var importing = false
     @State private var renaming: SheetTemplate?
     @State private var newName = ""
     @State private var deleting: SheetTemplate?
@@ -49,7 +50,14 @@ struct TemplateGrid: View {
         .navigationTitle("Templates")
         .searchable(text: $search, prompt: "Rechercher un template")
         .toolbar {
+            Button("Importer", systemImage: "square.and.arrow.down") { importing = true }
             Button("Nouveau template", systemImage: "plus") { showingNew = true }
+        }
+        .sheetImporter(isPresented: $importing) { item in
+            switch item {
+            case .template(let template): path.append(template)
+            case .character(let character): path.append(character)
+            }
         }
         .sheet(isPresented: $showingNew) {
             NewTemplateView { template in
@@ -98,6 +106,7 @@ struct TemplateGrid: View {
         Button("Dupliquer", systemImage: "plus.square.on.square") {
             template.duplicate(in: context)
         }
+        ExportButton(file: SheetExportFile(template: template))
         Divider()
         Button("Supprimer", systemImage: "trash", role: .destructive) {
             deleting = template
@@ -114,6 +123,7 @@ struct TemplateGrid: View {
             } actions: {
                 Button("Nouveau template") { showingNew = true }
                     .buttonStyle(.borderedProminent)
+                Button("Importer un fichier") { importing = true }
             }
         } else if filtered.isEmpty {
             ContentUnavailableView.search(text: search)
