@@ -19,3 +19,6 @@ DerivedData/
 # Swift Package Manager
 .build/
 .swiftpm/
+
+# Documents de référence (copyright, données personnelles)
+*.pdf
