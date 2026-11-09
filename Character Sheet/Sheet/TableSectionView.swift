@@ -70,6 +70,13 @@ private struct TableGrid: View {
     @Environment(\.structureEditor) private var editor
     @Environment(\.modelContext) private var context
 
+    /// En Structure, les lignes telles qu'elles sont ; sinon les spécialités sous leur catégorie.
+    private func lines(of group: SheetTableGroup) -> [TableLine] {
+        mode == .structure
+            ? group.sortedRows.map { .row($0, indented: false) }
+            : group.lines(editing: mode == .fill)
+    }
+
     var body: some View {
         Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 6) {
             GridRow {
@@ -96,17 +103,37 @@ private struct TableGrid: View {
                         .gridCellColumns(columns.count + 1)
                         .padding(.top, 6)
                 }
-                ForEach(group.sortedRows) { row in
-                    GridRow {
-                        RowLabel(row: row)
-                        ForEach(columns) { column in
-                            if let cell = row.cell(for: column) {
-                                CellView(cell: cell, column: column)
-                                    .gridColumnAlignment(column.kind == .text ? .leading : .trailing)
-                            } else {
-                                Color.clear.frame(width: 1, height: 1)
+                ForEach(lines(of: group)) { line in
+                    switch line {
+                    case .row(let row, let indented):
+                        GridRow {
+                            RowLabel(row: row, indented: indented)
+                            ForEach(columns) { column in
+                                if let cell = row.cell(for: column) {
+                                    CellView(cell: cell, column: column)
+                                        .gridColumnAlignment(column.kind == .text ? .leading : .trailing)
+                                } else {
+                                    Color.clear.frame(width: 1, height: 1)
+                                }
                             }
                         }
+                    case .category(let row):
+                        HStack(spacing: 8) {
+                            Text(row.label)
+                                .lineLimit(1)
+                            if mode == .fill {
+                                Button {
+                                    row.addSpecialty(in: context)
+                                } label: {
+                                    Label("Ajouter une spécialité à \(row.label)", systemImage: "plus.circle")
+                                        .labelStyle(.iconOnly)
+                                }
+                                .buttonStyle(.borderless)
+                                // Zone de toucher plus grande que l'icône, sans agrandir la ligne.
+                                .contentShape(Rectangle().inset(by: -12))
+                            }
+                        }
+                        .gridCellColumns(columns.count + 1)
                     }
                 }
                 if mode == .fill {
@@ -170,8 +197,12 @@ private struct GroupHeader: View {
 /// Libellé d'une ligne, avec sa spécialisation ; menu contextuel en mode Remplir.
 private struct RowLabel: View {
     @Bindable var row: SheetTableRow
+    /// Spécialité sous sa catégorie : seule la précision s'affiche, en retrait.
+    var indented = false
+
     @Environment(\.sheetMode) private var mode
     @Environment(\.modelContext) private var context
+    @ScaledMetric(relativeTo: .body) private var indent: CGFloat = 18
 
     var body: some View {
         if mode == .structure {
@@ -194,7 +225,22 @@ private struct RowLabel: View {
 
     private var editableLabel: some View {
         HStack(spacing: 4) {
-            if mode == .fill {
+            if indented {
+                if mode == .fill {
+                    TextField("", text: specialization, prompt: Text("précision"))
+                        .frame(minWidth: 90)
+                        .inputBackground()
+                        .accessibilityLabel("Précision de \(row.label)")
+                } else if row.hasSpecialization {
+                    Text(row.specialization ?? "")
+                        .lineLimit(2)
+                        .accessibilityLabel("\(row.label), \(row.specialization ?? "")")
+                } else {
+                    Text("à préciser")
+                        .foregroundStyle(.tertiary)
+                        .accessibilityLabel("\(row.label), à préciser")
+                }
+            } else if mode == .fill {
                 if row.isFromTemplate {
                     Text(row.label).lineLimit(1)
                 } else {
@@ -210,32 +256,27 @@ private struct RowLabel: View {
                         .accessibilityLabel("Précision de \(row.label)")
                 }
             } else {
-                // En lecture, un libellé long passe à la ligne plutôt que d'être coupé.
-                Text(readingLabel)
+                Text(row.label)
                     .lineLimit(2)
             }
         }
+        .padding(.leading, indented ? indent : 0)
         .contextMenu {
             if mode == .fill {
-                Button("Dupliquer la ligne", systemImage: "plus.square.on.square") {
-                    row.duplicate(in: context)
+                if row.allowsSpecialization {
+                    Button("Ajouter une spécialité", systemImage: "plus") {
+                        row.addSpecialty(in: context)
+                    }
+                } else {
+                    Button("Dupliquer la ligne", systemImage: "plus.square.on.square") {
+                        row.duplicate(in: context)
+                    }
                 }
                 Button("Supprimer la ligne", systemImage: "trash", role: .destructive) {
                     context.delete(row)
                 }
             }
         }
-    }
-
-    /// « Monter (Navire) », la précision estompée.
-    private var readingLabel: AttributedString {
-        var text = AttributedString(row.label)
-        if row.allowsSpecialization, let value = row.specialization, !value.isEmpty {
-            var detail = AttributedString(" (\(value))")
-            detail.foregroundColor = Color.secondary
-            text += detail
-        }
-        return text
     }
 
     private var specialization: Binding<String> {
