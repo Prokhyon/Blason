@@ -155,6 +155,10 @@ class LayoutSection: Identifiable {
         fields.sorted { $0.order < $1.order }
     }
 
+    var gridPlacement: GridPlacement {
+        GridPlacement(gridOrigin: gridOrigin, width: width, height: height)
+    }
+
     init(id: UUID = UUID(), title: String = "New Section", order: Int = 0, width: Int = 1, height: Int = 1, gridOrigin: GridPosition = GridPosition(x: 0, y: 0), sectionLayout: SectionLayout = .list, fields: [Field] = []) {
         self.id = id
         self.title = title
@@ -183,7 +187,7 @@ class LayoutSection: Identifiable {
     }
 }
 
-enum SectionLayout: String, Codable, CaseIterable {
+nonisolated enum SectionLayout: String, Codable, CaseIterable {
     case list
     case grid
     case multiList
@@ -234,7 +238,7 @@ class Field: Identifiable {
     }
 }
 
-enum FieldKind: String, Codable, CaseIterable {
+nonisolated enum FieldKind: String, Codable, CaseIterable {
     case text
     case integer
     case decimal
@@ -244,7 +248,7 @@ enum FieldKind: String, Codable, CaseIterable {
     case note
 }
 
-enum FieldLayout: String, Codable, CaseIterable {
+nonisolated enum FieldLayout: String, Codable, CaseIterable {
     case horizontal
     case vertical
 }
@@ -262,7 +266,7 @@ class CharacterFieldValue: Identifiable {
     }
 }
 
-struct GridPosition: Codable, Hashable {
+nonisolated struct GridPosition: Codable, Hashable {
     var x: Int
     var y: Int
 

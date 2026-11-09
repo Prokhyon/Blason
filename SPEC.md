@@ -213,6 +213,7 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-09 | iPad seul en V1, code multiplateforme ; iCloud puis iPhone et Mac ensuite. |
 | 2026-11-09 | Données actuelles jetables ; export / import JSON en V1. |
 | 2026-11-09 | Fiche de Leo (BRP) comme référence et critère d'acceptation ; PDF exclu de git. |
+| 2026-11-09 | M0 : Swift 6 (concurrence stricte) ; entitlements iCloud et push retirés jusqu'à la V1.2 ; langue de développement `fr`. |
 
 ## 10. Questions ouvertes
 

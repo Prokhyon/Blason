@@ -86,7 +86,7 @@ struct CharacterView: View {
                     SpanningGridLayout(columns: layout.gridColumns, cellSize: cellSize, spacing: gridSpacing) {
                         ForEach(layout.sortedSections) { section in
                             SectionCardView(section: section, character: character, editValues: editValues)
-                                .layoutValue(key: GridItemKey.self, value: section)
+                                .layoutValue(key: GridItemKey.self, value: section.gridPlacement)
                         }
                     }
                 }

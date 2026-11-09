@@ -2,8 +2,15 @@ import SwiftUI
 
 let gridSpacing: CGFloat = 15
 
-struct GridItemKey: LayoutValueKey {
-    static let defaultValue: LayoutSection? = nil
+/// Emplacement d'une section dans la grille, transmis au `Layout` sous forme de valeur (Sendable).
+nonisolated struct GridPlacement: Sendable {
+    var gridOrigin: GridPosition
+    var width: Int
+    var height: Int
+}
+
+nonisolated struct GridItemKey: LayoutValueKey {
+    static let defaultValue: GridPlacement? = nil
 }
 
 struct SpanningGridLayout: Layout {

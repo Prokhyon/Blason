@@ -102,7 +102,7 @@ struct GridPreview: View {
                                 .font(.caption)
                                 .lineLimit(1)
                         }
-                        .layoutValue(key: GridItemKey.self, value: section)
+                        .layoutValue(key: GridItemKey.self, value: section.gridPlacement)
                 }
             }
         }
