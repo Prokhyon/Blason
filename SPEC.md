@@ -232,6 +232,10 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-09 | M4 : glisser un élément sur un autre lui fait prendre sa place ; lâché sur un élément d'un autre type, il remonte au conteneur le plus proche qui l'accepte (une section lâchée sur un champ se place à la section de ce champ). Une ligne déplacée vers un autre tableau garde les valeurs des colonnes de même code. |
 | 2026-11-09 | M4 : sélection multiple avec ⌘ ou ⇧ + toucher (clavier physique) ou le menu contextuel « Ajouter à la sélection ». Supprimer : ⌘⌫ (⌫ seul entrerait en conflit avec la saisie). Annuler / rétablir : sur toutes les modifications, dans tous les modes sauf Jouer. |
 | 2026-11-09 | M4 : « Coller une liste » — champs : `libellé;valeur;code` ; tableau : `libellé;valeur par colonne saisissable`, `# Groupe;bonus`, `Langue (…)` (spécialisation à préciser), `Monter (Navire)` (précisée). Une valeur `=…` est une formule ; une ressource accepte `47/65`. |
+| 2026-11-09 | M5 : moteur de formules en Swift pur dans SheetKit (analyse, évaluation, mémorisation par calcul, détection des cycles). Fonctions : `plafond`, `plancher`, `arrondi` (1 ou 2 arguments), `min`, `max`, `abs`, avec alias anglais ; opérateurs × ÷ − acceptés ; arguments séparés par `;` (ou `,`). |
+| 2026-11-09 | M5 : une valeur non saisie rend le calcul vide (« — »), sans erreur ; codes inconnus, cycles, divisions par zéro et syntaxe invalide s'affichent dans le champ. |
+| 2026-11-09 | M5 : formule = valeur **par défaut** pour tout champ ou cellule numérique (affichée en gris en Remplir) ; la saisie la remplace, l'effacer revient au calcul. Champ ou colonne « Calcul » : lecture seule. Ressource : la formule calcule le maximum ; `PV` = actuel, `PV.max` = maximum. |
+| 2026-11-09 | M5 : dans un tableau, une référence désigne d'abord une colonne de la même ligne, puis `groupe` (valeur du groupe, 0 si vide), puis un champ. Une colonne peut porter une formule par défaut : le template BRP de démo calcule `% = base + groupe`. Référence à une ligne d'un autre tableau (ex. `Esquive.valeur`) : pas en V1. |
 
 ## 10. Questions ouvertes
 

@@ -1,7 +1,7 @@
 import Foundation
 
 // Mise en forme des valeurs pour l'affichage en lecture.
-// Les formules sont affichées telles quelles tant que le moteur (M5) n'existe pas.
+// Valeurs saisies seulement : les valeurs calculées passent par `FormulaEngine`.
 
 enum NumberText {
     static func string(_ value: Double) -> String {

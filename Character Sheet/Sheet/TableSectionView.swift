@@ -257,13 +257,15 @@ private struct CellView: View {
             }
         case .number, .percentage:
             if editable {
-                NumberField(value: $cell.numberValue, prompt: cell.formula, width: 52)
-            } else if let value = cell.numberValue {
-                Text(SheetFormat.number(value)).monospacedDigit()
+                let computed = engine.computed(cell)
+                HStack(spacing: 2) {
+                    NumberField(value: $cell.numberValue, prompt: computed?.promptText, width: 52)
+                    if cell.numberValue == nil, case .failure(let error)? = computed {
+                        FormulaErrorBadge(error: error)
+                    }
+                }
             } else {
-                Text(cell.formula ?? "")
-                    .font(.caption.monospaced())
-                    .foregroundStyle(.tertiary)
+                ComputedValueText(result: engine.value(of: cell))
             }
         case .checkbox:
             CheckboxButton(isOn: Binding(
@@ -271,9 +273,10 @@ private struct CellView: View {
                 set: { cell.boolValue = $0 }
             ), enabled: editable)
         case .formula:
-            Text(cell.formula ?? column.formula ?? "")
-                .font(.caption.monospaced())
-                .foregroundStyle(.tertiary)
+            ComputedValueText(result: engine.value(of: cell))
         }
     }
+
+    /// Moteur neuf à chaque affichage (voir `FieldView.engine`).
+    private var engine: FormulaEngine { FormulaEngine(sheet: cell.sheet) }
 }

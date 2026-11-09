@@ -74,10 +74,14 @@ struct FieldView: View {
         case .integer, .decimal, .percentage:
             HStack(spacing: 4) {
                 if editable {
-                    NumberField(value: $field.numberValue, integer: field.kind != .decimal)
+                    // Une formule donne la valeur par défaut, affichée en gris tant que rien n'est saisi.
+                    let computed = engine.computed(field)
+                    NumberField(value: $field.numberValue, integer: field.kind != .decimal, prompt: computed?.promptText)
+                    if field.numberValue == nil, case .failure(let error)? = computed {
+                        FormulaErrorBadge(error: error)
+                    }
                 } else {
-                    Text(field.numberValue.map(SheetFormat.number) ?? "—")
-                        .monospacedDigit()
+                    ComputedValueText(result: engine.value(of: field))
                 }
                 if field.kind == .percentage {
                     Text("%").foregroundStyle(.secondary)
@@ -141,12 +145,19 @@ struct FieldView: View {
             ImageFieldView(field: field, editable: editable)
 
         case .formula:
-            // Le calcul arrive au jalon M5 : on affiche la formule.
-            Text(field.formula ?? "")
-                .font(.callout.monospaced())
-                .foregroundStyle(.tertiary)
+            let result = engine.value(of: field)
+            HStack(spacing: 4) {
+                ComputedValueText(result: result)
+                if case .success(_?) = result, let unit = field.unit, !unit.isEmpty {
+                    Text(unit).foregroundStyle(.secondary)
+                }
+            }
         }
     }
+
+    /// Moteur de calcul neuf à chaque affichage : les valeurs lues pendant le calcul sont observées,
+    /// la vue se met à jour quand une valeur dont dépend la formule change.
+    private var engine: FormulaEngine { FormulaEngine(sheet: field.sheet) }
 
     private var text: Binding<String> {
         Binding(
@@ -171,6 +182,50 @@ struct FieldView: View {
                 }
             }
         )
+    }
+}
+
+/// Valeur calculée : nombre, « — » si une valeur dont elle dépend manque, ou l'erreur.
+struct ComputedValueText: View {
+    let result: FormulaResult
+
+    var body: some View {
+        switch result {
+        case .success(let value?):
+            Text(SheetFormat.number(value)).monospacedDigit()
+        case .success(nil):
+            Text("—").foregroundStyle(.tertiary)
+        case .failure(let error):
+            FormulaErrorBadge(error: error, showsMessage: true)
+        }
+    }
+}
+
+/// Erreur de formule : icône (et message), sans bloquer la fiche.
+struct FormulaErrorBadge: View {
+    let error: FormulaError
+    var showsMessage = false
+
+    var body: some View {
+        Label {
+            if showsMessage { Text(error.message) }
+        } icon: {
+            Image(systemName: "exclamationmark.triangle.fill")
+        }
+        .labelStyle(.titleAndIcon)
+        .font(.caption)
+        .foregroundStyle(.red)
+        .lineLimit(2)
+        .help(error.message)
+        .accessibilityLabel(error.message)
+    }
+}
+
+extension Result where Success == Double?, Failure == FormulaError {
+    /// Texte d'invite d'une saisie : la valeur calculée, s'il y en a une.
+    var promptText: String? {
+        guard case .success(let value?) = self else { return nil }
+        return SheetFormat.number(value)
     }
 }
 

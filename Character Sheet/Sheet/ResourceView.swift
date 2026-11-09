@@ -10,20 +10,20 @@ struct ResourceView: View {
 
     @Environment(\.sheetMode) private var mode
 
-    private var current: Int { Int(field.numberValue ?? field.resourceMax ?? 0) }
-    private var maximum: Int? { field.resourceMax.map { Int($0) } }
+    /// Maximum saisi, sinon calculé par la formule.
+    private var maximumResult: FormulaResult { FormulaEngine(sheet: field.sheet).maximum(of: field) }
+    private var maximum: Int? { (try? maximumResult.get())?.flatMap { Int($0) } }
+    private var current: Int { Int(field.numberValue ?? maximum.map(Double.init) ?? 0) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             if mode == .fill {
                 HStack(spacing: 8) {
-                    NumberField(value: $field.numberValue, prompt: "actuel")
+                    NumberField(value: $field.numberValue, prompt: maximum.map(String.init) ?? "actuel")
                     Text("/").foregroundStyle(.secondary)
-                    NumberField(value: $field.resourceMax, prompt: "max")
-                    if field.resourceMax == nil, let formula = field.formula {
-                        Text("max \(formula)")
-                            .font(.caption.monospaced())
-                            .foregroundStyle(.tertiary)
+                    NumberField(value: $field.resourceMax, prompt: maximumResult.promptText ?? "max")
+                    if field.resourceMax == nil, case .failure(let error) = maximumResult {
+                        FormulaErrorBadge(error: error)
                     }
                 }
             } else {

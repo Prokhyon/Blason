@@ -68,7 +68,7 @@ public enum DemoData {
             page.row { row in
                 row.table("Compétences", labelTitle: "Compétence", displayColumns: 3) { t in
                     t.column("Base", .number, code: "base")
-                    t.column("%", .percentage, code: "valeur")
+                    t.column("%", .percentage, code: "valeur", formula: "=base+groupe")
                     t.column("Exp.", .checkbox, code: "exp", live: true)
 
                     t.group("Communication", hasValue: true) { g in
