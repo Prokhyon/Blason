@@ -1,7 +1,10 @@
 import SwiftUI
 
-/// Mode d'affichage de la fiche (SPEC §4). Le mode Structure arrive avec l'éditeur (M4).
+/// Mode d'affichage de la fiche (SPEC §4).
 enum SheetMode: String, CaseIterable, Identifiable {
+    /// Construction : sélection d'éléments, inspecteur, ajouts. Les valeurs ne sont pas modifiables
+    /// directement sur la fiche (elles le sont dans l'inspecteur).
+    case structure
     /// Toutes les valeurs sont modifiables.
     case fill
     /// Seules les valeurs vivantes (PV, SAN, cases « Exp. »…) sont modifiables.
@@ -11,14 +14,15 @@ enum SheetMode: String, CaseIterable, Identifiable {
 
     var title: LocalizedStringKey {
         switch self {
+        case .structure: "Structure"
         case .fill: "Remplir"
         case .play: "Jouer"
         }
     }
 
-    /// Une valeur est modifiable en Remplir, ou en Jouer si elle est vivante.
+    /// Une valeur est modifiable en Remplir, ou en Jouer si elle est vivante ; jamais en Structure.
     func canEdit(live: Bool) -> Bool {
-        self == .fill || live
+        self == .fill || (self == .play && live)
     }
 }
 

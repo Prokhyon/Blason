@@ -5,26 +5,85 @@ import SheetKit
 struct SectionCard: View {
     let section: SheetSection
 
+    @Environment(\.sheetMode) private var mode
+    @Environment(\.structureEditor) private var editor
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(section.title)
-                .font(.headline)
+            if mode == .structure && section.title.isEmpty {
+                Text("Section sans titre")
+                    .font(.headline)
+                    .foregroundStyle(.tertiary)
+            } else if !section.title.isEmpty {
+                Text(section.title)
+                    .font(.headline)
+            }
             switch section.kind {
             case .fields:
                 FieldsSectionView(section: section)
             case .table:
                 TableSectionView(section: section)
             }
+            if mode == .structure, let editor {
+                addBar(editor)
+            }
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        .structureItem(.section(section))
+    }
+
+    /// Ajouts en bas de section : champ (par type) ou colonne / groupe, et « Coller une liste ».
+    @ViewBuilder
+    private func addBar(_ editor: StructureEditor) -> some View {
+        AddButtonsBar {
+            switch section.kind {
+            case .fields:
+                Menu {
+                    ForEach(FieldKind.allCases, id: \.self) { kind in
+                        Button {
+                            editor.addField(kind, to: section)
+                        } label: {
+                            Label(kind.title, systemImage: kind.symbol)
+                        }
+                    }
+                } label: {
+                    AddButtonLabel(title: "Champ")
+                }
+            case .table:
+                Menu {
+                    ForEach(ColumnKind.allCases, id: \.self) { kind in
+                        Button {
+                            editor.addColumn(kind, to: section)
+                        } label: {
+                            Label(kind.title, systemImage: kind.symbol)
+                        }
+                    }
+                } label: {
+                    AddButtonLabel(title: "Colonne")
+                }
+                Button {
+                    editor.addGroup(to: section)
+                } label: {
+                    AddButtonLabel(title: "Groupe")
+                }
+            }
+            Button {
+                editor.requestPasteList(into: section)
+            } label: {
+                AddButtonLabel(title: "Coller une liste", systemImage: "list.clipboard")
+            }
+        }
+        .padding(.top, 4)
     }
 }
 
 /// Champs d'une section selon sa disposition : liste, grille ou listes côte à côte.
 struct FieldsSectionView: View {
     let section: SheetSection
+
+    @Environment(\.sheetMode) private var mode
 
     var body: some View {
         let fields = section.sortedFields
@@ -37,6 +96,7 @@ struct FieldsSectionView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     ForEach(fields) { field in
                         FieldView(field: field, hideLabel: hidesLabel(field))
+                            .structureItem(.field(field))
                     }
                 }
             case .grid:
@@ -45,6 +105,7 @@ struct FieldsSectionView: View {
                         GridRow {
                             ForEach(line.fields) { field in
                                 FieldView(field: field)
+                                    .structureItem(.field(field))
                                     .gridCellColumns(line.spansAll ? count : 1)
                             }
                         }
@@ -56,6 +117,7 @@ struct FieldsSectionView: View {
                         VStack(alignment: .leading, spacing: 10) {
                             ForEach(fields.filter { min($0.listIndex, count - 1) == list }) { field in
                                 FieldView(field: field)
+                                    .structureItem(.field(field))
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -67,7 +129,7 @@ struct FieldsSectionView: View {
 
     /// Un champ seul dont le libellé répète le titre de la section n'affiche pas son libellé.
     private func hidesLabel(_ field: SheetField) -> Bool {
-        section.fields?.count == 1 && field.label == section.title
+        mode != .structure && section.fields?.count == 1 && field.label == section.title
     }
 
     struct GridLine: Identifiable {

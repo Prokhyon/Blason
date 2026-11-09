@@ -91,7 +91,7 @@ struct NewTemplateView: View {
                         .focused($nameFocused)
                     TextField("Système de jeu", text: $system, prompt: Text("Système (ex. L'Appel de Cthulhu)"))
                 } footer: {
-                    Text("La structure de la fiche se construit ensuite avec l'éditeur (à venir).")
+                    Text("Le template s'ouvre ensuite en mode Structure pour construire la fiche.")
                 }
             }
             .navigationTitle("Nouveau template")

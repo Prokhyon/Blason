@@ -36,10 +36,17 @@ struct FieldView: View {
         }
     }
 
+    @ViewBuilder
     private var label: some View {
-        Text(field.label)
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
+        if field.label.isEmpty && mode == .structure {
+            Text("Sans libellé")
+                .font(.subheadline)
+                .foregroundStyle(.tertiary)
+        } else {
+            Text(field.label)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
     }
 
     @ViewBuilder

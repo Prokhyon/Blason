@@ -48,7 +48,7 @@ struct LibraryView: View {
                     SheetView(
                         title: template.name,
                         sheet: template.sheet,
-                        initialMode: .fill,
+                        initialMode: .structure,
                         onEdit: { template.updatedAt = Date() }
                     )
                 }
@@ -63,20 +63,28 @@ struct LibraryView: View {
             }
         }
         #if DEBUG
-        .task { openDemoTarget() }
+        .task { await openDemoTarget() }
         #endif
     }
 
     #if DEBUG
-    /// Arguments de lancement pour les captures : -demoCategory templates, -demoOpen Leo.
-    private func openDemoTarget() {
+    /// Arguments de lancement pour les captures : -demoCategory templates, -demoOpen Leo
+    /// (début du nom d'un personnage ou d'un template).
+    private func openDemoTarget() async {
         let defaults = UserDefaults.standard
         if let raw = defaults.string(forKey: "demoCategory"), let value = Category(rawValue: raw) {
             category = value
+            // Le changement de catégorie vide le chemin : on attend qu'il soit passé.
+            try? await Task.sleep(for: .milliseconds(300))
         }
-        if path.isEmpty, let name = defaults.string(forKey: "demoOpen"),
-           let character = characters.first(where: { $0.displayName == name }) {
+        guard path.isEmpty, let name = defaults.string(forKey: "demoOpen") else { return }
+        // Début du nom suffisant (« -demoOpen Basic ») : les arguments sont lus comme des plists,
+        // les parenthèses et accents y passent mal.
+        func same(_ candidate: String) -> Bool { candidate.hasPrefix(name) }
+        if let character = characters.first(where: { same($0.displayName) }) {
             path.append(character)
+        } else if let template = templates.first(where: { same($0.name) }) {
+            path.append(template)
         }
     }
     #endif

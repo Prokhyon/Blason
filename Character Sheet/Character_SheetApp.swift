@@ -33,6 +33,8 @@ struct Character_SheetApp: App {
         // Template BRP et Leo, pour tester l'app sans tout saisir (jalon M1).
         try? DemoData.seedIfEmpty(in: container.mainContext)
         #endif
+        // Annuler / Rétablir (⌘Z / ⇧⌘Z) sur toutes les modifications, après le remplissage de démo.
+        container.mainContext.undoManager = UndoManager()
     }
 
     var body: some Scene {

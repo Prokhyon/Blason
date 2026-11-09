@@ -67,6 +67,7 @@ private struct TableGrid: View {
     let columns: [SheetTableColumn]
 
     @Environment(\.sheetMode) private var mode
+    @Environment(\.structureEditor) private var editor
     @Environment(\.modelContext) private var context
 
     var body: some View {
@@ -74,16 +75,24 @@ private struct TableGrid: View {
             GridRow {
                 Text(section.labelColumnTitle)
                 ForEach(columns) { column in
-                    Text(column.title)
-                        .gridColumnAlignment(column.kind == .text ? .leading : .trailing)
+                    Group {
+                        if column.title.isEmpty && mode == .structure {
+                            Text("Sans titre").foregroundStyle(.tertiary)
+                        } else {
+                            Text(column.title)
+                        }
+                    }
+                    .structureItem(.column(column))
+                    .gridColumnAlignment(column.kind == .text ? .leading : .trailing)
                 }
             }
             .font(.caption)
             .foregroundStyle(.secondary)
 
             ForEach(groups) { group in
-                if !group.title.isEmpty || group.hasValue {
+                if !group.title.isEmpty || group.hasValue || mode == .structure {
                     GroupHeader(group: group)
+                        .structureItem(.group(group))
                         .gridCellColumns(columns.count + 1)
                         .padding(.top, 6)
                 }
@@ -109,6 +118,20 @@ private struct TableGrid: View {
                     }
                     .buttonStyle(.borderless)
                     .gridCellColumns(columns.count + 1)
+                } else if mode == .structure, let editor {
+                    AddButtonsBar {
+                        Button {
+                            editor.addTableRow(to: group)
+                        } label: {
+                            AddButtonLabel(title: "Ligne")
+                        }
+                        Button {
+                            editor.requestPasteList(into: section, group: group)
+                        } label: {
+                            AddButtonLabel(title: "Coller des lignes", systemImage: "list.clipboard")
+                        }
+                    }
+                    .gridCellColumns(columns.count + 1)
                 }
             }
         }
@@ -122,8 +145,14 @@ private struct GroupHeader: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Text(group.title)
-                .font(.subheadline.weight(.semibold))
+            if group.title.isEmpty && mode == .structure {
+                Text("Groupe sans titre")
+                    .font(.subheadline)
+                    .foregroundStyle(.tertiary)
+            } else {
+                Text(group.title)
+                    .font(.subheadline.weight(.semibold))
+            }
             Spacer(minLength: 8)
             if group.hasValue {
                 if mode == .fill {
@@ -144,6 +173,25 @@ private struct RowLabel: View {
     @Environment(\.modelContext) private var context
 
     var body: some View {
+        if mode == .structure {
+            HStack(spacing: 4) {
+                if row.label.isEmpty {
+                    Text("Sans libellé").foregroundStyle(.tertiary)
+                } else {
+                    Text(row.label)
+                }
+                if row.allowsSpecialization {
+                    Text("(\(row.specialization ?? "…"))").foregroundStyle(.secondary)
+                }
+            }
+            .lineLimit(1)
+            .structureItem(.tableRow(row))
+        } else {
+            editableLabel
+        }
+    }
+
+    private var editableLabel: some View {
         HStack(spacing: 4) {
             if mode == .fill && !row.isFromTemplate {
                 TextField("", text: $row.label, prompt: Text("Nom"))
