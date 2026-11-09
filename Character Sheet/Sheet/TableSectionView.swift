@@ -323,7 +323,7 @@ private struct CellView: View {
                     }
                 }
             } else {
-                ComputedValueText(result: engine.value(of: cell))
+                ComputedValueText(result: engine.content(of: cell))
             }
         case .checkbox:
             CheckboxButton(isOn: Binding(
@@ -331,7 +331,7 @@ private struct CellView: View {
                 set: { cell.boolValue = $0 }
             ), enabled: editable, accessibilityName: accessibilityName)
         case .formula:
-            ComputedValueText(result: engine.value(of: cell))
+            ComputedValueText(result: engine.content(of: cell))
         }
     }
 

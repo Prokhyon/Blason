@@ -14,12 +14,14 @@ import Foundation
 //   code de champ de la fiche (`=DEX*2`).
 // - Une valeur non saisie rend le calcul vide (pas d'erreur) ; codes inconnus, cycles et
 //   divisions par zéro sont des erreurs affichées dans le champ.
+// - Une formule peut donner du texte (table de correspondance : « +1d4 ») ; `content` le garde
+//   pour l'affichage, `value` donne un nombre (un texte non numérique y est une erreur).
 //
 // Un moteur mémorise ses résultats : en créer un nouveau après une modification de la fiche.
 
 public final class FormulaEngine {
     private let sheet: Sheet?
-    private var cache: [Key: FormulaResult] = [:]
+    private var cache: [Key: FormulaValueResult] = [:]
     private var inProgress: Set<Key> = []
     private var parsed: [String: Result<FormulaExpression, FormulaError>] = [:]
     private lazy var fieldsByCode: [String: SheetField] = {
@@ -60,7 +62,7 @@ public final class FormulaEngine {
     }
 
     /// Calcul mémorisé, avec détection des cycles.
-    private func memo(_ key: Key, _ compute: () -> FormulaResult) -> FormulaResult {
+    private func memo(_ key: Key, _ compute: () -> FormulaValueResult) -> FormulaValueResult {
         if let cached = cache[key] { return cached }
         guard !inProgress.contains(key) else { return .failure(.circularReference) }
         inProgress.insert(key)
@@ -70,24 +72,43 @@ public final class FormulaEngine {
         return result
     }
 
+    private func evaluate(_ formula: String?, key: Key, resolve: @escaping (String, String?) -> FormulaValueResult) -> FormulaValueResult? {
+        guard let parsed = expression(formula) else { return nil }
+        return memo(key) {
+            switch parsed {
+            case .failure(let error): return .failure(error)
+            case .success(let expression): return expression.evaluateValue(resolve: resolve)
+            }
+        }
+    }
+
     // MARK: Champs
 
     /// Valeur numérique effective du champ : saisie, sinon calculée.
     public func value(of field: SheetField) -> FormulaResult {
+        content(of: field).numeric
+    }
+
+    /// Valeur effective à afficher : nombre ou texte (un modificateur peut valoir « +1d4 »).
+    public func content(of field: SheetField) -> FormulaValueResult {
         memo(Key(object: ObjectIdentifier(field), slot: .value)) {
             switch field.kind {
             case .formula:
-                return computed(field) ?? .success(nil)
+                return computedContent(field) ?? .success(nil)
             case .resource:
-                if let current = field.numberValue { return .success(current) }
-                return maximum(of: field)
-            case .integer, .decimal, .percentage, .modifier:
-                if let number = field.numberValue { return .success(number) }
-                return computed(field) ?? .success(nil)
+                if let current = field.numberValue { return .success(.number(current)) }
+                return maximum(of: field).asValue
+            case .integer, .decimal, .percentage:
+                if let number = field.numberValue { return .success(.number(number)) }
+                return computedContent(field) ?? .success(nil)
+            case .modifier:
+                if let number = field.numberValue { return .success(.number(number)) }
+                if let text = field.textValue, !text.isEmpty { return .success(.text(text)) }
+                return computedContent(field) ?? .success(nil)
             case .checkbox:
-                return .success(field.boolValue == true ? 1 : 0)
+                return .success(.number(field.boolValue == true ? 1 : 0))
             case .text, .longText, .choice:
-                return .success(field.textValue.flatMap(ListImport.number(from:)))
+                return .success(field.textValue.flatMap(ListImport.number(from:)).map(FormulaValue.number))
             case .date, .image:
                 return .success(nil)
             }
@@ -97,32 +118,34 @@ public final class FormulaEngine {
     /// Maximum effectif d'une ressource : saisi, sinon calculé par sa formule.
     public func maximum(of field: SheetField) -> FormulaResult {
         memo(Key(object: ObjectIdentifier(field), slot: .maximum)) {
-            if let maximum = field.resourceMax { return .success(maximum) }
-            return computed(field) ?? .success(nil)
+            if let maximum = field.resourceMax { return .success(.number(maximum)) }
+            return computedContent(field) ?? .success(nil)
         }
+        .numeric
     }
 
-    /// Résultat de la formule du champ (nil s'il n'en a pas), même si une valeur est saisie.
+    /// Résultat numérique de la formule du champ (nil s'il n'en a pas), même si une valeur est saisie.
     public func computed(_ field: SheetField) -> FormulaResult? {
-        guard let parsed = expression(field.formula) else { return nil }
-        return memo(Key(object: ObjectIdentifier(field), slot: .formula)) {
-            switch parsed {
-            case .failure(let error): return .failure(error)
-            case .success(let expression): return expression.evaluate { self.resolve($0, member: $1) }
-            }
+        computedContent(field)?.numeric
+    }
+
+    /// Résultat de la formule du champ, texte compris (nil s'il n'en a pas).
+    public func computedContent(_ field: SheetField) -> FormulaValueResult? {
+        evaluate(field.formula, key: Key(object: ObjectIdentifier(field), slot: .formula)) {
+            self.resolve($0, member: $1)
         }
     }
 
     /// Référence par code de champ (`FOR`, `PV.max`).
-    private func resolve(_ name: String, member: String?) -> FormulaResult {
+    private func resolve(_ name: String, member: String?) -> FormulaValueResult {
         let fullName = member.map { "\(name).\($0)" } ?? name
         guard let field = fieldsByCode[Self.normalize(name)] else { return .failure(.unknownReference(fullName)) }
         switch member.map(Self.normalize) {
         case nil:
-            return value(of: field)
+            return content(of: field)
         case "MAX"?:
             guard field.kind == .resource else { return .failure(.unknownReference(fullName)) }
-            return maximum(of: field)
+            return maximum(of: field).asValue
         default:
             return .failure(.unknownReference(fullName))
         }
@@ -132,34 +155,40 @@ public final class FormulaEngine {
 
     /// Valeur numérique effective de la cellule : saisie, sinon calculée.
     public func value(of cell: SheetTableCell) -> FormulaResult {
+        content(of: cell).numeric
+    }
+
+    /// Valeur effective à afficher : nombre ou texte.
+    public func content(of cell: SheetTableCell) -> FormulaValueResult {
         memo(Key(object: ObjectIdentifier(cell), slot: .value)) {
             switch cell.column?.kind ?? .text {
             case .formula:
-                return computed(cell) ?? .success(nil)
+                return computedContent(cell) ?? .success(nil)
             case .number, .percentage:
-                if let number = cell.numberValue { return .success(number) }
-                return computed(cell) ?? .success(nil)
+                if let number = cell.numberValue { return .success(.number(number)) }
+                return computedContent(cell) ?? .success(nil)
             case .checkbox:
-                return .success(cell.boolValue == true ? 1 : 0)
+                return .success(.number(cell.boolValue == true ? 1 : 0))
             case .text:
-                return .success(cell.textValue.flatMap(ListImport.number(from:)))
+                return .success(cell.textValue.flatMap(ListImport.number(from:)).map(FormulaValue.number))
             }
         }
     }
 
-    /// Résultat de la formule de la cellule (ou de sa colonne), nil sans formule.
+    /// Résultat numérique de la formule de la cellule (ou de sa colonne), nil sans formule.
     public func computed(_ cell: SheetTableCell) -> FormulaResult? {
-        guard let parsed = expression(cell.formula ?? cell.column?.formula) else { return nil }
-        return memo(Key(object: ObjectIdentifier(cell), slot: .formula)) {
-            switch parsed {
-            case .failure(let error): return .failure(error)
-            case .success(let expression): return expression.evaluate { self.resolve($0, member: $1, in: cell) }
-            }
+        computedContent(cell)?.numeric
+    }
+
+    /// Résultat de la formule de la cellule (ou de sa colonne), texte compris.
+    public func computedContent(_ cell: SheetTableCell) -> FormulaValueResult? {
+        evaluate(cell.formula ?? cell.column?.formula, key: Key(object: ObjectIdentifier(cell), slot: .formula)) {
+            self.resolve($0, member: $1, in: cell)
         }
     }
 
     /// Référence depuis une cellule : colonne de la même ligne, `groupe`, puis champ de la fiche.
-    private func resolve(_ name: String, member: String?, in cell: SheetTableCell) -> FormulaResult {
+    private func resolve(_ name: String, member: String?, in cell: SheetTableCell) -> FormulaValueResult {
         if member == nil, let row = cell.row {
             let key = Self.normalize(name)
             let sibling = (row.cells ?? []).first { other in
@@ -167,11 +196,11 @@ public final class FormulaEngine {
                 return Self.normalize(code) == key
             }
             if let sibling {
-                return value(of: sibling)
+                return content(of: sibling)
             }
             if key == "GROUPE" {
                 // Bonus de groupe non saisi : 0.
-                return .success(row.group.flatMap { $0.hasValue ? $0.numberValue : nil } ?? 0)
+                return .success(.number(row.group.flatMap { $0.hasValue ? $0.numberValue : nil } ?? 0))
             }
         }
         return resolve(name, member: member)
@@ -184,7 +213,7 @@ public final class FormulaEngine {
         do {
             // Références remplacées par 1 : reste à vérifier les fonctions et leurs arguments.
             let expression = try FormulaExpression.parse(formula)
-            switch expression.evaluate(resolve: { _, _ in .success(1) }) {
+            switch expression.evaluateValue(resolve: { _, _ in .success(.number(1)) }) {
             case .failure(let error) where error != .divisionByZero: return error
             default: return nil
             }

@@ -13,7 +13,7 @@ public enum SheetStore {
     /// du modèle** tant que la V1 n'est pas utilisée pour de vrai : l'app de développement
     /// recrée alors la base. Sans cela, SwiftData migre silencieusement l'ancienne base
     /// (constaté en M2 : tableaux perdus, colonnes ignorées).
-    public static let developmentRevision = 3
+    public static let developmentRevision = 4
 
     public static var schema: Schema { Schema(versionedSchema: SheetSchemaV1.self) }
 

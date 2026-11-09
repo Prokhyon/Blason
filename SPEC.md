@@ -130,7 +130,7 @@ Pour chaque champ : libellé, **code** (pour les formules), unité, aide, valeur
 - Opérateurs `+ − × ÷` et parenthèses ; fonctions `arrondi`, `plancher`, `plafond`, `min`, `max`.
 - Les cycles sont détectés ; une erreur s'affiche dans le champ sans bloquer la fiche.
 - Une formule peut servir de **valeur par défaut** (ex. le max de SAN = POU×5). Elle reste alors modifiable à la main.
-- **V1.1** : tables de correspondance (ex. modificateur de dégâts selon FOR+TAI). D'ici là, ce champ reste saisi à la main.
+- **Tables de correspondance** (V1.1) : `=table(FOR+TAI; 12; "-1d6"; 16; "-1d4"; 24; "aucun"; …)`, éditables ligne à ligne dans l'inspecteur. Le résultat peut être un texte (« +1d4 »).
 
 ### 5.7 Données
 - Stockage local (SwiftData) avec sauvegarde automatique. Les données actuelles sont jetables (repartir de zéro est accepté).
@@ -146,7 +146,6 @@ Interface en français, avec un String Catalog prêt pour l'anglais.
 
 | Prio | Fonction |
 |---|---|
-| V1.1 | Tables de correspondance dans les formules |
 | V1.1 | **Thèmes de fiche** : couleur du template, fiche papier ; d'autres pourront suivre |
 | V1.2 | Jets de dés (depuis un champ ou une ligne, ex. d100 contre la compétence) |
 | V1.2 | **Synchronisation iCloud** : prérequis pour iPhone et Mac |
@@ -244,6 +243,8 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-09 | M7 : les nombres se mettent à jour pendant la frappe (les formules qui en dépendent aussi). La virgule est décimale ; les séparateurs de milliers (espace, apostrophe suisse) sont acceptés. Une valeur vide s'affiche « — » estompé, partout. |
 | 2026-11-09 | M7 : une section de champs trop étroite (inspecteur ouvert, grand texte) passe à moins de colonnes plutôt que de couper ses libellés ; dans un tableau, la précision (« Hautes sphères ») est coupée avant le nom de la compétence. |
 | 2026-11-09 | M7 : compétences à spécialiser (Connaissance, Langue, Monter…) : en Jouer et Remplir, une ligne de catégorie puis chaque spécialité en retrait avec ses valeurs, même s'il n'y en a qu'une ; en Jouer, une compétence encore sans précision reste sur une ligne (« Langue 0 0 »). En Remplir, ⊕ sur la catégorie ajoute une spécialité : elle reprend la base et les formules, pas la valeur saisie ni la case « Exp. ». Le mode Structure montre les lignes du template telles quelles. Les spécialités d'une famille sont les lignes à spécialiser de même libellé dans le groupe : pas de changement de modèle. |
+| 2026-11-09 | V1.1 : une table de correspondance s'écrit dans la formule du champ ou de la colonne : `=table(valeur; seuil; résultat; …; [au-delà])`. Chaque seuil est compris (« jusqu'à ») ; sans « au-delà », le champ reste vide au-dessus du dernier seuil. Pas de changement du modèle ni du format d'export ; une table servant à deux champs est recopiée. L'inspecteur l'édite ligne à ligne (« Table de correspondance… ») et relit la formule. |
+| 2026-11-09 | V1.1 : une formule peut donner du **texte** (`"aucun"`, « +1d4 », guillemets droits ou typographiques). Un texte qui se lit comme un nombre (« +2 ») se calcule ; un autre (« +1d4 ») utilisé dans un calcul est une erreur « Valeur non numérique ». Un modificateur saisi à la main (texte ou nombre) remplace la table. Le template BRP de démo calcule le modificateur de dégâts (Leo : FOR 11 + TAI 15 = 26 → +1d4). |
 | 2026-11-09 | M7 : accessibilité de base : chaque saisie, case et ressource porte le nom de son champ (ou « ligne, colonne » dans un tableau) ; en lecture, libellé et valeur sont lus ensemble ; une ressource s'ajuste par balayage avec VoiceOver ; titres de page et de section annoncés comme titres ; tailles qui suivent la taille du texte. |
 
 ## 10. Questions ouvertes

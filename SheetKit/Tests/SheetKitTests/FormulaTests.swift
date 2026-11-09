@@ -110,6 +110,13 @@ struct FormulaEngineTests {
         #expect(engine.computed(pv) == .success(14))
         #expect(engine.value(of: try field("BLESSURE")) == .success(7))
 
+        // Table de correspondance : FOR 11 + TAI 15 = 26 → +1d4 ; une saisie la remplace.
+        let damage = try field("MODDEG")
+        #expect(engine.content(of: damage) == .success(.text("+1d4")))
+        #expect(engine.value(of: damage) == .failure(.notANumber("+1d4")))
+        damage.textValue = "+1d6"
+        #expect(FormulaEngine(sheet: sheet).content(of: damage) == .success(.text("+1d6")))
+
         let skills = try #require(sheet.section(titled: "Compétences"))
         func cell(_ label: String, _ code: String) throws -> SheetTableCell {
             try #require(skills.tableRow(label: label)?.cell(code: code))
@@ -218,5 +225,92 @@ struct FormulaEngineTests {
         #expect(engine.value(of: san) == .success(47))
         #expect(engine.maximum(of: san) == .success(65))
         #expect(engine.value(of: selfRef) == .success(4))
+    }
+}
+
+@Suite("Formules : textes et tables de correspondance")
+struct LookupFormulaTests {
+
+    /// Évalue en gardant le texte.
+    private func content(_ formula: String, _ values: [String: Double] = [:]) -> FormulaValueResult {
+        do {
+            return try FormulaExpression.parse(formula).evaluateValue { name, _ in
+                values[name].map { .success(.number($0)) } ?? .failure(.unknownReference(name))
+            }
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    private let damage = #"=table(FOR+TAI; 12; "-1d6"; 16; "-1d4"; 24; "aucun"; 32; "+1d4"; 40; "+1d6"; 56; "+2d6")"#
+
+    @Test("Seuils compris (« jusqu'à ») : FOR+TAI = 26 → +1d4")
+    func thresholds() {
+        #expect(content(damage, ["FOR": 11, "TAI": 15]) == .success(.text("+1d4")))
+        #expect(content(damage, ["FOR": 6, "TAI": 6]) == .success(.text("-1d6")))
+        #expect(content(damage, ["FOR": 8, "TAI": 8]) == .success(.text("-1d4")))
+        #expect(content(damage, ["FOR": 10, "TAI": 7]) == .success(.text("aucun")))
+        #expect(content(damage, ["FOR": 1, "TAI": 1]) == .success(.text("-1d6")))
+        // Au-delà du dernier seuil, sans résultat « au-delà » : rien.
+        #expect(content(damage, ["FOR": 30, "TAI": 30]) == .success(nil))
+        // Avec un résultat « au-delà » (nombre d'arguments impair).
+        #expect(content(#"=table(X; 10; 1; 20; 2; 3)"#, ["X": 25]) == .success(.number(3)))
+        #expect(content(#"=table(X; 10; 1; 20; 2; 3)"#, ["X": 20]) == .success(.number(2)))
+    }
+
+    @Test("Valeur manquante : vide ; erreurs : arguments, seuil texte, texte dans un calcul")
+    func errors() {
+        #expect(evaluate(#"=table(EDU; 10; 1)"#, ["EDU": Double?.none]) == .success(nil))
+        #expect(content(#"=table(X; 10)"#, ["X": 1]) == .failure(.argumentCount(function: "table", expected: "une valeur, puis des paires seuil ; résultat")))
+        #expect(content(#"=table(X; "dix"; 1)"#, ["X": 1]) == .failure(.notANumber("dix")))
+        // Le résultat texte d'une table ne se calcule pas…
+        #expect(content(#"=table(X; 10; "+1d4")*2"#, ["X": 1]) == .failure(.notANumber("+1d4")))
+        // … sauf s'il se lit comme un nombre.
+        #expect(content(#"=table(X; 10; "+2")*2"#, ["X": 1]) == .success(.number(4)))
+        #expect(FormulaEngine.check(damage) == nil)
+        #expect(FormulaEngine.check(#"=table(FOR; 1; "a)"#) == .syntax("guillemet fermant manquant"))
+        #expect(FormulaError.notANumber("+1d4").message == "Valeur non numérique : +1d4")
+    }
+
+    @Test("Textes : guillemets droits, typographiques, guillemet doublé")
+    func texts() {
+        #expect(content(#"="aucun""#) == .success(.text("aucun")))
+        #expect(content("=« +1d4 »") == .success(.text("+1d4")))
+        #expect(content("=“1d6”") == .success(.text("1d6")))
+        #expect(content(#"="dit ""non""""#) == .success(.text(#"dit "non""#)))
+    }
+
+    @Test("Écriture d'une formule relisible à l'identique")
+    func source() throws {
+        for formula in ["=FOR*5", "=plafond((CON+TAI)/2)", "=-(A-B)*2", "=PV.max/2+1.5", "=A-(B-C)", "=A/(B*C)",
+                        #"=table(FOR+TAI; 12; "-1d6"; 16; "dit ""non"""; 3)"#] {
+            let parsed = try FormulaExpression.parse(formula)
+            #expect(try FormulaExpression.parse(parsed.source) == parsed, "\(formula) → \(parsed.source)")
+        }
+        #expect(try FormulaExpression.parse("= ( FOR + TAI ) * 5").source == "(FOR+TAI)*5")
+    }
+
+    @Test("Éditeur de table : lecture d'une formule et réécriture")
+    func editor() throws {
+        let table = try #require(LookupTable(formula: damage))
+        #expect(table.input == "FOR+TAI")
+        #expect(table.rows.count == 6)
+        #expect(table.rows[0] == .init(upTo: 12, result: "-1d6"))
+        #expect(table.otherwise == "")
+        #expect(table.formula == damage)
+
+        var edited = table
+        edited.rows.append(.init(upTo: nil, result: "ignorée"))
+        edited.rows[2].result = "0"
+        edited.otherwise = "+3d6"
+        let formula = try #require(edited.formula)
+        #expect(formula.contains(#"24; 0; 32"#))
+        #expect(formula.hasSuffix(#"56; "+2d6"; "+3d6")"#))
+        #expect(LookupTable(formula: formula)?.otherwise == "+3d6")
+        #expect(LookupTable(formula: #"=table(X; -5; -1; 5; "a")"#)?.rows.first == .init(upTo: -5, result: "-1"))
+
+        #expect(LookupTable(formula: "=FOR*5") == nil)
+        #expect(LookupTable(formula: #"=table(X; Y; "a")"#) == nil)
+        #expect(LookupTable(input: "", rows: [.init(upTo: 1, result: "a")]).formula == nil)
     }
 }

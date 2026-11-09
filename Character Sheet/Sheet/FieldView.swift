@@ -102,15 +102,15 @@ struct FieldView: View {
 
         case .modifier:
             if editable {
-                TextField("", text: modifierText, prompt: Text("+0"))
+                // Une formule (table de correspondance) donne la valeur par défaut, en gris.
+                TextField("", text: modifierText, prompt: Text(engine.computedContent(field)?.promptText ?? "+0"))
                     .multilineTextAlignment(.trailing)
                     .frame(minWidth: 70)
                     .fixedSize()
                     .inputBackground()
                     .accessibilityLabel(field.label)
             } else {
-                ValueText(field.displayValue)
-                    .monospacedDigit()
+                ComputedValueText(result: engine.content(of: field), signed: true)
             }
 
         case .resource:
@@ -157,7 +157,7 @@ struct FieldView: View {
             ImageFieldView(field: field, editable: editable)
 
         case .formula:
-            let result = engine.value(of: field)
+            let result = engine.content(of: field)
             HStack(spacing: 4) {
                 ComputedValueText(result: result)
                 if case .success(_?) = result, let unit = field.unit, !unit.isEmpty {
@@ -216,14 +216,26 @@ struct ValueText: View {
     }
 }
 
-/// Valeur calculée : nombre, « — » si une valeur dont elle dépend manque, ou l'erreur.
+/// Valeur calculée : nombre, texte (table de correspondance), « — » si une valeur dont elle
+/// dépend manque, ou l'erreur.
 struct ComputedValueText: View {
-    let result: FormulaResult
+    let result: FormulaValueResult
+    /// Nombre affiché avec son signe (modificateur : « +2 »).
+    var signed = false
+
+    init(result: FormulaValueResult, signed: Bool = false) {
+        self.result = result
+        self.signed = signed
+    }
+
+    init(result: FormulaResult) {
+        self.init(result: result.asValue)
+    }
 
     var body: some View {
         switch result {
         case .success(let value?):
-            Text(SheetFormat.number(value)).monospacedDigit()
+            Text(value.displayText(signed: signed)).monospacedDigit()
         case .success(nil):
             ValueText(nil)
         case .failure(let error):
@@ -249,6 +261,26 @@ struct FormulaErrorBadge: View {
         .lineLimit(2)
         .help(error.message)
         .accessibilityLabel(error.message)
+    }
+}
+
+extension FormulaValue {
+    /// Texte affiché : nombre mis en forme (avec son signe si demandé), ou texte tel quel.
+    func displayText(signed: Bool = false) -> String {
+        switch self {
+        case .number(let value):
+            signed && value > 0 ? "+" + SheetFormat.number(value) : SheetFormat.number(value)
+        case .text(let text):
+            text
+        }
+    }
+}
+
+extension Result where Success == FormulaValue?, Failure == FormulaError {
+    /// Texte d'invite d'une saisie : la valeur calculée, s'il y en a une.
+    var promptText: String? {
+        guard case .success(let value?) = self else { return nil }
+        return value.displayText(signed: true)
     }
 }
 

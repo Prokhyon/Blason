@@ -451,7 +451,8 @@ private struct FieldInspector: View {
                     InspectorTextRow(title: field.kind == .resource ? "Maximum" : "Formule",
                                      text: optionalText($field.formula), prompt: "=FOR*5",
                                      focus: focus, focusValue: .other("formula"), monospaced: true)
-                    if let result = FormulaEngine(sheet: sheet).computed(field) {
+                    LookupTableButton(formula: $field.formula)
+                    if let result = FormulaEngine(sheet: sheet).computedContent(field) {
                         LabeledContent("Résultat") {
                             ComputedValueText(result: result)
                         }
@@ -504,9 +505,9 @@ private struct FieldInspector: View {
 
     private var formulaHelp: LocalizedStringKey {
         switch field.kind {
-        case .formula: "La valeur est calculée et ne se saisit pas. Codes des champs, + − × ÷, parenthèses, plafond, plancher, arrondi, min, max. Ex. =FOR*5."
+        case .formula: "La valeur est calculée et ne se saisit pas. Codes des champs, + − × ÷, parenthèses, plafond, plancher, arrondi, min, max, table. Ex. =FOR*5."
         case .resource: "Calcule le maximum de la ressource, ex. =plafond((CON+TAI)/2). PV désigne la valeur actuelle, PV.max le maximum."
-        default: "Valeur par défaut calculée (ex. =POU*5) ; une valeur saisie la remplace, l'effacer revient au calcul."
+        default: "Valeur par défaut calculée (ex. =POU*5, ou une table de correspondance) ; une valeur saisie la remplace, l'effacer revient au calcul."
         }
     }
 
@@ -589,6 +590,7 @@ private struct ColumnInspector: View {
                     if let formula = column.formula, let error = FormulaEngine.check(formula) {
                         FormulaErrorBadge(error: error, showsMessage: true)
                     }
+                    LookupTableButton(formula: $column.formula)
                 }
                 Toggle("Modifiable en mode Jouer", isOn: $column.isLive)
             } footer: {

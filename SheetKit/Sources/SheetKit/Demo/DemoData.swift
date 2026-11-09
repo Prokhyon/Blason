@@ -4,10 +4,16 @@ import SwiftData
 /// Données de démonstration : un template inspiré de la fiche Basic Roleplaying
 /// et le personnage de référence « Leo » (voir SPEC.md, fiche de référence).
 ///
-/// Les formules (`=FOR*5`…) sont enregistrées dès maintenant ; elles seront évaluées
-/// à partir du jalon M5. En attendant, les maximums des ressources de Leo sont saisis.
+/// Les maximums des ressources de Leo sont saisis ; ils valent aussi ce que donnent les formules.
 public enum DemoData {
     public static let templateName = "Basic Roleplaying (démo)"
+
+    /// Modificateur de dégâts selon FOR + TAI (table BRP), +1d6 par tranche de 16 au-delà de 56.
+    static let damageModifierTable = LookupTable(input: "FOR+TAI", rows: [
+        .init(upTo: 12, result: "-1d6"), .init(upTo: 16, result: "-1d4"), .init(upTo: 24, result: "aucun"),
+        .init(upTo: 32, result: "+1d4"), .init(upTo: 40, result: "+1d6"), .init(upTo: 56, result: "+2d6"),
+        .init(upTo: 72, result: "+3d6"), .init(upTo: 88, result: "+4d6"), .init(upTo: 104, result: "+5d6"),
+    ]).formula
 
     /// Crée le template et Leo si la base ne contient aucun template.
     public static func seedIfEmpty(in context: ModelContext) throws {
@@ -54,7 +60,7 @@ public enum DemoData {
                     s.field("Agilité", .formula, code: "AGILITE", formula: "=DEX*5", unit: "%", list: 1)
                     s.field("Charme", .formula, code: "CHARME", formula: "=CHA*5", unit: "%", list: 1)
                     s.field("Connaissance", .formula, code: "SAVOIR", formula: "=EDU*5", unit: "%", list: 1)
-                    s.field("Modificateur de dégâts", .modifier, code: "MODDEG", list: 1)
+                    s.field("Modificateur de dégâts", .modifier, code: "MODDEG", formula: Self.damageModifierTable, list: 1)
                 }
                 row.fields("Points de vie", column: 1) { s in
                     s.field("Points de vie", .resource, code: "PV", formula: "=plafond((CON+TAI)/2)",
