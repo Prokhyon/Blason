@@ -22,7 +22,13 @@
     "%lld" : {
 
     },
+    "%lld personnages" : {
+
+    },
     "+0" : {
+
+    },
+    "1 personnage" : {
 
     },
     "Ajouter une date" : {
@@ -31,16 +37,22 @@
     "Ajouter une ligne" : {
 
     },
+    "Annuler" : {
+
+    },
     "Aucun champ" : {
+
+    },
+    "Aucun personnage" : {
+
+    },
+    "Aucun template" : {
 
     },
     "Augmenter" : {
 
     },
     "Bibliothèque" : {
-
-    },
-    "Bibliothèque vide" : {
 
     },
     "Cette fiche n'a encore aucune page. La construction de la structure arrive avec l'éditeur." : {
@@ -55,7 +67,10 @@
     "Coché" : {
 
     },
-    "Crée un template pour commencer." : {
+    "Crée un personnage à partir d'un template, ou une fiche vierge." : {
+
+    },
+    "Créer" : {
 
     },
     "Diminuer" : {
@@ -70,10 +85,28 @@
     "Enregistrer comme template" : {
 
     },
+    "Fiche" : {
+
+    },
     "Fiche vide" : {
 
     },
+    "Fiche vierge" : {
+
+    },
     "Jouer" : {
+
+    },
+    "La fiche et toutes ses valeurs seront supprimées. Cette action est définitive." : {
+
+    },
+    "La structure de la fiche se construit ensuite avec l'éditeur (à venir)." : {
+
+    },
+    "Le personnage reçoit une copie du template : modifier le template plus tard ne changera pas ce personnage." : {
+
+    },
+    "Les personnages déjà créés à partir de ce template sont conservés. Cette action est définitive." : {
 
     },
     "max %@" : {
@@ -82,7 +115,16 @@
     "Mode" : {
 
     },
+    "Modifié %@" : {
+
+    },
     "Nom" : {
+
+    },
+    "Nom du personnage" : {
+
+    },
+    "Nom du template" : {
 
     },
     "Non coché" : {
@@ -94,6 +136,9 @@
     "Nouveau template" : {
 
     },
+    "OK" : {
+
+    },
     "Page" : {
 
     },
@@ -103,16 +148,52 @@
     "précision" : {
 
     },
+    "Rechercher un personnage" : {
+
+    },
+    "Rechercher un template" : {
+
+    },
     "Remplir" : {
+
+    },
+    "Renommer" : {
+
+    },
+    "Renommer le personnage" : {
+
+    },
+    "Renommer le template" : {
 
     },
     "Retirer" : {
 
     },
+    "Supprimer" : {
+
+    },
+    "Supprimer « %@ » ?" : {
+
+    },
     "Supprimer la ligne" : {
 
     },
+    "Système (ex. L'Appel de Cthulhu)" : {
+
+    },
+    "Système de jeu" : {
+
+    },
+    "Template" : {
+
+    },
     "Templates" : {
+
+    },
+    "Un template décrit la fiche d'un système de jeu. Il sert ensuite à créer des personnages." : {
+
+    },
+    "Une erreur est survenue" : {
 
     }
   },
