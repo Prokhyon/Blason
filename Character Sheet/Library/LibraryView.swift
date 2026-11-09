@@ -2,101 +2,84 @@ import SwiftUI
 import SwiftData
 import SheetKit
 
-/// Bibliothèque provisoire : elle sera remplacée par la vraie bibliothèque au jalon M3.
+/// Bibliothèque : barre latérale (Personnages / Templates) et grille de cartes.
+/// Ouvrir une fiche masque la barre latérale pour lui laisser toute la largeur.
 struct LibraryView: View {
-    @Environment(\.modelContext) private var context
-    @Query(sort: \PlayerCharacter.updatedAt, order: .reverse) private var characters: [PlayerCharacter]
-    @Query(sort: \SheetTemplate.name) private var templates: [SheetTemplate]
-    @State private var path: [PlayerCharacter] = []
+    enum Category: String, Hashable {
+        case characters
+        case templates
+    }
+
+    @Query private var characters: [PlayerCharacter]
+    @Query private var templates: [SheetTemplate]
+
+    @State private var category: Category? = .characters
+    @State private var path = NavigationPath()
+    @State private var columnVisibility: NavigationSplitViewVisibility = .automatic
 
     var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Section("Personnages") {
-                    ForEach(characters) { character in
-                        NavigationLink(value: character) {
-                            LibraryRow(title: character.displayName, subtitle: character.sourceTemplateName)
-                        }
-                        .contextMenu {
-                            Button("Dupliquer", systemImage: "plus.square.on.square") {
-                                character.duplicate(in: context)
-                            }
-                            Button("Enregistrer comme template", systemImage: "doc.badge.plus") {
-                                character.makeTemplate(named: "Template de \(character.displayName)", in: context)
-                            }
-                        }
-                    }
-                    .onDelete { offsets in
-                        for index in offsets { context.delete(characters[index]) }
-                    }
-                }
-
-                Section("Templates") {
-                    ForEach(templates) { template in
-                        NavigationLink {
-                            SheetView(title: template.name, sheet: template.sheet, initialMode: .fill)
-                        } label: {
-                            LibraryRow(title: template.name, subtitle: template.system)
-                        }
-                        .contextMenu {
-                            Button("Nouveau personnage", systemImage: "person.badge.plus") {
-                                template.makeCharacter(named: "Nouveau personnage", in: context)
-                            }
-                            Button("Dupliquer", systemImage: "plus.square.on.square") {
-                                template.duplicate(in: context)
-                            }
-                        }
-                    }
-                    .onDelete { offsets in
-                        for index in offsets { context.delete(templates[index]) }
-                    }
-                }
+        NavigationSplitView(columnVisibility: $columnVisibility) {
+            List(selection: $category) {
+                Label("Personnages", systemImage: "person.2")
+                    .badge(characters.count)
+                    .tag(Category.characters)
+                Label("Templates", systemImage: "doc.on.doc")
+                    .badge(templates.count)
+                    .tag(Category.templates)
             }
-            .overlay {
-                if characters.isEmpty && templates.isEmpty {
-                    ContentUnavailableView(
-                        "Bibliothèque vide",
-                        systemImage: "books.vertical",
-                        description: Text("Crée un template pour commencer.")
+            .navigationTitle("Bibliothèque")
+        } detail: {
+            NavigationStack(path: $path) {
+                Group {
+                    switch category ?? .characters {
+                    case .characters: CharacterGrid(path: $path)
+                    case .templates: TemplateGrid(path: $path)
+                    }
+                }
+                .navigationDestination(for: PlayerCharacter.self) { character in
+                    SheetView(
+                        title: character.displayName,
+                        sheet: character.sheet,
+                        initialMode: .play,
+                        onEdit: { character.touch() }
+                    )
+                }
+                .navigationDestination(for: SheetTemplate.self) { template in
+                    SheetView(
+                        title: template.name,
+                        sheet: template.sheet,
+                        initialMode: .fill,
+                        onEdit: { template.updatedAt = Date() }
                     )
                 }
             }
-            .navigationTitle("Bibliothèque")
-            .navigationDestination(for: PlayerCharacter.self) { character in
-                SheetView(title: character.displayName, sheet: character.sheet, initialMode: .play)
-            }
-            #if DEBUG
-            .task {
-                // Argument de lancement pour les captures : -demoOpen Leo
-                if path.isEmpty, let name = UserDefaults.standard.string(forKey: "demoOpen"),
-                   let character = characters.first(where: { $0.displayName == name }) {
-                    path = [character]
-                }
-            }
-            #endif
-            .toolbar {
-                Button("Nouveau template", systemImage: "plus") {
-                    SheetTemplate.create(name: "Nouveau template", in: context)
-                }
+        }
+        .onChange(of: category) {
+            path = NavigationPath()
+        }
+        .onChange(of: path.count) { _, count in
+            withAnimation {
+                columnVisibility = count == 0 ? .automatic : .detailOnly
             }
         }
+        #if DEBUG
+        .task { openDemoTarget() }
+        #endif
     }
-}
 
-private struct LibraryRow: View {
-    let title: String
-    let subtitle: String
-
-    var body: some View {
-        VStack(alignment: .leading) {
-            Text(title)
-            if !subtitle.isEmpty {
-                Text(subtitle)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
+    #if DEBUG
+    /// Arguments de lancement pour les captures : -demoCategory templates, -demoOpen Leo.
+    private func openDemoTarget() {
+        let defaults = UserDefaults.standard
+        if let raw = defaults.string(forKey: "demoCategory"), let value = Category(rawValue: raw) {
+            category = value
+        }
+        if path.isEmpty, let name = defaults.string(forKey: "demoOpen"),
+           let character = characters.first(where: { $0.displayName == name }) {
+            path.append(character)
         }
     }
+    #endif
 }
 
 #Preview {

@@ -131,15 +131,39 @@ extension SheetField {
 // MARK: - Bibliothèque
 
 extension SheetTemplate {
-    /// Crée un template vide (avec sa fiche) et l'insère.
+    /// Crée un template et sa fiche, et les insère. `firstPage` ajoute une première page
+    /// (avec une rangée vide) pour que la fiche ne soit pas vide à l'ouverture.
     @discardableResult
-    public static func create(name: String, system: String = "", in context: ModelContext) -> SheetTemplate {
+    public static func create(
+        name: String,
+        system: String = "",
+        firstPage: String? = nil,
+        in context: ModelContext
+    ) -> SheetTemplate {
         let template = SheetTemplate(name: name, system: system)
         context.insert(template)
         let sheet = Sheet()
         context.insert(sheet)
         template.sheet = sheet
+        if let firstPage {
+            sheet.addPage(title: firstPage, in: context).addRow(in: context)
+        }
         return template
+    }
+
+    /// Renomme le template et met à jour le nom d'origine affiché par ses personnages.
+    public func rename(to newName: String, in context: ModelContext) throws {
+        let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        name = trimmed
+        updatedAt = Date()
+        let templateUID: UUID? = uid
+        let descriptor = FetchDescriptor<PlayerCharacter>(
+            predicate: #Predicate { $0.sourceTemplateUID == templateUID }
+        )
+        for character in try context.fetch(descriptor) {
+            character.sourceTemplateName = trimmed
+        }
     }
 
     /// Crée un personnage à partir d'une **copie** du template. Les modifications ultérieures
@@ -174,6 +198,32 @@ extension PlayerCharacter {
             return value
         }
         return name.isEmpty ? "Personnage sans nom" : name
+    }
+
+    /// Crée un personnage sans template, avec une fiche d'une page vide.
+    @discardableResult
+    public static func createBlank(named name: String, in context: ModelContext) -> PlayerCharacter {
+        let character = PlayerCharacter(name: name)
+        context.insert(character)
+        let sheet = Sheet()
+        context.insert(sheet)
+        character.sheet = sheet
+        sheet.addPage(title: "Fiche", in: context).addRow(in: context)
+        return character
+    }
+
+    /// Renomme le personnage, y compris le champ « nom » de sa fiche.
+    public func rename(to newName: String) {
+        let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        name = trimmed
+        sheet?.nameField?.textValue = trimmed
+        touch()
+    }
+
+    /// Image du premier champ image rempli (portrait), pour la bibliothèque.
+    public var portraitData: Data? {
+        sheet?.allFields.first { $0.kind == .image && $0.imageData != nil }?.imageData
     }
 
     /// Duplique le personnage (structure et valeurs).

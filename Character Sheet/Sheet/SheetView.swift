@@ -6,13 +6,17 @@ import SheetKit
 struct SheetView: View {
     let title: String
     let sheet: Sheet?
+    /// Appelé après chaque enregistrement d'une modification faite pendant que la fiche est ouverte
+    /// (sert à mettre à jour la date de modification du personnage ou du template).
+    var onEdit: () -> Void = {}
 
     @State private var mode: SheetMode
     @State private var pageIndex: Int
 
-    init(title: String, sheet: Sheet?, initialMode: SheetMode) {
+    init(title: String, sheet: Sheet?, initialMode: SheetMode, onEdit: @escaping () -> Void = {}) {
         self.title = title
         self.sheet = sheet
+        self.onEdit = onEdit
         var mode = initialMode
         var page = 0
         #if DEBUG
@@ -68,6 +72,17 @@ struct SheetView: View {
             }
         }
         .environment(\.sheetMode, mode)
+        .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { notification in
+            if Self.containsSheetEdit(notification, owner: sheet?.character?.persistentModelID ?? sheet?.template?.persistentModelID) {
+                onEdit()
+            }
+        }
+    }
+
+    /// Un enregistrement contient une modification de la fiche s'il touche autre chose que
+    /// le propriétaire lui-même (dont seule la date change en réponse : pas de boucle).
+    private static func containsSheetEdit(_ notification: Notification, owner: PersistentIdentifier?) -> Bool {
+        SheetStore.savedIdentifiers(in: notification).contains { $0 != owner }
     }
 }
 

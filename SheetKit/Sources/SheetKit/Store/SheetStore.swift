@@ -30,6 +30,15 @@ public enum SheetStore {
         )
     }
 
+    /// Identifiants des objets insérés, modifiés ou supprimés lors d'un enregistrement
+    /// (notification `ModelContext.didSave`).
+    public static func savedIdentifiers(in notification: Notification) -> [PersistentIdentifier] {
+        let keys: [ModelContext.NotificationKey] = [.insertedIdentifiers, .updatedIdentifiers, .deletedIdentifiers]
+        return keys.flatMap { key in
+            notification.userInfo?[key.rawValue] as? [PersistentIdentifier] ?? []
+        }
+    }
+
     /// Supprime le fichier de la base locale. Réservé au développement : tant que la V1
     /// n'est pas utilisée pour de vrai, le schéma V1 évolue sans migration.
     public static func destroyStore() {

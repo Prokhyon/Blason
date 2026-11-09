@@ -278,3 +278,73 @@ struct TableRowTests {
         #expect(Set(mental.sortedRows.map(\.order)).count == mental.sortedRows.count)
     }
 }
+
+@MainActor
+@Suite("Bibliothèque")
+struct LibraryOperationTests {
+
+    @Test("Un personnage vierge a une fiche d'une page")
+    func blankCharacter() throws {
+        let context = try makeContext()
+        let character = PlayerCharacter.createBlank(named: "Mira", in: context)
+        try context.save()
+
+        #expect(character.displayName == "Mira")
+        #expect(character.sourceTemplateUID == nil)
+        #expect(character.sheet?.sortedPages.map(\.title) == ["Fiche"])
+        #expect(character.sheet?.sortedPages.first?.sortedRows.count == 1)
+    }
+
+    @Test("Un nouveau template peut avoir une première page")
+    func templateWithFirstPage() throws {
+        let context = try makeContext()
+        let empty = SheetTemplate.create(name: "A", in: context)
+        let withPage = SheetTemplate.create(name: "B", system: "CoC", firstPage: "Fiche", in: context)
+        try context.save()
+
+        #expect(empty.sheet?.sortedPages.isEmpty == true)
+        #expect(withPage.sheet?.sortedPages.map(\.title) == ["Fiche"])
+        #expect(withPage.system == "CoC")
+    }
+
+    @Test("Renommer un personnage met à jour le champ nom de sa fiche")
+    func renameCharacter() throws {
+        let context = try makeContext()
+        let leo = DemoData.leo(from: DemoData.brpTemplate(in: context), in: context)
+        let before = leo.updatedAt
+
+        leo.rename(to: "  Léonard  ")
+
+        #expect(leo.displayName == "Léonard")
+        #expect(leo.sheet?.field(code: "NOM")?.textValue == "Léonard")
+        #expect(leo.updatedAt >= before)
+        leo.rename(to: "   ")
+        #expect(leo.displayName == "Léonard")
+    }
+
+    @Test("Renommer un template met à jour ses personnages")
+    func renameTemplate() throws {
+        let context = try makeContext()
+        let template = DemoData.brpTemplate(in: context)
+        let leo = DemoData.leo(from: template, in: context)
+        let other = PlayerCharacter.createBlank(named: "Autre", in: context)
+        try context.save()
+
+        try template.rename(to: "BRP maison", in: context)
+
+        #expect(template.name == "BRP maison")
+        #expect(leo.sourceTemplateName == "BRP maison")
+        #expect(other.sourceTemplateName == "")
+    }
+
+    @Test("Le portrait vient du premier champ image rempli")
+    func portrait() throws {
+        let context = try makeContext()
+        let leo = DemoData.leo(from: DemoData.brpTemplate(in: context), in: context)
+        #expect(leo.portraitData == nil)
+
+        let image = try #require(leo.sheet?.allFields.first { $0.kind == .image })
+        image.imageData = Data([1, 2, 3])
+        #expect(leo.portraitData == Data([1, 2, 3]))
+    }
+}
