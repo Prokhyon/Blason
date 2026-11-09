@@ -45,6 +45,9 @@ public struct SheetDocument: Codable, Equatable, Sendable {
 
     public struct SheetRecord: Codable, Equatable, Sendable {
         public var pages: [PageRecord]
+        /// Apparence propre à la fiche (absente : celle par défaut, ou celle du template).
+        public var themeID: String?
+        public var themeColor: String?
     }
 
     public struct PageRecord: Codable, Equatable, Sendable {
@@ -271,6 +274,8 @@ extension SheetDocument.SheetRecord {
                 )
             })
         }
+        themeID = sheet?.themeID
+        themeColor = sheet?.themeColor
     }
 }
 
@@ -359,6 +364,8 @@ extension SheetDocument.SheetRecord {
     func makeSheet(in context: ModelContext) -> Sheet {
         let sheet = Sheet()
         context.insert(sheet)
+        sheet.themeID = themeID
+        sheet.themeColor = themeColor
         for (pageOrder, pageRecord) in pages.enumerated() {
             let page = Page(title: pageRecord.title, order: pageOrder)
             context.insert(page)

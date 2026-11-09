@@ -10,16 +10,28 @@ struct SectionCard: View {
     @Environment(\.sheetTheme) private var theme
 
     var body: some View {
+        theme.sectionFrame(SectionFrameConfiguration(title: title, content: AnyView(content)))
+            .structureItem(.section(section))
+    }
+
+    /// Titre mis en forme par le thème ; le cadre du thème décide où le poser.
+    private var title: AnyView? {
+        if mode == .structure && section.title.isEmpty {
+            return AnyView(Text("Section sans titre")
+                .font(theme.sectionTitleFont)
+                .foregroundStyle(.tertiary))
+        }
+        guard !section.title.isEmpty else { return nil }
+        return AnyView(Text(section.title)
+            .font(theme.sectionTitleFont)
+            .textCase(theme.sectionTitleCase)
+            .tracking(theme.sectionTitleTracking)
+            .sheetHeading(theme)
+            .accessibilityAddTraits(.isHeader))
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: 10) {
-            if mode == .structure && section.title.isEmpty {
-                Text("Section sans titre")
-                    .font(theme.sectionTitleFont)
-                    .foregroundStyle(.tertiary)
-            } else if !section.title.isEmpty {
-                Text(section.title)
-                    .font(theme.sectionTitleFont)
-                    .accessibilityAddTraits(.isHeader)
-            }
             switch section.kind {
             case .fields:
                 FieldsSectionView(section: section)
@@ -30,10 +42,6 @@ struct SectionCard: View {
                 addBar(editor)
             }
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(theme.cardBackground, in: RoundedRectangle(cornerRadius: theme.cardCornerRadius))
-        .structureItem(.section(section))
     }
 
     /// Ajouts en bas de section : champ (par type) ou colonne / groupe, et « Coller une liste ».

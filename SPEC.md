@@ -142,11 +142,16 @@ Interface en français, avec un String Catalog prêt pour l'anglais.
 
 ---
 
+### 5.9 Thèmes (V1.1)
+- Trois thèmes : **Natif** (système), **Couleur du template** (bandeaux et titres teintés, palette de 10 couleurs du système), **Fiche papier** (papier crème au grain léger, encre, cadres à double filet avec le titre posé sur le filet, capitales gravées, lignes à compléter, cases à l'encre ; toujours clair).
+- Le template choisit le thème (menu « Affichage ») ; ses personnages le suivent, même s'il change ensuite. Un personnage peut choisir le sien, ou revenir à « Comme le template ».
+- **Ajouter un thème** : un fichier dans `Themes/` qui part de `SheetTheme()` et remplace ce qu'il veut — couleurs, polices (celles d'iOS : rien à télécharger ni à licencier), et pièces : fond de page, cadre de section, zone de saisie, case à cocher ; textures dessinées par le code. Puis une ligne dans `SheetThemes.all`. Les vues de la fiche ne changent pas.
+
 ## 6. Hors V1 (feuille de route)
 
 | Prio | Fonction |
 |---|---|
-| V1.1 | **Thèmes de fiche** : couleur du template, fiche papier ; d'autres pourront suivre |
+| plus tard | D'autres thèmes de fiche (parchemin, dossier années 20, terminal…), un fichier chacun |
 | V1.2 | Jets de dés (depuis un champ ou une ligne, ex. d100 contre la compétence) |
 | V1.2 | **Synchronisation iCloud** : prérequis pour iPhone et Mac |
 | V2 | iPhone et Mac ; inventaire avancé ; **journal de campagne et documents** de session |
@@ -245,6 +250,8 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-09 | M7 : compétences à spécialiser (Connaissance, Langue, Monter…) : en Jouer et Remplir, une ligne de catégorie puis chaque spécialité en retrait avec ses valeurs, même s'il n'y en a qu'une ; en Jouer, une compétence encore sans précision reste sur une ligne (« Langue 0 0 »). En Remplir, ⊕ sur la catégorie ajoute une spécialité : elle reprend la base et les formules, pas la valeur saisie ni la case « Exp. ». Le mode Structure montre les lignes du template telles quelles. Les spécialités d'une famille sont les lignes à spécialiser de même libellé dans le groupe : pas de changement de modèle. |
 | 2026-11-09 | V1.1 : une table de correspondance s'écrit dans la formule du champ ou de la colonne : `=table(valeur; seuil; résultat; …; [au-delà])`. Chaque seuil est compris (« jusqu'à ») ; sans « au-delà », le champ reste vide au-dessus du dernier seuil. Pas de changement du modèle ni du format d'export ; une table servant à deux champs est recopiée. L'inspecteur l'édite ligne à ligne (« Table de correspondance… ») et relit la formule. |
 | 2026-11-09 | V1.1 : une formule peut donner du **texte** (`"aucun"`, « +1d4 », guillemets droits ou typographiques). Un texte qui se lit comme un nombre (« +2 ») se calcule ; un autre (« +1d4 ») utilisé dans un calcul est une erreur « Valeur non numérique ». Un modificateur saisi à la main (texte ou nombre) remplace la table. Le template BRP de démo calcule le modificateur de dégâts (Leo : FOR 11 + TAI 15 = 26 → +1d4). |
+| 2026-11-09 | V1.1 : thèmes modulaires. Un thème = couleurs, polices et quatre pièces remplaçables (fond de page, cadre de section, zone de saisie, case à cocher) ; le natif fournit tout, un thème ne remplace que ce qu'il veut. Thème et couleur sont enregistrés dans la fiche par identifiant (`themeID`, `themeColor`) et exportés ; un identifiant inconnu revient au natif. Un personnage sans thème propre suit son template. |
+| 2026-11-09 | V1.1 : palette plutôt que couleur libre ; en « Couleur du template », titres et pleins sont assombris en clair et éclaircis en sombre pour rester lisibles (sarcelle, orange). La fiche papier reste claire en mode sombre, comme une vraie feuille. |
 | 2026-11-09 | M7 : accessibilité de base : chaque saisie, case et ressource porte le nom de son champ (ou « ligne, colonne » dans un tableau) ; en lecture, libellé et valeur sont lus ensemble ; une ressource s'ajuste par balayage avec VoiceOver ; titres de page et de section annoncés comme titres ; tailles qui suivent la taille du texte. |
 
 ## 10. Questions ouvertes

@@ -364,9 +364,7 @@ struct CheckboxButton: View {
         Button {
             isOn.toggle()
         } label: {
-            Image(systemName: isOn ? "checkmark.square.fill" : "square")
-                .font(.title3)
-                .foregroundStyle(isOn ? theme.accent : Color.secondary)
+            theme.checkbox(isOn)
         }
         .buttonStyle(.plain)
         .allowsHitTesting(enabled)

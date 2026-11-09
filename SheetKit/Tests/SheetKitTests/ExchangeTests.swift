@@ -104,12 +104,13 @@ struct ExchangeTests {
                                                   labelColumnTitle: "", fields: [], columns: [], groups: [])
         let row = SheetDocument.RowRecord(columnWeights: [], sections: [])
         let page = SheetDocument.PageRecord(title: "", rows: [])
+        let sheetRecord = SheetDocument.SheetRecord(pages: [], themeID: nil, themeColor: nil)
         let document = SheetDocument(template: SheetTemplate(name: ""))
         let character = SheetDocument(character: PlayerCharacter(name: ""))
         let records: [String: Set<String>] = [
             "SheetField": properties(field), "SheetTableColumn": properties(column), "SheetTableCell": properties(cell),
             "SheetTableGroup": properties(group), "SheetTableRow": properties(tableRow), "SheetSection": properties(section),
-            "SheetRow": properties(row), "Page": properties(page),
+            "SheetRow": properties(row), "Page": properties(page), "Sheet": properties(sheetRecord),
             "SheetTemplate": properties(try #require(document.template)),
             "PlayerCharacter": properties(try #require(character.character)),
         ]

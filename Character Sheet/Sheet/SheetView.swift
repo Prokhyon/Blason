@@ -17,6 +17,7 @@ struct SheetView: View {
     @State private var showsInspector = true
     @AppStorage(SheetLayout.storageKey) private var layout: SheetLayout = .tabs
     @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.modelContext) private var context
 
     init(title: String, sheet: Sheet?, initialMode: SheetMode, onEdit: @escaping () -> Void = {}) {
         self.title = title
@@ -31,6 +32,10 @@ struct SheetView: View {
             mode = value
         }
         editor.pageIndex = defaults.integer(forKey: "demoPage")
+        // -demoTheme paper -demoColor teal : apparence de la fiche ouverte (modifie la base de développement).
+        if let theme = defaults.string(forKey: "demoTheme") {
+            sheet?.ownAppearance = SheetAppearance(themeID: theme, colorID: defaults.string(forKey: "demoColor") ?? "blue")
+        }
         if let code = defaults.string(forKey: "demoSelect") {
             if let field = sheet?.field(code: code) {
                 editor.select(.field(field))
@@ -119,6 +124,7 @@ struct SheetView: View {
             }
         }
         .animation(.default, value: editor.notice)
+        .sheetTheme(SheetThemes.theme(for: sheet?.appearance(in: context) ?? .standard))
     }
 
     @ViewBuilder
@@ -164,6 +170,11 @@ struct SheetView: View {
                     }
                 }
                 .pickerStyle(.inline)
+                if let sheet {
+                    Section {
+                        ThemeMenu(sheet: sheet)
+                    }
+                }
             } label: {
                 Label("Affichage", systemImage: layout.symbol)
             }

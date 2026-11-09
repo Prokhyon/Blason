@@ -110,11 +110,17 @@ struct ResourceTrack: View {
                     Text("\(value)")
                         .font(.caption2.monospacedDigit())
                         .frame(maxWidth: .infinity, minHeight: cellHeight)
-                        .foregroundStyle(value == current ? Color.white : (value > current ? Color.secondary.opacity(0.5) : Color.primary))
+                        .foregroundStyle(value == current ? Color.white
+                                         : value > current ? Color.secondary.opacity(0.5) : theme.ink ?? Color.primary)
                         .background(
                             value == current ? theme.accent : theme.inputFill,
                             in: RoundedRectangle(cornerRadius: 5)
                         )
+                        .overlay {
+                            if let stroke = theme.trackStroke {
+                                RoundedRectangle(cornerRadius: 5).strokeBorder(stroke, lineWidth: 0.8)
+                            }
+                        }
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("\(value)")

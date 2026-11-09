@@ -10,6 +10,8 @@ extension Sheet {
     public func deepCopy(in context: ModelContext) -> Sheet {
         let copy = Sheet()
         context.insert(copy)
+        copy.themeID = themeID
+        copy.themeColor = themeColor
         for page in sortedPages {
             page.copy(into: copy, in: context)
         }
@@ -176,6 +178,8 @@ extension SheetTemplate {
         character.sourceTemplateName = self.name
         character.sheet = (sheet ?? Sheet()).deepCopy(in: context)
         character.sheet?.nameField?.textValue = name
+        // Le personnage suit l'apparence de son template, même si elle change ensuite.
+        character.sheet?.ownAppearance = nil
         return character
     }
 

@@ -89,6 +89,12 @@ extension SheetSchemaV1 {
         public var template: SheetTemplate?
         public var character: PlayerCharacter?
 
+        /// Thème d'affichage (identifiant connu de l'app) ; nil : thème natif pour un template,
+        /// celui du template pour un personnage.
+        public var themeID: String?
+        /// Couleur du thème (identifiant de la palette de l'app).
+        public var themeColor: String?
+
         public init() {}
     }
 

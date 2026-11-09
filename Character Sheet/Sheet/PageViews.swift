@@ -109,7 +109,8 @@ private struct PageTitle: View {
     var body: some View {
         Text(page.title.isEmpty ? "Sans titre" : page.title)
             .font(theme.pageTitleFont)
-            .foregroundStyle(page.title.isEmpty ? .secondary : .primary)
+            .sheetHeading(theme)
+            .opacity(page.title.isEmpty ? 0.5 : 1)
             .accessibilityAddTraits(.isHeader)
             .structureItem(.page(page))
     }
@@ -316,7 +317,7 @@ private struct SheetScrollStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .scrollDismissesKeyboard(.interactively)
-            .background(theme.pageBackground)
+            .background { theme.pageBackground().ignoresSafeArea() }
     }
 }
 

@@ -169,6 +169,7 @@ private struct TableGrid: View {
 private struct GroupHeader: View {
     @Bindable var group: SheetTableGroup
     @Environment(\.sheetMode) private var mode
+    @Environment(\.sheetTheme) private var theme
 
     var body: some View {
         HStack(spacing: 6) {
@@ -179,6 +180,7 @@ private struct GroupHeader: View {
             } else {
                 Text(group.title)
                     .font(.subheadline.weight(.semibold))
+                    .sheetHeading(theme)
             }
             Spacer(minLength: 8)
             if group.hasValue {
