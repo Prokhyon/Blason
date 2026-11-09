@@ -1,7 +1,40 @@
 {
   "sourceLanguage" : "fr",
   "strings" : {
-    "ajoutée par le joueur" : {
+    "" : {
+
+    },
+    "—" : {
+
+    },
+    "(%@)" : {
+
+    },
+    "/" : {
+
+    },
+    "/ %lld" : {
+
+    },
+    "%" : {
+
+    },
+    "%lld" : {
+
+    },
+    "+0" : {
+
+    },
+    "Ajouter une date" : {
+
+    },
+    "Ajouter une ligne" : {
+
+    },
+    "Aucun champ" : {
+
+    },
+    "Augmenter" : {
 
     },
     "Bibliothèque" : {
@@ -10,13 +43,49 @@
     "Bibliothèque vide" : {
 
     },
+    "Cette fiche n'a encore aucune page. La construction de la structure arrive avec l'éditeur." : {
+
+    },
+    "Changer d'image" : {
+
+    },
+    "Choisir une image" : {
+
+    },
+    "Coché" : {
+
+    },
     "Crée un template pour commencer." : {
+
+    },
+    "Diminuer" : {
 
     },
     "Dupliquer" : {
 
     },
+    "Dupliquer la ligne" : {
+
+    },
     "Enregistrer comme template" : {
+
+    },
+    "Fiche vide" : {
+
+    },
+    "Jouer" : {
+
+    },
+    "max %@" : {
+
+    },
+    "Mode" : {
+
+    },
+    "Nom" : {
+
+    },
+    "Non coché" : {
 
     },
     "Nouveau personnage" : {
@@ -25,7 +94,22 @@
     "Nouveau template" : {
 
     },
+    "Page" : {
+
+    },
     "Personnages" : {
+
+    },
+    "précision" : {
+
+    },
+    "Remplir" : {
+
+    },
+    "Retirer" : {
+
+    },
+    "Supprimer la ligne" : {
 
     },
     "Templates" : {
