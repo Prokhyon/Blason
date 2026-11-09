@@ -17,8 +17,8 @@ public enum SheetSchemaV1: VersionedSchema {
     public static var models: [any PersistentModel.Type] {
         [
             SheetTemplate.self, PlayerCharacter.self, Sheet.self, Page.self, SheetRow.self,
-            SheetSection.self, SheetField.self, TableColumn.self, TableGroup.self,
-            TableRow.self, TableCell.self,
+            SheetSection.self, SheetField.self, SheetTableColumn.self, SheetTableGroup.self,
+            SheetTableRow.self, SheetTableCell.self,
         ]
     }
 }
@@ -30,10 +30,10 @@ public typealias Page = SheetSchemaV1.Page
 public typealias SheetRow = SheetSchemaV1.SheetRow
 public typealias SheetSection = SheetSchemaV1.SheetSection
 public typealias SheetField = SheetSchemaV1.SheetField
-public typealias TableColumn = SheetSchemaV1.TableColumn
-public typealias TableGroup = SheetSchemaV1.TableGroup
-public typealias TableRow = SheetSchemaV1.TableRow
-public typealias TableCell = SheetSchemaV1.TableCell
+public typealias SheetTableColumn = SheetSchemaV1.SheetTableColumn
+public typealias SheetTableGroup = SheetSchemaV1.SheetTableGroup
+public typealias SheetTableRow = SheetSchemaV1.SheetTableRow
+public typealias SheetTableCell = SheetSchemaV1.SheetTableCell
 
 extension SheetSchemaV1 {
 
@@ -109,10 +109,14 @@ extension SheetSchemaV1 {
         }
     }
 
-    /// Rangée horizontale d'une page : 1 à N sections côte à côte.
+    /// Rangée d'une page : 1 à N colonnes de largeurs relatives ; chaque colonne
+    /// empile ses sections (`SheetSection.columnIndex`).
     @Model
     public final class SheetRow {
         public var order: Int = 0
+        /// Largeurs relatives des colonnes (ex. [2, 1] → ⅔ – ⅓). Le nombre d'éléments
+        /// donne le nombre de colonnes.
+        public var columnWeights: [Double] = [1]
 
         @Relationship(deleteRule: .cascade, inverse: \SheetSection.row)
         public var sections: [SheetSection]? = []
@@ -128,9 +132,10 @@ extension SheetSchemaV1 {
     @Model
     public final class SheetSection {
         public var title: String = ""
+        /// Colonne de la rangée qui contient la section.
+        public var columnIndex: Int = 0
+        /// Position dans la colonne.
         public var order: Int = 0
-        /// Largeur relative dans la rangée (ex. 1 et 2 → ⅓ – ⅔).
-        public var widthWeight: Double = 1
         public var kindRaw: String = SectionKind.fields.rawValue
         /// Disposition des champs (sections « Champs »).
         public var arrangementRaw: String = FieldArrangement.list.rawValue
@@ -142,11 +147,11 @@ extension SheetSchemaV1 {
         @Relationship(deleteRule: .cascade, inverse: \SheetField.section)
         public var fields: [SheetField]? = []
 
-        @Relationship(deleteRule: .cascade, inverse: \TableColumn.section)
-        public var columns: [TableColumn]? = []
+        @Relationship(deleteRule: .cascade, inverse: \SheetTableColumn.section)
+        public var columns: [SheetTableColumn]? = []
 
-        @Relationship(deleteRule: .cascade, inverse: \TableGroup.section)
-        public var groups: [TableGroup]? = []
+        @Relationship(deleteRule: .cascade, inverse: \SheetTableGroup.section)
+        public var groups: [SheetTableGroup]? = []
 
         public var row: SheetRow?
 
@@ -209,7 +214,7 @@ extension SheetSchemaV1 {
 
     /// Colonne typée d'un tableau.
     @Model
-    public final class TableColumn {
+    public final class SheetTableColumn {
         public var title: String = ""
         /// Identifiant utilisé dans les formules de ligne (ex. `=valeur/2`).
         public var code: String = ""
@@ -220,8 +225,8 @@ extension SheetSchemaV1 {
         /// Modifiable en mode Jouer (ex. case « compétence utilisée »).
         public var isLive: Bool = false
 
-        @Relationship(deleteRule: .cascade, inverse: \TableCell.column)
-        public var cells: [TableCell]? = []
+        @Relationship(deleteRule: .cascade, inverse: \SheetTableCell.column)
+        public var cells: [SheetTableCell]? = []
 
         public var section: SheetSection?
 
@@ -235,15 +240,15 @@ extension SheetSchemaV1 {
 
     /// Groupe de lignes avec en-tête (ex. « Communication »).
     @Model
-    public final class TableGroup {
+    public final class SheetTableGroup {
         public var title: String = ""
         public var order: Int = 0
         /// Le groupe porte sa propre valeur (ex. bonus de catégorie BRP).
         public var hasValue: Bool = false
         public var numberValue: Double?
 
-        @Relationship(deleteRule: .cascade, inverse: \TableRow.group)
-        public var rows: [TableRow]? = []
+        @Relationship(deleteRule: .cascade, inverse: \SheetTableRow.group)
+        public var rows: [SheetTableRow]? = []
 
         public var section: SheetSection?
 
@@ -256,7 +261,7 @@ extension SheetSchemaV1 {
 
     /// Ligne d'un tableau.
     @Model
-    public final class TableRow {
+    public final class SheetTableRow {
         public var order: Int = 0
         public var label: String = ""
         /// Complément libre : « Langue (Latin) », « Monter (Navire) ».
@@ -265,10 +270,10 @@ extension SheetSchemaV1 {
         /// Ligne définie dans le template (par opposition à une ligne ajoutée par le joueur).
         public var isFromTemplate: Bool = true
 
-        @Relationship(deleteRule: .cascade, inverse: \TableCell.row)
-        public var cells: [TableCell]? = []
+        @Relationship(deleteRule: .cascade, inverse: \SheetTableCell.row)
+        public var cells: [SheetTableCell]? = []
 
-        public var group: TableGroup?
+        public var group: SheetTableGroup?
 
         public init(label: String, order: Int = 0) {
             self.label = label
@@ -278,15 +283,15 @@ extension SheetSchemaV1 {
 
     /// Cellule à l'intersection d'une ligne et d'une colonne.
     @Model
-    public final class TableCell {
+    public final class SheetTableCell {
         public var textValue: String?
         public var numberValue: Double?
         public var boolValue: Bool?
         /// Formule propre à la cellule (ex. base « =DEX*2 »).
         public var formula: String?
 
-        public var row: TableRow?
-        public var column: TableColumn?
+        public var row: SheetTableRow?
+        public var column: SheetTableColumn?
 
         public init() {}
     }

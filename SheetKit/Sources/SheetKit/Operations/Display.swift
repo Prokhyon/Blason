@@ -48,7 +48,7 @@ extension SheetField {
     }
 }
 
-extension TableCell {
+extension SheetTableCell {
     /// Valeur lisible selon le type de la colonne. Une formule s'affiche si aucune valeur n'est saisie.
     public var displayValue: String {
         switch column?.kind ?? .text {

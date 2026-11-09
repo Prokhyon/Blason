@@ -27,6 +27,7 @@ extension Page {
             let rowCopy = SheetRow(order: row.order)
             context.insert(rowCopy)
             rowCopy.page = copy
+            rowCopy.columnWeights = row.columnWeights
             for section in row.sortedSections {
                 section.copy(into: rowCopy, in: context)
             }
@@ -42,7 +43,7 @@ extension SheetSection {
         let copy = SheetSection(title: title, kind: kind, order: order)
         context.insert(copy)
         copy.row = row
-        copy.widthWeight = widthWeight
+        copy.columnIndex = columnIndex
         copy.arrangementRaw = arrangementRaw
         copy.columnCount = columnCount
         copy.labelColumnTitle = labelColumnTitle
@@ -51,9 +52,9 @@ extension SheetSection {
             field.copy(into: copy, in: context)
         }
 
-        var columnMap: [ObjectIdentifier: TableColumn] = [:]
+        var columnMap: [ObjectIdentifier: SheetTableColumn] = [:]
         for column in sortedColumns {
-            let columnCopy = TableColumn(title: column.title, kind: column.kind, code: column.code, order: column.order)
+            let columnCopy = SheetTableColumn(title: column.title, kind: column.kind, code: column.code, order: column.order)
             context.insert(columnCopy)
             columnCopy.section = copy
             columnCopy.formula = column.formula
@@ -62,19 +63,19 @@ extension SheetSection {
         }
 
         for group in sortedGroups {
-            let groupCopy = TableGroup(title: group.title, order: group.order, hasValue: group.hasValue)
+            let groupCopy = SheetTableGroup(title: group.title, order: group.order, hasValue: group.hasValue)
             context.insert(groupCopy)
             groupCopy.section = copy
             groupCopy.numberValue = group.numberValue
             for tableRow in group.sortedRows {
-                let rowCopy = TableRow(label: tableRow.label, order: tableRow.order)
+                let rowCopy = SheetTableRow(label: tableRow.label, order: tableRow.order)
                 context.insert(rowCopy)
                 rowCopy.group = groupCopy
                 rowCopy.specialization = tableRow.specialization
                 rowCopy.allowsSpecialization = tableRow.allowsSpecialization
                 rowCopy.isFromTemplate = tableRow.isFromTemplate
                 for cell in tableRow.cells ?? [] {
-                    let cellCopy = TableCell()
+                    let cellCopy = SheetTableCell()
                     context.insert(cellCopy)
                     cellCopy.row = rowCopy
                     cellCopy.column = cell.column.flatMap { columnMap[ObjectIdentifier($0)] }

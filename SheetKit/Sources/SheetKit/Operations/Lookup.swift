@@ -27,21 +27,21 @@ extension Sheet {
 }
 
 extension SheetSection {
-    public func column(code: String) -> TableColumn? {
+    public func column(code: String) -> SheetTableColumn? {
         sortedColumns.first { $0.code.caseInsensitiveCompare(code) == .orderedSame }
     }
 
-    public func group(titled title: String) -> TableGroup? {
+    public func group(titled title: String) -> SheetTableGroup? {
         sortedGroups.first { $0.title.caseInsensitiveCompare(title) == .orderedSame }
     }
 
     /// Toutes les lignes du tableau, groupe après groupe.
-    public var allTableRows: [TableRow] {
+    public var allTableRows: [SheetTableRow] {
         sortedGroups.flatMap(\.sortedRows)
     }
 
     /// Première ligne portant ce libellé (et cette spécialisation si elle est précisée).
-    public func tableRow(label: String, specialization: String? = nil) -> TableRow? {
+    public func tableRow(label: String, specialization: String? = nil) -> SheetTableRow? {
         allTableRows.first { row in
             row.label.caseInsensitiveCompare(label) == .orderedSame
                 && (specialization == nil || row.specialization == specialization)

@@ -9,6 +9,12 @@ public enum SheetMigrationPlan: SchemaMigrationPlan {
 }
 
 public enum SheetStore {
+    /// Révision du modèle pendant le développement. **À incrémenter à chaque modification
+    /// du modèle** tant que la V1 n'est pas utilisée pour de vrai : l'app de développement
+    /// recrée alors la base. Sans cela, SwiftData migre silencieusement l'ancienne base
+    /// (constaté en M2 : tableaux perdus, colonnes ignorées).
+    public static let developmentRevision = 2
+
     public static var schema: Schema { Schema(versionedSchema: SheetSchemaV1.self) }
 
     /// Conteneur de l'app. Stockage local uniquement (iCloud prévu en V1.2).
@@ -22,5 +28,14 @@ public enum SheetStore {
             migrationPlan: SheetMigrationPlan.self,
             configurations: configuration
         )
+    }
+
+    /// Supprime le fichier de la base locale. Réservé au développement : tant que la V1
+    /// n'est pas utilisée pour de vrai, le schéma V1 évolue sans migration.
+    public static func destroyStore() {
+        let url = ModelConfiguration("CharacterSheet", schema: schema, cloudKitDatabase: .none).url
+        for suffix in ["", "-shm", "-wal"] {
+            try? FileManager.default.removeItem(at: URL(fileURLWithPath: url.path + suffix))
+        }
     }
 }

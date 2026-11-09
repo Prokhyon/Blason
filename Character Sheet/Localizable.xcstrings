@@ -1,7 +1,36 @@
 {
   "sourceLanguage" : "fr",
   "strings" : {
+    "ajoutée par le joueur" : {
 
+    },
+    "Bibliothèque" : {
+
+    },
+    "Bibliothèque vide" : {
+
+    },
+    "Crée un template pour commencer." : {
+
+    },
+    "Dupliquer" : {
+
+    },
+    "Enregistrer comme template" : {
+
+    },
+    "Nouveau personnage" : {
+
+    },
+    "Nouveau template" : {
+
+    },
+    "Personnages" : {
+
+    },
+    "Templates" : {
+
+    }
   },
   "version" : "1.0"
 }

@@ -12,7 +12,24 @@ extension Page {
 }
 
 extension SheetRow {
-    public var sortedSections: [SheetSection] { (sections ?? []).sorted { $0.order < $1.order } }
+    public var columnCount: Int { max(1, columnWeights.count) }
+
+    /// Colonne effective d'une section (une colonne supprimée renvoie vers la dernière).
+    public func effectiveColumn(of section: SheetSection) -> Int {
+        min(max(0, section.columnIndex), columnCount - 1)
+    }
+
+    /// Sections d'une colonne, de haut en bas.
+    public func sections(inColumn column: Int) -> [SheetSection] {
+        (sections ?? [])
+            .filter { effectiveColumn(of: $0) == column }
+            .sorted { $0.order < $1.order }
+    }
+
+    /// Toutes les sections, colonne par colonne.
+    public var sortedSections: [SheetSection] {
+        (0..<columnCount).flatMap { sections(inColumn: $0) }
+    }
 }
 
 extension SheetSection {
@@ -27,8 +44,8 @@ extension SheetSection {
     }
 
     public var sortedFields: [SheetField] { (fields ?? []).sorted { $0.order < $1.order } }
-    public var sortedColumns: [TableColumn] { (columns ?? []).sorted { $0.order < $1.order } }
-    public var sortedGroups: [TableGroup] { (groups ?? []).sorted { $0.order < $1.order } }
+    public var sortedColumns: [SheetTableColumn] { (columns ?? []).sorted { $0.order < $1.order } }
+    public var sortedGroups: [SheetTableGroup] { (groups ?? []).sorted { $0.order < $1.order } }
 }
 
 extension SheetField {
@@ -48,29 +65,29 @@ extension SheetField {
     }
 }
 
-extension TableColumn {
+extension SheetTableColumn {
     public var kind: ColumnKind {
         get { ColumnKind(rawValue: kindRaw) ?? .text }
         set { kindRaw = newValue.rawValue }
     }
 }
 
-extension TableGroup {
-    public var sortedRows: [TableRow] { (rows ?? []).sorted { $0.order < $1.order } }
+extension SheetTableGroup {
+    public var sortedRows: [SheetTableRow] { (rows ?? []).sorted { $0.order < $1.order } }
 }
 
-extension TableRow {
+extension SheetTableRow {
     /// Libellé avec sa spécialisation : « Monter (Navire) ».
     public var displayLabel: String {
         guard let specialization, !specialization.isEmpty else { return label }
         return "\(label) (\(specialization))"
     }
 
-    public func cell(for column: TableColumn) -> TableCell? {
+    public func cell(for column: SheetTableColumn) -> SheetTableCell? {
         (cells ?? []).first { $0.column === column }
     }
 
-    public func cell(code: String) -> TableCell? {
+    public func cell(code: String) -> SheetTableCell? {
         (cells ?? []).first { $0.column?.code.caseInsensitiveCompare(code) == .orderedSame }
     }
 }

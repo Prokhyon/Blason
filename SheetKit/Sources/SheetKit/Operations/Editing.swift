@@ -23,7 +23,7 @@ public enum CellInput: Sendable, Equatable,
     }
 }
 
-extension TableCell {
+extension SheetTableCell {
     public func apply(_ input: CellInput) {
         switch input {
         case .number(let value): numberValue = value
@@ -56,20 +56,25 @@ extension Sheet {
 }
 
 extension Page {
+    /// Ajoute une rangée ; `columnWeights` donne le nombre de colonnes et leurs largeurs.
     @discardableResult
-    public func addRow(in context: ModelContext) -> SheetRow {
+    public func addRow(columnWeights: [Double] = [1], in context: ModelContext) -> SheetRow {
         let row = SheetRow(order: ((rows ?? []).map(\.order).max() ?? -1) + 1)
         context.insert(row)
         row.page = self
+        row.columnWeights = columnWeights.isEmpty ? [1] : columnWeights
         return row
     }
 }
 
 extension SheetRow {
     @discardableResult
-    public func addSection(title: String, kind: SectionKind, in context: ModelContext) -> SheetSection {
-        let section = SheetSection(title: title, kind: kind, order: ((sections ?? []).map(\.order).max() ?? -1) + 1)
+    public func addSection(title: String, kind: SectionKind, column: Int = 0, in context: ModelContext) -> SheetSection {
+        let column = min(max(0, column), columnCount - 1)
+        let order = (sections(inColumn: column).map(\.order).max() ?? -1) + 1
+        let section = SheetSection(title: title, kind: kind, order: order)
         context.insert(section)
+        section.columnIndex = column
         section.row = self
         return section
     }
@@ -86,13 +91,13 @@ extension SheetSection {
 
     /// Ajoute une colonne et crée sa cellule dans chaque ligne existante.
     @discardableResult
-    public func addColumn(title: String, kind: ColumnKind, code: String, in context: ModelContext) -> TableColumn {
-        let column = TableColumn(title: title, kind: kind, code: code, order: ((columns ?? []).map(\.order).max() ?? -1) + 1)
+    public func addColumn(title: String, kind: ColumnKind, code: String, in context: ModelContext) -> SheetTableColumn {
+        let column = SheetTableColumn(title: title, kind: kind, code: code, order: ((columns ?? []).map(\.order).max() ?? -1) + 1)
         context.insert(column)
         column.section = self
         for group in groups ?? [] {
             for row in group.rows ?? [] {
-                let cell = TableCell()
+                let cell = SheetTableCell()
                 context.insert(cell)
                 cell.row = row
                 cell.column = column
@@ -102,8 +107,8 @@ extension SheetSection {
     }
 
     @discardableResult
-    public func addGroup(title: String, hasValue: Bool = false, in context: ModelContext) -> TableGroup {
-        let group = TableGroup(title: title, order: ((groups ?? []).map(\.order).max() ?? -1) + 1, hasValue: hasValue)
+    public func addGroup(title: String, hasValue: Bool = false, in context: ModelContext) -> SheetTableGroup {
+        let group = SheetTableGroup(title: title, order: ((groups ?? []).map(\.order).max() ?? -1) + 1, hasValue: hasValue)
         context.insert(group)
         group.section = self
         return group
@@ -113,22 +118,51 @@ extension SheetSection {
     @discardableResult
     public func addRow(
         label: String,
-        to group: TableGroup,
+        to group: SheetTableGroup,
         allowsSpecialization: Bool = false,
         isFromTemplate: Bool = true,
         in context: ModelContext
-    ) -> TableRow {
-        let row = TableRow(label: label, order: ((group.rows ?? []).map(\.order).max() ?? -1) + 1)
+    ) -> SheetTableRow {
+        let row = SheetTableRow(label: label, order: ((group.rows ?? []).map(\.order).max() ?? -1) + 1)
         context.insert(row)
         row.group = group
         row.allowsSpecialization = allowsSpecialization
         row.isFromTemplate = isFromTemplate
         for column in sortedColumns {
-            let cell = TableCell()
+            let cell = SheetTableCell()
             context.insert(cell)
             cell.row = row
             cell.column = column
         }
         return row
+    }
+}
+
+extension SheetTableRow {
+    /// Duplique la ligne juste en dessous, avec ses valeurs, sans sa spécialisation
+    /// (ex. « Langue (Latin) » → une nouvelle « Langue » à préciser).
+    /// La copie est marquée comme ajoutée par le joueur.
+    @discardableResult
+    public func duplicate(in context: ModelContext) -> SheetTableRow? {
+        guard let group else { return nil }
+        for other in group.rows ?? [] where other.order > order {
+            other.order += 1
+        }
+        let copy = SheetTableRow(label: label, order: order + 1)
+        context.insert(copy)
+        copy.group = group
+        copy.allowsSpecialization = allowsSpecialization
+        copy.isFromTemplate = false
+        for cell in cells ?? [] {
+            let cellCopy = SheetTableCell()
+            context.insert(cellCopy)
+            cellCopy.row = copy
+            cellCopy.column = cell.column
+            cellCopy.textValue = cell.textValue
+            cellCopy.numberValue = cell.numberValue
+            cellCopy.boolValue = cell.boolValue
+            cellCopy.formula = cell.formula
+        }
+        return copy
     }
 }

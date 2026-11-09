@@ -23,7 +23,7 @@ struct LibraryTests {
 
         // Chaque objet de la fiche existe désormais en double, et rien d'autre n'a été créé.
         for key in ["Sheet", "Page", "SheetRow", "SheetSection", "SheetField",
-                    "TableColumn", "TableGroup", "TableRow", "TableCell"] {
+                    "SheetTableColumn", "SheetTableGroup", "SheetTableRow", "SheetTableCell"] {
             #expect(after[key] == before[key] * 2, "\(key) : \(before[key]) → \(after[key])")
         }
         #expect(after["PlayerCharacter"] == 1)
@@ -163,8 +163,8 @@ struct StructureDeletionTests {
         context.delete(try #require(skills.column(code: "exp")))
         let after = try EntityCounts(context)
 
-        #expect(after["TableColumn"] == before["TableColumn"] - 1)
-        #expect(after["TableCell"] == before["TableCell"] - rowCount)
+        #expect(after["SheetTableColumn"] == before["SheetTableColumn"] - 1)
+        #expect(after["SheetTableCell"] == before["SheetTableCell"] - rowCount)
         #expect(skills.allTableRows.allSatisfy { $0.cell(code: "exp") == nil })
     }
 
@@ -182,10 +182,10 @@ struct StructureDeletionTests {
         let after = try EntityCounts(context)
 
         #expect(after["SheetSection"] == before["SheetSection"] - 1)
-        #expect(after["TableColumn"] == before["TableColumn"] - columns)
-        #expect(after["TableGroup"] == before["TableGroup"] - groups)
-        #expect(after["TableRow"] == before["TableRow"] - rows)
-        #expect(after["TableCell"] == before["TableCell"] - rows * columns)
+        #expect(after["SheetTableColumn"] == before["SheetTableColumn"] - columns)
+        #expect(after["SheetTableGroup"] == before["SheetTableGroup"] - groups)
+        #expect(after["SheetTableRow"] == before["SheetTableRow"] - rows)
+        #expect(after["SheetTableCell"] == before["SheetTableCell"] - rows * columns)
     }
 
     @Test("Supprimer un champ ne touche que ce champ")
@@ -211,5 +211,70 @@ struct StructureDeletionTests {
         try context.save()
 
         #expect(skills.allTableRows.allSatisfy { $0.cells?.count == 4 && $0.cell(code: "moitie") != nil })
+    }
+}
+
+@MainActor
+@Suite("Rangées et colonnes")
+struct ColumnLayoutTests {
+
+    @Test("Les sections s'empilent dans leur colonne")
+    func sectionsStackInColumns() throws {
+        let context = try makeContext()
+        let template = DemoData.brpTemplate(in: context)
+        let row = try #require(template.sheet?.sortedPages.first?.sortedRows.first)
+
+        #expect(row.columnCount == 2)
+        #expect(row.sections(inColumn: 0).map(\.title) == ["Personnel"])
+        #expect(row.sections(inColumn: 1).map(\.title) == ["Caractéristiques", "Points de vie"])
+        #expect(row.sortedSections.map(\.title) == ["Personnel", "Caractéristiques", "Points de vie"])
+    }
+
+    @Test("Une section dont la colonne a disparu va dans la dernière colonne")
+    func orphanColumnFallsBack() throws {
+        let context = try makeContext()
+        let template = DemoData.brpTemplate(in: context)
+        let row = try #require(template.sheet?.sortedPages.first?.sortedRows.first)
+
+        row.columnWeights = [1]
+        #expect(row.sections(inColumn: 0).count == 3)
+    }
+
+    @Test("Ajouter une section la place en bas de sa colonne")
+    func addSectionAppendsToColumn() throws {
+        let context = try makeContext()
+        let template = DemoData.brpTemplate(in: context)
+        let row = try #require(template.sheet?.sortedPages.first?.sortedRows.first)
+
+        row.addSection(title: "Nouvelle", kind: .fields, column: 1, in: context)
+        #expect(row.sections(inColumn: 1).map(\.title) == ["Caractéristiques", "Points de vie", "Nouvelle"])
+        #expect(row.sections(inColumn: 0).map(\.title) == ["Personnel"])
+    }
+}
+
+@MainActor
+@Suite("Lignes de tableau")
+struct TableRowTests {
+
+    @Test("Dupliquer une ligne l'insère juste en dessous, sans spécialisation")
+    func duplicateRowInsertsBelow() throws {
+        let context = try makeContext()
+        let template = DemoData.brpTemplate(in: context)
+        let leo = DemoData.leo(from: template, in: context)
+        let skills = try #require(leo.sheet?.section(titled: "Compétences"))
+        let mental = try #require(skills.group(titled: "Mental"))
+        let knowledge = try #require(skills.tableRow(label: "Connaissance"))
+
+        let copy = try #require(knowledge.duplicate(in: context))
+        try context.save()
+
+        let labels = mental.sortedRows.map(\.displayLabel)
+        let index = try #require(labels.firstIndex(of: "Connaissance (Hautes sphères)"))
+        #expect(labels[index + 1] == "Connaissance")
+        #expect(copy.isFromTemplate == false)
+        #expect(copy.allowsSpecialization)
+        #expect(copy.cell(code: "base")?.numberValue == 5)
+        #expect(copy.cells?.count == skills.sortedColumns.count)
+        #expect(Set(mental.sortedRows.map(\.order)).count == mental.sortedRows.count)
     }
 }

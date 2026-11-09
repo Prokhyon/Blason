@@ -40,7 +40,7 @@ La priorité est de rendre **rapide et pratique** la construction de la structur
 | **Template** | Structure de fiche pour un système, avec ses valeurs par défaut. |
 | **Personnage** | Fiche concrète. Possède **sa propre copie** de la structure, avec ses valeurs. |
 | **Page** | Onglet de la fiche (ex. « Personnage », « Compétences », « Combat », « Notes »). |
-| **Rangée** | Ligne horizontale d'une page, qui contient 1 à N sections côte à côte. |
+| **Rangée** | Bloc horizontal d'une page, découpé en 1 à N **colonnes** de largeurs relatives. Chaque colonne **empile** ses sections, indépendamment des autres. |
 | **Section** | Bloc titré. Deux sortes : **Champs** ou **Tableau**. |
 | **Champ** | Donnée typée et nommée (ex. « POU », entier). Possède un **code** utilisable dans les formules. |
 | **Tableau** | Lignes × colonnes typées, avec des groupes (ex. les compétences par catégorie). |
@@ -73,7 +73,7 @@ Une seule vue, trois modes, un sélecteur dans la barre d'outils :
 - **Coller une liste** : coller un texte (une ligne par entrée, colonnes séparées par une tabulation ou un `;`) crée tous les champs ou toutes les lignes d'un tableau d'un coup. Exemple : `Marchander;5` → ligne « Marchander », base 5.
 - **Dupliquer, copier, coller** : un champ, plusieurs champs (sélection multiple), une section entière, d'une section à l'autre ou d'un template à l'autre (presse-papiers de l'app). Raccourcis ⌘C, ⌘V, ⌘D.
 - **Glisser-déposer** : réordonner les champs, déplacer une section dans une autre rangée.
-- **Rangées** : « + rangée » ; dans une rangée, la largeur relative de chaque section se règle dans l'inspecteur (ex. ½ – ½, ⅓ – ⅔).
+- **Rangées** : « + rangée » ; le nombre de colonnes d'une rangée et leurs largeurs relatives (ex. ½ – ½, ⅔ – ⅓) se règlent dans l'inspecteur. Une section se glisse d'une colonne à l'autre.
 - **Annuler / rétablir** : ⌘Z, ⇧⌘Z.
 
 ---
@@ -86,9 +86,9 @@ Une seule vue, trois modes, un sélecteur dans la barre d'outils :
 - Tri par date de modification, recherche.
 
 ### 5.2 Mise en page
-- Hiérarchie : **Fiche → Pages → Rangées → Sections**.
+- Hiérarchie : **Fiche → Pages → Rangées → Colonnes → Sections** (disposition « C » : une rangée a 1 à N colonnes, chaque colonne empile ses sections ; une rangée d'une seule colonne donne une section pleine largeur).
 - La hauteur d'une section **suit son contenu** : plus de cellules carrées ni de contenu coupé.
-- En portrait étroit, les sections d'une rangée passent les unes sous les autres.
+- En portrait étroit, les colonnes d'une rangée passent les unes sous les autres.
 - Les pages s'affichent en **onglets**, définis librement dans le template.
 - L'ancienne grille (`SpanningGridLayout`, `recalculateGrid`) est archivée hors du build, dans `Archive/`, pour comparaison ou réutilisation.
 
@@ -163,8 +163,8 @@ Template   { name, system, notes, sheet: Sheet, dates }
 Character  { name, portrait?, sourceTemplate (nom, id), sheet: Sheet, dates }
 Sheet      { pages: [Page] }
 Page       { title, order, rows: [Row] }
-Row        { order, sections: [Section] }
-Section    { title, order, widthWeight, kind: fields|table,
+Row        { order, columnWeights: [Double], sections: [Section] }
+Section    { title, columnIndex, order (dans la colonne), kind: fields|table,
              fieldsArrangement, columnCount,
              fields: [Field],
              tableColumns: [TableColumn], tableGroups: [TableGroup] }
@@ -190,7 +190,7 @@ TableCell  { columnCode, value typée, formula? }
 |---|---|---|---|---|
 | M0 | Nettoyage | Code mort, archivage de la grille, avertissements Swift 6, cible iPad, String Catalog | S | Build propre, sans avertissement |
 | M1 | Modèle v2 | Nouveau modèle, copie template → personnage, **template BRP de démo et Leo en données de seed** | M | Tests verts : copier, dupliquer, supprimer sans données orphelines |
-| M2 | Rendu de la fiche | Pages, rangées, sections Champs et Tableau, tous les types, modes Remplir et Jouer | L | La fiche de Leo s'affiche et se joue (à partir du seed) |
+| M2 | Rendu de la fiche | Pages, rangées et colonnes, sections Champs et Tableau, tous les types, modes Remplir et Jouer | L | La fiche de Leo s'affiche et se joue (à partir du seed) |
 | M3 | Bibliothèque | Split view, cycle de vie des personnages et des templates | S | Créer, dupliquer et supprimer depuis un template |
 | M4 | Éditeur Structure | Sélection, inspecteur, ajout rapide, coller une liste, dupliquer / copier-coller, glisser, annuler | L | **Template BRP recréé de zéro en moins de 20 min** |
 | M5 | Formules | Moteur, références, cycles, colonnes dérivées | M | Tous les jets ×5, les PV et les bases des compétences sont calculés |
@@ -209,7 +209,9 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-09 | Tableaux complets et formules en V1 ; tables de correspondance en V1.1. |
 | 2026-11-09 | Mise en page Page → Rangée → Section, hauteur selon le contenu ; ancienne grille archivée. |
 | 2026-11-09 | Une seule vue de fiche avec trois modes (Structure / Remplir / Jouer) et un inspecteur latéral. |
-| 2026-11-09 | Pages en onglets ; en portrait, les sections d'une rangée passent les unes sous les autres. |
+| 2026-11-09 | Pages en onglets ; en portrait, les colonnes d'une rangée passent les unes sous les autres. |
+| 2026-11-09 | Disposition « C » : chaque rangée a 1 à N colonnes qui empilent leurs sections. Les onglets sont conservés pour l'instant ; un défilement continu (sans pages) sera réévalué une fois la fiche visible. |
+| 2026-11-09 | Ordre des jalons inchangé ; l'interface de M2 à M6 est fonctionnelle et sobre, le design est traité en M7. |
 | 2026-11-09 | iPad seul en V1, code multiplateforme ; iCloud puis iPhone et Mac ensuite. |
 | 2026-11-09 | Données actuelles jetables ; export / import JSON en V1. |
 | 2026-11-09 | Fiche de Leo (BRP) comme référence et critère d'acceptation ; PDF exclu de git. |
@@ -219,6 +221,9 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-09 | M1 : « Enregistrer comme template » conserve les valeurs du personnage (elles deviennent les défauts), à nettoyer en mode Remplir. |
 | 2026-11-09 | M1 : syntaxe de formule pour le maximum d'une ressource : `PV.max`. Une ressource avec formule voit celle-ci calculer son maximum. |
 | 2026-11-09 | M1 : base stockée dans `CharacterSheet.store` ; l'ancienne `default.store` (modèle v0) est ignorée. |
+| 2026-11-09 | M2 : types de tableau renommés `SheetTableColumn`, `SheetTableGroup`, `SheetTableRow`, `SheetTableCell` (collision avec SwiftUI `TableColumn` / `TableRow`). |
+| 2026-11-09 | M2 : **SwiftData migre silencieusement** une base dont le modèle a changé, même sans nouvelle version de schéma (constaté : tableaux perdus). En développement, `SheetStore.developmentRevision` (à incrémenter à chaque changement du modèle) recrée la base. **Dès que de vraies fiches existent, tout changement du modèle passe par un `SheetSchemaV2` et une migration testée.** |
+| 2026-11-09 | M2 : un tableau affiche autant de colonnes d'affichage que la largeur le permet (au plus `columnCount`) ; la saisie demande plus de place que la lecture (ex. compétences : 3 colonnes en Jouer, 2 en Remplir en portrait). |
 
 ## 10. Questions ouvertes
 

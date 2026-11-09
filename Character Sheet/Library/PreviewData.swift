@@ -12,4 +12,9 @@ enum PreviewData {
             fatalError("Aperçu : \(error)")
         }
     }()
+
+    @MainActor
+    static var leo: PlayerCharacter? {
+        try? container.mainContext.fetch(FetchDescriptor<PlayerCharacter>()).first
+    }
 }

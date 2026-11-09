@@ -37,9 +37,10 @@ public final class PageBuilder {
         self.context = context
     }
 
+    /// Rangée de `columns.count` colonnes de largeurs relatives `columns`.
     @discardableResult
-    public func row(_ build: (RowBuilder) -> Void) -> SheetRow {
-        let row = page.addRow(in: context)
+    public func row(columns: [Double] = [1], _ build: (RowBuilder) -> Void) -> SheetRow {
+        let row = page.addRow(columnWeights: columns, in: context)
         build(RowBuilder(row: row, context: context))
         return row
     }
@@ -57,13 +58,12 @@ public final class RowBuilder {
     @discardableResult
     public func fields(
         _ title: String,
-        weight: Double = 1,
+        column: Int = 0,
         arrangement: FieldArrangement = .list,
         columns: Int = 1,
         _ build: (FieldsBuilder) -> Void
     ) -> SheetSection {
-        let section = row.addSection(title: title, kind: .fields, in: context)
-        section.widthWeight = weight
+        let section = row.addSection(title: title, kind: .fields, column: column, in: context)
         section.arrangement = arrangement
         section.columnCount = columns
         build(FieldsBuilder(section: section, context: context))
@@ -74,12 +74,11 @@ public final class RowBuilder {
     public func table(
         _ title: String,
         labelTitle: String,
-        weight: Double = 1,
+        column: Int = 0,
         displayColumns: Int = 1,
         _ build: (TableBuilder) -> Void
     ) -> SheetSection {
-        let section = row.addSection(title: title, kind: .table, in: context)
-        section.widthWeight = weight
+        let section = row.addSection(title: title, kind: .table, column: column, in: context)
         section.columnCount = displayColumns
         section.labelColumnTitle = labelTitle
         build(TableBuilder(section: section, context: context))
@@ -145,7 +144,7 @@ public final class TableBuilder {
         code: String,
         formula: String? = nil,
         live: Bool = false
-    ) -> TableColumn {
+    ) -> SheetTableColumn {
         let column = section.addColumn(title: title, kind: kind, code: code, in: context)
         column.formula = formula
         column.isLive = live
@@ -153,7 +152,7 @@ public final class TableBuilder {
     }
 
     @discardableResult
-    public func group(_ title: String = "", hasValue: Bool = false, _ build: (GroupBuilder) -> Void = { _ in }) -> TableGroup {
+    public func group(_ title: String = "", hasValue: Bool = false, _ build: (GroupBuilder) -> Void = { _ in }) -> SheetTableGroup {
         let group = section.addGroup(title: title, hasValue: hasValue, in: context)
         build(GroupBuilder(section: section, group: group, context: context))
         return group
@@ -162,10 +161,10 @@ public final class TableBuilder {
 
 public final class GroupBuilder {
     public let section: SheetSection
-    public let group: TableGroup
+    public let group: SheetTableGroup
     let context: ModelContext
 
-    init(section: SheetSection, group: TableGroup, context: ModelContext) {
+    init(section: SheetSection, group: SheetTableGroup, context: ModelContext) {
         self.section = section
         self.group = group
         self.context = context
@@ -177,7 +176,7 @@ public final class GroupBuilder {
         _ label: String,
         specialization: Bool = false,
         _ cells: [String: CellInput] = [:]
-    ) -> TableRow {
+    ) -> SheetTableRow {
         let row = section.addRow(label: label, to: group, allowsSpecialization: specialization, in: context)
         for (code, input) in cells {
             precondition(row.cell(code: code) != nil, "Colonne inconnue « \(code) » dans « \(section.title) »")

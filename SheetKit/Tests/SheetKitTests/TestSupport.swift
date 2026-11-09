@@ -28,10 +28,10 @@ struct EntityCounts: Equatable, CustomStringConvertible {
             "SheetRow": try context.fetchCount(FetchDescriptor<SheetRow>()),
             "SheetSection": try context.fetchCount(FetchDescriptor<SheetSection>()),
             "SheetField": try context.fetchCount(FetchDescriptor<SheetField>()),
-            "TableColumn": try context.fetchCount(FetchDescriptor<TableColumn>()),
-            "TableGroup": try context.fetchCount(FetchDescriptor<TableGroup>()),
-            "TableRow": try context.fetchCount(FetchDescriptor<TableRow>()),
-            "TableCell": try context.fetchCount(FetchDescriptor<TableCell>()),
+            "SheetTableColumn": try context.fetchCount(FetchDescriptor<SheetTableColumn>()),
+            "SheetTableGroup": try context.fetchCount(FetchDescriptor<SheetTableGroup>()),
+            "SheetTableRow": try context.fetchCount(FetchDescriptor<SheetTableRow>()),
+            "SheetTableCell": try context.fetchCount(FetchDescriptor<SheetTableCell>()),
         ]
     }
 
@@ -49,9 +49,9 @@ func signature(of sheet: Sheet?) -> [String] {
     for page in sheet.sortedPages {
         lines.append("page \(page.order) \(page.title)")
         for row in page.sortedRows {
-            lines.append("  row \(row.order)")
+            lines.append("  row \(row.order) \(row.columnWeights)")
             for section in row.sortedSections {
-                lines.append("    section \(section.order) \(section.title) \(section.kindRaw) \(section.arrangementRaw) \(section.columnCount) \(section.widthWeight)")
+                lines.append("    section \(section.order) \(section.title) \(section.kindRaw) \(section.arrangementRaw) \(section.columnCount) col=\(section.columnIndex)")
                 for field in section.sortedFields {
                     lines.append("      field \(field.order) \(field.label) \(field.code) \(field.kindRaw) \(field.displayValue) \(field.formula ?? "-") live=\(field.isLive)")
                 }

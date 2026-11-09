@@ -26,8 +26,8 @@ public enum DemoData {
         let builder = SheetBuilder(sheet: template.sheet!, context: context)
 
         builder.page("Personnage") { page in
-            page.row { row in
-                row.fields("Personnel", weight: 2, arrangement: .grid, columns: 2) { s in
+            page.row(columns: [1, 1]) { row in
+                row.fields("Personnel", column: 0, arrangement: .grid, columns: 2) { s in
                     s.field("Nom", code: "NOM", isName: true)
                     s.field("Joueur")
                     s.field("Culture")
@@ -43,7 +43,7 @@ public enum DemoData {
                     s.field("Traits distinctifs", .longText, placement: .top)
                     s.field("Description", .longText, placement: .top)
                 }
-                row.fields("Caractéristiques", weight: 2, arrangement: .columns, columns: 2) { s in
+                row.fields("Caractéristiques", column: 1, arrangement: .columns, columns: 2) { s in
                     for code in ["FOR", "CON", "TAI", "INT", "POU", "DEX", "CHA", "EDU"] {
                         s.field(code == "EDU" ? "ÉDU" : code, .integer, code: code, min: 0, list: 0)
                     }
@@ -56,7 +56,7 @@ public enum DemoData {
                     s.field("Connaissance", .formula, code: "SAVOIR", formula: "=EDU*5", unit: "%", list: 1)
                     s.field("Modificateur de dégâts", .modifier, code: "MODDEG", list: 1)
                 }
-                row.fields("Points de vie") { s in
+                row.fields("Points de vie", column: 1) { s in
                     s.field("Points de vie", .resource, code: "PV", formula: "=plafond((CON+TAI)/2)",
                             live: true, style: .track)
                     s.field("Blessure grave", .formula, code: "BLESSURE", formula: "=plafond(PV.max/2)")
@@ -141,8 +141,8 @@ public enum DemoData {
         }
 
         builder.page("Combat") { page in
-            page.row { row in
-                row.table("Armes", labelTitle: "Arme", weight: 2) { t in
+            page.row(columns: [2, 1]) { row in
+                row.table("Armes", labelTitle: "Arme", column: 0) { t in
                     t.column("%", .percentage, code: "pct")
                     t.column("Dégâts", .text, code: "degats")
                     t.column("Portée", .text, code: "portee")
@@ -158,7 +158,10 @@ public enum DemoData {
                                         "attaques": "1", "longueur": "courte", "mains": "2M"])
                     }
                 }
-                row.fields("Armure et bouclier") { s in
+                row.fields("Notes de combat", column: 0) { s in
+                    s.field("Notes de combat", .longText, placement: .top)
+                }
+                row.fields("Armure et bouclier", column: 1) { s in
                     s.field("Armure")
                     s.field("Valeur d'armure", .integer, code: "ARMURE")
                     s.field("Bouclier")
@@ -167,34 +170,27 @@ public enum DemoData {
                     s.field("PV du bouclier", .integer)
                 }
             }
-            page.row { row in
-                row.fields("Notes de combat") { s in
-                    s.field("Notes de combat", .longText, placement: .top)
-                }
-            }
         }
 
         builder.page("Pouvoirs et notes") { page in
-            page.row { row in
-                row.fields("Points de personnage") { s in
+            page.row(columns: [1, 1]) { row in
+                row.fields("Points de personnage", column: 0) { s in
                     s.field("Niveau de puissance de la campagne")
                     s.field("Points de personnage", .integer, code: "PP_PERSO")
                 }
-                row.table("Défauts", labelTitle: "Défaut") { t in
+                row.table("Défauts", labelTitle: "Défaut", column: 0) { t in
                     t.column("Points", .number, code: "points")
                     t.group()
                 }
-            }
-            page.row { row in
-                row.fields("Points de pouvoir") { s in
+                row.fields("Points de pouvoir", column: 1) { s in
                     s.field("Points de pouvoir", .resource, code: "PM", formula: "=POU", live: true, style: .track)
                     s.field("Batterie", .integer, live: true)
                 }
-                row.fields("Fatigue") { s in
+                row.fields("Fatigue", column: 1) { s in
                     s.field("Fatigue", .resource, code: "FATIGUE", formula: "=FOR+CON", live: true, style: .track)
                     s.field("Épuisé")
                 }
-                row.fields("Santé mentale") { s in
+                row.fields("Santé mentale", column: 1) { s in
                     s.field("Santé mentale", .resource, code: "SAN", formula: "=POU*5", live: true, style: .track)
                     s.field("Score de folie temporaire", .integer, code: "SFT")
                 }
@@ -212,12 +208,12 @@ public enum DemoData {
                     t.group()
                 }
             }
-            page.row { row in
-                row.fields("Notes", weight: 2) { s in
+            page.row(columns: [2, 1]) { row in
+                row.fields("Notes", column: 0) { s in
                     s.field("Notes", .longText, placement: .top)
                     s.field("Réputation", .percentage, code: "REPUTATION")
                 }
-                row.fields("Portrait") { s in
+                row.fields("Portrait", column: 1) { s in
                     s.field("Portrait", .image, placement: .top)
                 }
             }
