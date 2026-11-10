@@ -70,9 +70,6 @@
         }
       }
     },
-    "+0" : {
-
-    },
     "⌘ ou ⇧ + toucher : sélection multiple" : {
 
     },
@@ -139,6 +136,9 @@
     "Astuces" : {
 
     },
+    "Au-delà" : {
+
+    },
     "Au-dessus" : {
 
     },
@@ -158,6 +158,12 @@
 
     },
     "Bibliothèque" : {
+
+    },
+    "Bleu" : {
+
+    },
+    "Brun" : {
 
     },
     "Calcul (formule)" : {
@@ -182,6 +188,9 @@
 
     },
     "Changer d'image" : {
+
+    },
+    "Chaque ligne vaut jusqu'à son seuil compris. Un résultat est un nombre (2) ou un texte (+1d4). « Au-delà » : au-dessus du dernier seuil ; vide, le champ reste vide." : {
 
     },
     "Choisir une image" : {
@@ -226,6 +235,9 @@
     "Colonnes d'affichage : %lld" : {
 
     },
+    "Comme le template" : {
+
+    },
     "Compteur" : {
 
     },
@@ -236,6 +248,15 @@
 
     },
     "Copier, dupliquer ou supprimer agit sur toute la sélection." : {
+
+    },
+    "Correspondances" : {
+
+    },
+    "Couleur" : {
+
+    },
+    "Couleur du template" : {
 
     },
     "Crée un personnage à partir d'un template, ou une fiche vierge." : {
@@ -283,6 +304,12 @@
     "Entrée dans un libellé : crée l'élément suivant" : {
 
     },
+    "ex. +1d4" : {
+
+    },
+    "ex. FOR+TAI" : {
+
+    },
     "Exporter" : {
 
     },
@@ -292,6 +319,9 @@
     "Fiche" : {
 
     },
+    "Fiche papier" : {
+
+    },
     "Fiche vide" : {
 
     },
@@ -299,6 +329,9 @@
 
     },
     "Formule" : {
+
+    },
+    "Graphite" : {
 
     },
     "Grille" : {
@@ -325,10 +358,16 @@
     "Indication" : {
 
     },
+    "Indigo" : {
+
+    },
     "Inspecteur" : {
 
     },
     "Jouer" : {
+
+    },
+    "Jusqu'à" : {
 
     },
     "La fiche et toutes ses valeurs seront supprimées. Cette action est définitive." : {
@@ -337,7 +376,7 @@
     "la section" : {
 
     },
-    "La valeur est calculée et ne se saisit pas. Codes des champs, + − × ÷, parenthèses, plafond, plancher, arrondi, min, max. Ex. =FOR*5." : {
+    "La valeur est calculée et ne se saisit pas. Codes des champs, + − × ÷, parenthèses, plafond, plancher, arrondi, min, max, table. Ex. =FOR*5." : {
 
     },
     "Largeur de la colonne %lld : %lld" : {
@@ -369,6 +408,9 @@
 
     },
     "Les personnages déjà créés à partir de ce template sont conservés. Cette action est définitive." : {
+
+    },
+    "Les seuils doivent aller croissant : la première ligne dont le seuil atteint la valeur l'emporte." : {
 
     },
     "Libellé" : {
@@ -413,7 +455,13 @@
     "Modifié %@" : {
 
     },
+    "Modifier la table…" : {
+
+    },
     "Monter" : {
+
+    },
+    "Natif" : {
 
     },
     "Nom" : {
@@ -450,6 +498,9 @@
 
     },
     "Options" : {
+
+    },
+    "Orange" : {
 
     },
     "Page" : {
@@ -534,6 +585,9 @@
     "Résultat" : {
 
     },
+    "Résultat de la ligne %lld" : {
+
+    },
     "Rétablir" : {
 
     },
@@ -543,10 +597,22 @@
     "Retirer de la sélection" : {
 
     },
+    "rien" : {
+
+    },
+    "Rose" : {
+
+    },
+    "Rouge" : {
+
+    },
     "Sans libellé" : {
 
     },
     "Sans titre" : {
+
+    },
+    "Sarcelle" : {
 
     },
     "Section" : {
@@ -582,6 +648,12 @@
     "Système de jeu" : {
 
     },
+    "Table de correspondance" : {
+
+    },
+    "Table de correspondance…" : {
+
+    },
     "Tableau" : {
 
     },
@@ -598,6 +670,9 @@
 
     },
     "Texte long" : {
+
+    },
+    "Thème" : {
 
     },
     "Titre" : {
@@ -622,6 +697,9 @@
 
     },
     "Une erreur est survenue" : {
+
+    },
+    "Une formule, sans « = » : un code (FOR), un calcul (FOR+TAI)…" : {
 
     },
     "Une ligne par élément" : {
@@ -651,13 +729,16 @@
     "Valeur" : {
 
     },
+    "Valeur cherchée" : {
+
+    },
     "Valeur de groupe" : {
 
     },
     "Valeur par défaut" : {
 
     },
-    "Valeur par défaut calculée (ex. =POU*5) ; une valeur saisie la remplace, l'effacer revient au calcul." : {
+    "Valeur par défaut calculée (ex. =POU*5, ou une table de correspondance) ; une valeur saisie la remplace, l'effacer revient au calcul." : {
 
     },
     "Valeurs" : {
@@ -669,13 +750,22 @@
     "Valeurs séparées par « ; » ou une tabulation (copie depuis un tableur) : libellé;valeur;code. Exemple : Force;11;FOR. Une valeur commençant par « = » est une formule ; une ressource accepte 47/65." : {
 
     },
+    "Valider remplace la formule actuelle (%@)." : {
+
+    },
     "Vers la droite" : {
 
     },
     "Vers la gauche" : {
 
     },
+    "Vert" : {
+
+    },
     "vide" : {
+
+    },
+    "Violet" : {
 
     }
   },
