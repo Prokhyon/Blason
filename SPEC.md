@@ -147,15 +147,21 @@ Interface en français, avec un String Catalog prêt pour l'anglais.
 - Le template choisit le thème (menu « Affichage ») ; ses personnages le suivent, même s'il change ensuite. Un personnage peut choisir le sien, ou revenir à « Comme le template ».
 - **Ajouter un thème** : un fichier dans `Themes/` qui part de `SheetTheme()` et remplace ce qu'il veut — couleurs, polices (celles d'iOS : rien à télécharger ni à licencier), et pièces : fond de page, cadre de section, zone de saisie, case à cocher ; textures dessinées par le code. Puis une ligne dans `SheetThemes.all`. Les vues de la fiche ne changent pas.
 
+### 5.10 Synchronisation iCloud (V1.2, décidé, pas commencé)
+- **Toujours active** dès que l'appareil est connecté à iCloud, comme Notes ; elle se coupe dans Réglages d'iOS (compte Apple › iCloud), pas dans l'app.
+- L'app ne signale que les **problèmes** : un avis discret dans la bibliothèque quand iCloud est indisponible (pas de compte, stockage plein) ou que la synchronisation échoue.
+- Plus de données de démo créées automatiquement (chaque appareil vide créerait les siennes, en double après synchronisation) : un bouton « Ajouter l'exemple BRP » dans la bibliothèque vide et dans un menu.
+- Conteneur iCloud enregistré par Xcode (Signing & Capabilities). **En attente du nom définitif de l'app** : le conteneur ne peut être ni supprimé ni renommé, et l'identifiant de l'app (bundle ID) se choisit en même temps.
+
 ## 6. Hors V1 (feuille de route)
 
 | Prio | Fonction |
 |---|---|
-| plus tard | D'autres thèmes de fiche (parchemin, dossier années 20, terminal…), un fichier chacun |
-| V1.2 | Jets de dés (depuis un champ ou une ligne, ex. d100 contre la compétence) |
-| V1.2 | **Synchronisation iCloud** : prérequis pour iPhone et Mac |
+| V1.2 | **Synchronisation iCloud** : prérequis pour iPhone et Mac (voir §5.10) |
 | V2 | iPhone et Mac ; inventaire avancé ; **journal de campagne et documents** de session |
+| plus tard | D'autres thèmes de fiche (parchemin, dossier années 20, terminal…), un fichier chacun |
 | plus tard | Mise à jour d'un personnage depuis son template, Apple Pencil, volet MJ |
+| bien plus tard | Jets de dés (depuis un champ ou une ligne, ex. d100 contre la compétence), après l'inventaire et les notes |
 
 ---
 
@@ -253,7 +259,8 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-09 | V1.1 : thèmes modulaires. Un thème = couleurs, polices et quatre pièces remplaçables (fond de page, cadre de section, zone de saisie, case à cocher) ; le natif fournit tout, un thème ne remplace que ce qu'il veut. Thème et couleur sont enregistrés dans la fiche par identifiant (`themeID`, `themeColor`) et exportés ; un identifiant inconnu revient au natif. Un personnage sans thème propre suit son template. |
 | 2026-11-09 | V1.1 : palette plutôt que couleur libre ; en « Couleur du template », titres et pleins sont assombris en clair et éclaircis en sombre pour rester lisibles (sarcelle, orange). La fiche papier reste claire en mode sombre, comme une vraie feuille. |
 | 2026-11-09 | M7 : accessibilité de base : chaque saisie, case et ressource porte le nom de son champ (ou « ligne, colonne » dans un tableau) ; en lecture, libellé et valeur sont lus ensemble ; une ressource s'ajuste par balayage avec VoiceOver ; titres de page et de section annoncés comme titres ; tailles qui suivent la taille du texte. |
+| 2026-11-10 | V1.2 : synchronisation iCloud toujours active, sans réglage dans l'app ; seuls les problèmes s'affichent ; exemple BRP ajouté par un bouton plutôt qu'au premier lancement. Les jets de dés passent bien plus tard, après l'inventaire et les notes. |
 
 ## 10. Questions ouvertes
 
-- **Nom de l'app et icône** : réflexion à part. L'icône actuelle (feuille + dé, sources dans `Design/IconeProvisoire`) est provisoire.
+- **Nom de l'app et icône** : réflexion à part. L'icône actuelle (feuille + dé, sources dans `Design/IconeProvisoire`) est provisoire. **Le nom est à choisir avant la synchronisation iCloud** : il fixe l'identifiant de l'app (`loristhomas.Character-Sheet` aujourd'hui) et celui du conteneur iCloud.
