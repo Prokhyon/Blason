@@ -263,4 +263,17 @@ TableCell  { columnCode, value typée, formula? }
 
 ## 10. Questions ouvertes
 
-- **Nom de l'app et icône** : réflexion à part. L'icône actuelle (feuille + dé, sources dans `Design/IconeProvisoire`) est provisoire. **Le nom est à choisir avant la synchronisation iCloud** : il fixe l'identifiant de l'app (`loristhomas.Character-Sheet` aujourd'hui) et celui du conteneur iCloud.
+- **Nom de l'app et icône** : **Blason** est retenu pour l'instant (à confirmer : nom libre dans App Store Connect, marques sur Swissreg et à l'EUIPO). L'icône actuelle (feuille + dé, sources dans `Design/IconeProvisoire`) est provisoire ; la nouvelle doit évoquer le JDR ou la fiche, pas un blason générique. **Le nom est à fixer avant la synchronisation iCloud** : il donne l'identifiant de l'app (`loristhomas.Character-Sheet` aujourd'hui) et celui du conteneur iCloud, sans accent (ex. `…blason`). Le nom affiché, lui, peut changer plus tard.
+
+### 10.1 Pistes autour de « Blason »
+
+Des idées à garder pour y revenir, **pas des exigences**.
+
+- **Vocabulaire**, avec parcimonie : la bibliothèque comme **Armorial** (le recueil des blasons) ; la **Besace** pour l'inventaire (V2) ; les **émaux** pour les couleurs ; éventuellement la **brisure** (la marque qui distingue les armes d'un cadet de celles de sa famille) pour « créer un personnage depuis ce template ». Slogan possible : « Le blason de tes personnages ». Le *blason* est aussi un poème de la Renaissance qui décrit quelqu'un attribut par attribut, c'est-à-dire une fiche de personnage.
+- **Règle des émaux** : pas de métal (or, argent) sur métal, ni de couleur (azur, gueules, sinople, sable) sur couleur. C'est une règle de contraste, utilisable pour l'icône et pour la palette « Couleur du template ».
+- **Hachures** héraldiques (azur en traits horizontaux, gueules en traits verticaux, or en points…) : le thème Fiche papier pourrait rendre la couleur du template en hachures, en restant monochrome.
+- **Un petit écu par personnage** dans la bibliothèque, teinté de la couleur de son template, quand il n'a pas de portrait.
+- **Icône alternative** au choix dans l'app, par exemple une version gravée pour le thème papier, ou la même icône en plusieurs teintes héraldiques (gueules, or, sinople, azur, pourpre…). Sources et pistes dans `Design/Blason`.
+- **Icône iOS 26** en calques (Icon Composer : clair, sombre, teinté) : l'écu et ses motifs sur des calques séparés.
+- **Constellations de dés** (d20, d100 en deux d10) : plutôt en illustration (bibliothèque vide, À propos) qu'en icône, où elles deviennent illisibles en petit.
+- **Écu et sécurité** : un écu seul, surtout avec une coche, évoque les apps de sécurité ou de VPN. L'icône doit montrer la fiche ou le JDR.
