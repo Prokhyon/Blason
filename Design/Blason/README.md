@@ -14,6 +14,8 @@ Couleurs (`planche-couleurs-…`, palettes `HUES`, `CONTRASTS`, `HUES_GOLD`, `HU
 - huit teintes (terre cuite, gueules, or, sinople, sarcelle, azur, pourpre, graphite), candidates pour des icônes alternatives au choix dans l'app ;
 - coins en métal héraldique (or ou argent) à étudier ; pas de métal sur métal (la teinte Or prend des coins d'argent).
 
+**Pour essayer dans Icon Composer : le dossier [`Finale`](Finale/README.md)**, une version par teinte (unie, ou avec des coins en or), avec les calques à importer et les couleurs de chaque apparence. Essais en cours : un or plus lumineux en sombre (`planche-or-sombre`) et d'autres fonds clairs (`planche-fonds-clairs`).
+
 ## Les pistes (`DESIGNS` dans `make.py`)
 
 - `2b` : écu en blocs (en-tête, deux colonnes dont une avec le portrait en creux, pointe).

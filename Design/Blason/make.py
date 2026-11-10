@@ -354,6 +354,21 @@ HUES_SILVER = {name: metal_corners(pal, *SILVER) for name, pal in HUES.items()}
 PALETTE_SHEETS = {"planche-couleurs-teintes.svg": HUES, "planche-couleurs-contrastes.svg": CONTRASTS,
                   "planche-couleurs-or.svg": HUES_GOLD, "planche-couleurs-argent.svg": HUES_SILVER}
 
+# Essais : un or plus lumineux en sombre, d'autres fonds clairs.
+GOLD_DARK_TRIALS = {"actuel": "#854F0B", "+1": "#A66A12", "+2": "#BA7517", "+3": "#D9911F", "+4": "#EF9F27"}
+LIGHT_BACKGROUNDS = {"crème (actuel)": "#F4F2EC", "blanc": "#FFFFFF", "parchemin": "#F3EAD8", "ivoire": "#FAF3E1",
+                     "gris perle": "#ECEEF0", "teinte claire": None}
+HUE_TINTS = {"Terre cuite": "#FAECE7", "Gueules": "#FCEBEB", "Or": "#FAEEDA", "Sinople": "#EAF3DE",
+             "Sarcelle": "#E1F5EE", "Azur": "#E6F1FB", "Pourpre": "#EEEDFE", "Graphite": "#F1EFE8"}
+GRIDS = {
+    "planche-or-sombre.svg": [
+        (f"or {label}", "Sombre", lambda name, c, g=gold: c if name == "Or" else dict(c, corner=g))
+        for label, gold in GOLD_DARK_TRIALS.items()],
+    "planche-fonds-clairs.svg": [
+        (label, "Clair", lambda name, c, bg=bg: dict(c, bg=bg or HUE_TINTS[name]))
+        for label, bg in LIGHT_BACKGROUNDS.items()],
+}
+
 
 # Sortie -----------------------------------------------------------------------------------
 
@@ -440,6 +455,101 @@ def palette_sheet(out, design, palettes, filename):
         subprocess.run(["rsvg-convert", path, "-o", path[:-4] + ".png"], check=True)
 
 
+def icon_group(x, y, size, design, colors):
+    g = [f'<g transform="translate({x} {y}) scale({size / 1024})">',
+         f'<rect width="1024" height="1024" rx="230" fill="{colors["bg"]}"/>']
+    for _, role, shapes in design:
+        g += [f'<path d="{d}" fill="{colors[role]}" fill-rule="evenodd"/>' for d in paths(shapes)]
+    return "".join(g) + "</g>"
+
+
+def grid(out, design, columns, rows, filename):
+    """Une forme : une colonne par palette, une ligne par essai (rows : libellé, apparence, retouche)."""
+    cell, pad, label, left = 1024, 160, 120, 760
+    width = left + len(columns) * (cell + pad)
+    height = label + len(rows) * (cell + pad)
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width // 8}" height="{height // 8}" '
+             f'viewBox="0 0 {width} {height}"><rect width="{width}" height="{height}" fill="#FFFFFF"/>']
+    for col, name in enumerate(columns):
+        x = left + col * (cell + pad)
+        parts.append(f'<text x="{x + cell / 2}" y="{label - 20}" font-family="Helvetica" font-size="80" '
+                     f'text-anchor="middle" fill="#444441">{name}</text>')
+    for row, (row_label, appearance, adjust) in enumerate(rows):
+        y = label + row * (cell + pad)
+        parts.append(f'<text x="{left - 60}" y="{y + cell / 2 + 28}" font-family="Helvetica" font-size="80" '
+                     f'text-anchor="end" fill="#444441">{row_label}</text>')
+        for col, (name, pal) in enumerate(columns.items()):
+            colors = adjust(name, {**APPEARANCES[appearance], **pal[appearance]})
+            parts.append(icon_group(left + col * (cell + pad), y, cell, design, colors))
+    parts.append("</svg>\n")
+    path = os.path.join(out, filename)
+    with open(path, "w") as f:
+        f.write("".join(parts))
+    if shutil.which("rsvg-convert"):
+        subprocess.run(["rsvg-convert", path, "-o", path[:-4] + ".png"], check=True)
+
+
+# Versions finales ---------------------------------------------------------------------------
+
+def final_sets():
+    """Les huit teintes, unies et avec des coins en métal (or, ou argent pour la teinte Or)."""
+    sets = {}
+    for name in HUES:
+        slug = name.replace(" ", "-")
+        sets[slug] = (name, "unie", HUES[name])
+        sets[f"{slug}-{'argent' if name == 'Or' else 'or'}"] = (name, "coins argent" if name == "Or" else "coins or",
+                                                                HUES_GOLD[name])
+    return sets
+
+
+def write_final(out):
+    """Finale/<teinte>/ : les calques aux couleurs claires, et deux aperçus complets."""
+    base = os.path.join(out, "Finale")
+    if os.path.isdir(base):
+        shutil.rmtree(base)
+    design = DESIGNS[CHOSEN]
+    rows = []
+    for slug, (name, kind, pal) in final_sets().items():
+        folder = os.path.join(base, slug)
+        os.makedirs(folder)
+        for filename, role, shapes in design:
+            with open(os.path.join(folder, f"{filename}.svg"), "w") as f:
+                f.write(layer_svg(shapes, pal["Clair"][role]))
+        for appearance in ("Clair", "Sombre"):
+            colors = {**APPEARANCES[appearance], **pal[appearance]}
+            with open(os.path.join(folder, f"apercu-{appearance.lower()}.svg"), "w") as f:
+                f.write('<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">'
+                        + icon_group(0, 0, 1024, design, colors) + "</svg>\n")
+        c, d = pal["Clair"], pal["Sombre"]
+        rows.append(f"| `{slug}` | {name}, {kind} | `{c['corner']}` / `{d['corner']}` | "
+                    f"`{c['die']}` / `{d['die']}` | `{c['face']}` / `{d['face']}` |")
+    light, dark = APPEARANCES["Clair"]["bg"], APPEARANCES["Sombre"]["bg"]
+    readme = f"""# Icône Blason : versions finales
+
+Généré par `make.py` (ne pas modifier à la main) : forme `{CHOSEN}`, une version par teinte.
+
+## Essayer dans Icon Composer
+
+Dans le dossier d'une teinte, glisser dans l'ordre :
+
+1. `1-coins.svg` (tout en bas),
+2. `2-de.svg`,
+3. `3-face.svg` (au-dessus).
+
+Les calques portent les couleurs de l'apparence claire. Pour l'apparence sombre, changer la couleur de
+chaque calque d'après le tableau ; le fond se règle dans Icon Composer : `{light}` en clair, `{dark}` en sombre.
+L'apparence teintée se calcule seule. `apercu-clair.svg` et `apercu-sombre.svg` montrent le résultat attendu,
+sans le verre.
+
+## Couleurs (clair / sombre)
+
+| Dossier | Teinte | Coins | Dé | Face |
+|---|---|---|---|---|
+""" + "\n".join(rows) + "\n"
+    with open(os.path.join(base, "README.md"), "w") as f:
+        f.write(readme)
+
+
 if __name__ == "__main__":
     out = sys.argv[1] if len(sys.argv) > 1 else "."
     write(out, DESIGNS)
@@ -448,3 +558,6 @@ if __name__ == "__main__":
         sheet(out, DESIGNS, names, filename)
     for filename, palettes in PALETTE_SHEETS.items():
         palette_sheet(out, DESIGNS[CHOSEN], palettes, filename)
+    for filename, rows in GRIDS.items():
+        grid(out, DESIGNS[CHOSEN], HUES_GOLD, rows, filename)
+    write_final(out)
