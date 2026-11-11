@@ -33,14 +33,18 @@ final class SyncMonitor {
         observers.append(center.addObserver(
             forName: NSPersistentCloudKitContainer.eventChangedNotification, object: nil, queue: .main
         ) { [weak self] notification in
-            // Seuls les événements terminés comptent : réussi efface l'avis, échoué le pose.
             guard let event = notification.userInfo?[NSPersistentCloudKitContainer.eventNotificationUserInfoKey]
-                    as? NSPersistentCloudKitContainer.Event, event.endDate != nil else { return }
+                    as? NSPersistentCloudKitContainer.Event else { return }
+            let record = SyncEventRecord(event)
+            // Seuls les événements terminés comptent pour l'avis : réussi l'efface, échoué le pose.
             let problem = event.succeeded ? nil : event.error.flatMap { SyncProblem(error: $0) }
-            let succeeded = event.succeeded
             MainActor.assumeIsolated {
                 guard let self else { return }
-                if succeeded { self.syncProblem = nil } else if let problem { self.syncProblem = problem }
+                #if DEBUG
+                self.record(record)
+                #endif
+                guard record.end != nil else { return }
+                if record.succeeded { self.syncProblem = nil } else if let problem { self.syncProblem = problem }
             }
         })
         refreshAccount()
@@ -48,8 +52,59 @@ final class SyncMonitor {
 
     private func refreshAccount() {
         Task {
-            let status = try? await CKContainer(identifier: SheetStore.cloudContainerID).accountStatus()
+            let container = CKContainer(identifier: SheetStore.cloudContainerID)
+            let status = try? await container.accountStatus()
             accountProblem = status.flatMap { SyncProblem(accountStatus: $0) }
+            #if DEBUG
+            accountStatus = status
+            userID = try? await container.userRecordID().recordName
+            #endif
+        }
+    }
+
+    #if DEBUG
+    // MARK: Diagnostic (temporaire, builds de développement seulement)
+
+    private(set) var accountStatus: CKAccountStatus?
+    /// Identifiant de l'utilisateur dans le conteneur : le même sur deux appareils du même compte.
+    private(set) var userID: String?
+    /// Derniers événements de synchronisation, du plus récent au plus ancien.
+    private(set) var events: [SyncEventRecord] = []
+
+    private func record(_ record: SyncEventRecord) {
+        if let index = events.firstIndex(where: { $0.id == record.id }) {
+            events[index] = record
+        } else {
+            events.insert(record, at: 0)
+            if events.count > 30 { events.removeLast() }
+        }
+    }
+    #endif
+}
+
+/// Événement de synchronisation (configuration, import, export), réduit à ce qui s'affiche.
+struct SyncEventRecord: Identifiable, Sendable {
+    let id: UUID
+    let kind: String
+    let start: Date
+    let end: Date?
+    let succeeded: Bool
+    let error: String?
+
+    nonisolated init(_ event: NSPersistentCloudKitContainer.Event) {
+        id = event.identifier
+        switch event.type {
+        case .setup: kind = "Configuration"
+        case .import: kind = "Import"
+        case .export: kind = "Export"
+        @unknown default: kind = "Autre"
+        }
+        start = event.startDate
+        end = event.endDate
+        succeeded = event.succeeded
+        error = event.error.map { error in
+            let nsError = error as NSError
+            return "\(nsError.domain) \(nsError.code) : \(nsError.localizedDescription)"
         }
     }
 }

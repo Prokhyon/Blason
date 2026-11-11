@@ -100,6 +100,9 @@
     "Ajouter à la sélection" : {
 
     },
+    "Ajouter l'exemple BRP" : {
+
+    },
     "Ajouter une colonne" : {
 
     },
@@ -343,6 +346,18 @@
     "Groupe sans titre" : {
 
     },
+    "iCloud à reconnecter" : {
+
+    },
+    "iCloud bloqué" : {
+
+    },
+    "iCloud désactivé" : {
+
+    },
+    "iCloud est bloqué sur cet appareil (contrôle parental ou gestion). Tes fiches restent ici." : {
+
+    },
     "Image" : {
 
     },
@@ -434,6 +449,9 @@
     "Maintenir puis glisser : déplacer un élément" : {
 
     },
+    "Masquer" : {
+
+    },
     "Masquer l'inspecteur" : {
 
     },
@@ -501,6 +519,9 @@
 
     },
     "Orange" : {
+
+    },
+    "Ouvre Réglages pour revalider ton compte Apple. La synchronisation reprendra ensuite." : {
 
     },
     "Page" : {
@@ -630,6 +651,9 @@
     "Spécialisation" : {
 
     },
+    "Stockage iCloud plein" : {
+
+    },
     "Structure" : {
 
     },
@@ -640,6 +664,9 @@
 
     },
     "Supprimer la ligne" : {
+
+    },
+    "Synchronisation impossible" : {
 
     },
     "Système (ex. L'Appel de Cthulhu)" : {
@@ -664,6 +691,15 @@
 
     },
     "Templates" : {
+
+    },
+    "Tes fiches restent sur cet appareil. Pour les retrouver sur tes autres appareils, active iCloud pour Blason dans Réglages." : {
+
+    },
+    "Tes modifications restent sur cet appareil et partiront quand il y aura de la place." : {
+
+    },
+    "Tes modifications restent sur cet appareil. %@" : {
 
     },
     "Texte" : {

@@ -34,6 +34,10 @@ public enum SyncProblem: Equatable, Sendable {
             self = .noAccount
             return
         }
+        // Demande annulée parce qu'une autre du même type est déjà en attente : rien à signaler.
+        if nsError.domain == NSCocoaErrorDomain, nsError.code == Self.requestSupersededCoreDataCode {
+            return nil
+        }
         guard let error = error as? CKError else {
             self = .failed(error.localizedDescription)
             return
@@ -57,6 +61,8 @@ public enum SyncProblem: Equatable, Sendable {
 
     /// « Unable to initialize without an iCloud account » (NSCloudKitMirroringDelegate).
     static let noAccountCoreDataCode = 134400
+    /// « Request … was cancelled because there is already a pending request » (constaté sur simulateur).
+    static let requestSupersededCoreDataCode = 134417
 
     /// Le joueur peut masquer l'avis : il a choisi de ne pas utiliser iCloud.
     /// Les échecs, eux, restent affichés jusqu'à la prochaine synchronisation réussie.

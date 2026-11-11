@@ -19,6 +19,8 @@ struct SyncProblemTests {
         for code in [CKError.Code.networkUnavailable, .networkFailure, .serviceUnavailable, .requestRateLimited, .zoneBusy] {
             #expect(SyncProblem(error: CKError(code)) == nil)
         }
+        // Export annulé parce qu'un autre attend déjà (Core Data).
+        #expect(SyncProblem(error: NSError(domain: NSCocoaErrorDomain, code: 134417)) == nil)
     }
 
     @Test("Stockage plein et compte déconnecté sont reconnus")
