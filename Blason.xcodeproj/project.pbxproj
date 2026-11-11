@@ -11,7 +11,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		783EF4582F86BD81004E2387 /* Blason.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Blason.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		783EF4582F86BD81004E2387 /* Blason.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Blason.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -30,7 +30,7 @@
 			exceptions = (
 				B1A50E0C0000000000000001 /* Exceptions for "Blason" folder in "Blason" target */,
 			);
-			path = "Blason";
+			path = Blason;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -81,11 +81,11 @@
 			fileSystemSynchronizedGroups = (
 				783EF45A2F86BD81004E2387 /* Blason */,
 			);
-			name = "Blason";
+			name = Blason;
 			packageProductDependencies = (
 				A1B2C3D40000000000000002 /* SheetKit */,
 			);
-			productName = "Blason";
+			productName = Blason;
 			productReference = 783EF4582F86BD81004E2387 /* Blason.app */;
 			productType = "com.apple.product-type.application";
 		};
@@ -154,13 +154,13 @@
 				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "AppIcon-Terre-cuite-or AppIcon-Gueules AppIcon-Gueules-or AppIcon-Or AppIcon-Or-argent AppIcon-Sinople AppIcon-Sinople-or AppIcon-Sarcelle AppIcon-Sarcelle-or AppIcon-Azur AppIcon-Azur-or AppIcon-Pourpre AppIcon-Pourpre-or AppIcon-Graphite AppIcon-Graphite-or";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "Blason/Blason.entitlements";
+				CODE_SIGN_ENTITLEMENTS = Blason/Blason.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = EE4866DK5Q;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Blason/Info.plist";
+				INFOPLIST_FILE = Blason/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Blason;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -189,13 +189,13 @@
 				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "AppIcon-Terre-cuite-or AppIcon-Gueules AppIcon-Gueules-or AppIcon-Or AppIcon-Or-argent AppIcon-Sinople AppIcon-Sinople-or AppIcon-Sarcelle AppIcon-Sarcelle-or AppIcon-Azur AppIcon-Azur-or AppIcon-Pourpre AppIcon-Pourpre-or AppIcon-Graphite AppIcon-Graphite-or";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "Blason/Blason.entitlements";
+				CODE_SIGN_ENTITLEMENTS = Blason/Blason.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = EE4866DK5Q;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Blason/Info.plist";
+				INFOPLIST_FILE = Blason/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Blason;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

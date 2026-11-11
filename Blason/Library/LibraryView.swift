@@ -41,11 +41,6 @@ struct LibraryView: View {
                 .safeAreaInset(edge: .bottom) {
                     if let problem = syncMonitor.problem { SyncNotice(problem: problem) }
                 }
-                #if DEBUG
-                .toolbar {
-                    ToolbarItem(placement: .topBarLeading) { SyncDiagnosticsButton() }
-                }
-                #endif
                 .navigationDestination(for: PlayerCharacter.self) { character in
                     SheetView(
                         title: character.displayName,
