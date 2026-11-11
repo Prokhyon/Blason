@@ -53,6 +53,8 @@ private struct StructureItemModifier: ViewModifier {
                 .onTapGesture {
                     editor.select(item, extending: HardwareKeyboard.isExtendingSelection)
                 }
+                // Cible du défilement vers l'élément sélectionné (`scrollsToSelection`).
+                .id(item)
                 .contextMenu {
                     StructureItemMenu(item: item, editor: editor)
                 }
@@ -103,6 +105,19 @@ private struct StructureItemMenu: View {
     private func prepare() {
         if !editor.isSelected(item) {
             editor.select(item)
+        }
+    }
+}
+
+extension View {
+    /// Fait défiler la fiche juste assez pour montrer l'élément sélectionné quand la sélection change
+    /// (sur iPhone, au-dessus de la feuille de l'inspecteur ; aussi après un ajout ou un collage).
+    func scrollsToSelection(_ editor: StructureEditor, proxy: ScrollViewProxy) -> some View {
+        task(id: editor.primary) {
+            guard let item = editor.primary else { return }
+            // Laisse la feuille de l'inspecteur apparaître et la marge du bas se mettre à jour.
+            try? await Task.sleep(for: .milliseconds(350))
+            withAnimation { proxy.scrollTo(item) }
         }
     }
 }

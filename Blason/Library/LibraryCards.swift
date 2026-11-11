@@ -2,6 +2,7 @@ import SwiftUI
 import SheetKit
 
 /// Carte d'un personnage : portrait (ou initiales), nom, template d'origine, dernière modification.
+/// Hauteur fixe : le nom a toujours la place de deux lignes, puis il est coupé.
 struct CharacterCard: View {
     let character: PlayerCharacter
 
@@ -15,7 +16,7 @@ struct CharacterCard: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(character.displayName)
                     .font(.headline)
-                    .lineLimit(1)
+                    .lineLimit(2, reservesSpace: true)
                 Text(character.sourceTemplateName.isEmpty ? "Fiche libre" : character.sourceTemplateName)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -23,7 +24,9 @@ struct CharacterCard: View {
                 Text("Modifié \(character.updatedAt, format: .relative(presentation: .named))")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
+                    .lineLimit(1)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(12)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
@@ -53,6 +56,7 @@ struct CharacterCard: View {
 }
 
 /// Carte d'un template : nom, système, nombre de personnages créés.
+/// Hauteur fixe : deux lignes pour le nom, une pour le système (même vide), puis coupé.
 struct TemplateCard: View {
     let template: SheetTemplate
     let characterCount: Int
@@ -73,20 +77,30 @@ struct TemplateCard: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(template.name)
                     .font(.headline)
-                    .lineLimit(2)
-                if !template.system.isEmpty {
-                    Text(template.system)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
+                    .lineLimit(2, reservesSpace: true)
+                // Ligne gardée même sans système : toutes les cartes ont la même hauteur.
+                Text(template.system)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1, reservesSpace: true)
                 Text(characterCount == 0 ? "Aucun personnage"
                      : characterCount == 1 ? "1 personnage" : "\(characterCount) personnages")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
+                    .lineLimit(1)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(12)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
         .contentShape(RoundedRectangle(cornerRadius: 14))
+    }
+}
+
+/// Colonnes des grilles de la bibliothèque : deux cartes par ligne sur iPhone, plus larges sur iPad.
+enum LibraryGridLayout {
+    static func columns(for sizeClass: UserInterfaceSizeClass?) -> [GridItem] {
+        let minimum: CGFloat = sizeClass == .compact ? 150 : 200
+        return [GridItem(.adaptive(minimum: minimum, maximum: 280), spacing: 16)]
     }
 }

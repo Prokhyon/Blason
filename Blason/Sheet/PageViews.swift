@@ -36,10 +36,13 @@ struct TabbedPages: View {
     var body: some View {
         Group {
             if let page = editor.currentPage {
-                ScrollView {
-                    PageContent(page: page)
-                        .padding()
-                        .deselectsOnBackgroundTap()
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        PageContent(page: page)
+                            .padding()
+                            .deselectsOnBackgroundTap()
+                    }
+                    .scrollsToSelection(editor, proxy: proxy)
                 }
                 .id(page.persistentModelID)
             }
@@ -86,6 +89,7 @@ struct ContinuousPages: View {
                     withAnimation { proxy.scrollTo(section.persistentModelID, anchor: .top) }
                 }
             }
+            .scrollsToSelection(editor, proxy: proxy)
             .onAppear { visiblePage = editor.pageIndex }
             // Défilement par l'utilisateur → page courante (les ajouts et le collage s'y font).
             .onChange(of: visiblePage) { _, page in
@@ -124,11 +128,15 @@ struct PageBar: View {
     var showSection: ((SheetSection) -> Void)? = nil
 
     @Environment(\.sheetMode) private var mode
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
         let pages = editor.pages
         HStack(spacing: 16) {
-            if pages.count > 1 {
+            if pages.count > 1 && sizeClass == .compact {
+                // iPhone : les titres ne tiennent pas dans un contrôle segmenté.
+                PageChips(editor: editor)
+            } else if pages.count > 1 {
                 Picker("Page", selection: $editor.pageIndex) {
                     ForEach(pages.indices, id: \.self) { index in
                         Text(pages[index].title.isEmpty ? "Sans titre" : pages[index].title).tag(index)
@@ -171,6 +179,44 @@ struct PageBar: View {
         .padding(.horizontal)
         .padding(.vertical, 8)
         .background(.bar)
+    }
+}
+
+/// Pages en pastilles qui défilent horizontalement (écran étroit) ; la page choisie reste visible.
+private struct PageChips: View {
+    @Bindable var editor: StructureEditor
+
+    var body: some View {
+        let pages = editor.pages
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal) {
+                HStack(spacing: 6) {
+                    ForEach(pages.indices, id: \.self) { index in
+                        let selected = index == editor.pageIndex
+                        Button {
+                            editor.pageIndex = index
+                        } label: {
+                            Text(pages[index].title.isEmpty ? "Sans titre" : pages[index].title)
+                                .font(.subheadline.weight(selected ? .semibold : .regular))
+                                .lineLimit(1)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(selected ? Color.accentColor.opacity(0.15) : Color(.tertiarySystemFill),
+                                            in: Capsule())
+                                .foregroundStyle(selected ? Color.accentColor : .primary)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityAddTraits(selected ? .isSelected : [])
+                        .id(index)
+                    }
+                }
+            }
+            .scrollIndicators(.hidden)
+            .onAppear { proxy.scrollTo(editor.pageIndex, anchor: .center) }
+            .onChange(of: editor.pageIndex) { _, index in
+                withAnimation { proxy.scrollTo(index, anchor: .center) }
+            }
+        }
     }
 }
 

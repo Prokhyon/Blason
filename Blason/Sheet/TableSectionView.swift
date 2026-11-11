@@ -32,12 +32,17 @@ struct TableSectionView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
-        } else if columns.count > 4 {
-            ScrollView(.horizontal) {
-                TableGrid(section: section, groups: groups, columns: columns)
-            }
         } else {
-            TableGrid(section: section, groups: groups, columns: columns)
+            // Trop large pour l'écran (iPhone, beaucoup de colonnes) : le tableau défile horizontalement,
+            // sans couper les valeurs ; l'indicateur de défilement reste visible pour le signaler.
+            ViewThatFits(in: .horizontal) {
+                TableGrid(section: section, groups: groups, columns: columns)
+                ScrollView(.horizontal) {
+                    TableGrid(section: section, groups: groups, columns: columns)
+                        .padding(.bottom, 8)
+                }
+                .scrollIndicators(.visible)
+            }
         }
     }
 

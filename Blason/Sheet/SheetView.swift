@@ -15,6 +15,9 @@ struct SheetView: View {
     @State private var mode: SheetMode
     @State private var editor: StructureEditor
     @State private var showsInspector = true
+    /// Hauteur de la feuille de l'inspecteur (iPhone) : la fiche garde cette marge en bas
+    /// pour que tout élément puisse remonter au-dessus d'elle.
+    @State private var inspectorSheetHeight: CGFloat = 0
     @AppStorage(SheetLayout.storageKey) private var layout: SheetLayout = .tabs
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.modelContext) private var context
@@ -66,8 +69,9 @@ struct SheetView: View {
         .toolbar { toolbar }
         .sheet(isPresented: compactInspectorShown) {
             StructureInspector(editor: editor, isTemplate: sheet?.template != nil) {
-                showsInspector = false
+                editor.clearSelection()
             }
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { inspectorSheetHeight = $0 }
             .presentationDetents([.medium, .large])
             .presentationBackgroundInteraction(.enabled(upThrough: .medium))
             .environment(\.structureEditor, editor)
@@ -93,11 +97,17 @@ struct SheetView: View {
         mode == .structure && showsInspector && sizeClass != .compact
     }
 
+    /// iPhone : la feuille n'apparaît qu'avec une sélection (sinon elle couvrirait la barre du bas
+    /// et le choix du mode) ; la fermer désélectionne.
     private var compactInspectorShown: Binding<Bool> {
         Binding(
-            get: { mode == .structure && showsInspector && sizeClass == .compact },
-            set: { showsInspector = $0 }
+            get: { showsCompactInspector },
+            set: { if !$0 { editor.clearSelection() } }
         )
+    }
+
+    private var showsCompactInspector: Bool {
+        mode == .structure && sizeClass == .compact && editor.primary != nil
     }
 
     /// Pages, en onglets ou à la suite.
@@ -124,6 +134,7 @@ struct SheetView: View {
             }
         }
         .animation(.default, value: editor.notice)
+        .safeAreaPadding(.bottom, showsCompactInspector ? inspectorSheetHeight : 0)
         .sheetTheme(SheetThemes.theme(for: sheet?.appearance(in: context) ?? .standard))
     }
 
@@ -145,6 +156,16 @@ struct SheetView: View {
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
+        if sizeClass == .compact {
+            compactToolbar
+        } else {
+            regularToolbar
+        }
+    }
+
+    /// iPad : tout dans la barre du haut.
+    @ToolbarContentBuilder
+    private var regularToolbar: some ToolbarContent {
         ToolbarItemGroup(placement: .primaryAction) {
             if mode != .play {
                 UndoRedoButtons()
@@ -155,46 +176,92 @@ struct SheetView: View {
                 } label: {
                     Label("Édition", systemImage: "ellipsis.circle")
                 }
-                Button {
-                    showsInspector.toggle()
-                } label: {
-                    Label("Inspecteur", systemImage: "sidebar.trailing")
-                }
+                inspectorButton
             }
         }
         ToolbarItem(placement: .primaryAction) {
             Menu {
-                Picker("Pages", selection: $layout) {
-                    ForEach(SheetLayout.allCases) { layout in
-                        Label(layout.title, systemImage: layout.symbol).tag(layout)
-                    }
-                }
-                .pickerStyle(.inline)
-                if let sheet {
-                    Section {
-                        ThemeMenu(sheet: sheet)
-                    }
-                }
+                displayCommands
             } label: {
                 Label("Affichage", systemImage: layout.symbol)
             }
         }
         ToolbarItem(placement: .primaryAction) {
-            if let file = exportFile {
-                ShareLink(item: file, preview: SharePreview(file.document.title)) {
-                    Label("Exporter", systemImage: "square.and.arrow.up")
-                }
-            }
+            exportLink
         }
         ToolbarItem(placement: .primaryAction) {
-            Picker("Mode", selection: $mode) {
-                ForEach(SheetMode.allCases) { mode in
-                    Text(mode.title).tag(mode)
-                }
-            }
-            .pickerStyle(.segmented)
-            .fixedSize()
+            modePicker
         }
+    }
+
+    /// iPhone : le mode en bas, sous le pouce ; en haut, annuler et un menu qui regroupe
+    /// édition, affichage et export. L'inspecteur s'ouvre en touchant un élément.
+    @ToolbarContentBuilder
+    private var compactToolbar: some ToolbarContent {
+        ToolbarItemGroup(placement: .primaryAction) {
+            if mode != .play {
+                UndoRedoButtons()
+            }
+            Menu {
+                if mode == .structure {
+                    Section {
+                        EditCommands(editor: editor)
+                    }
+                }
+                displayCommands
+                Section {
+                    exportLink
+                }
+            } label: {
+                Label("Plus", systemImage: "ellipsis")
+            }
+        }
+        ToolbarItem(placement: .bottomBar) {
+            modePicker
+        }
+    }
+
+    private var inspectorButton: some View {
+        Button {
+            showsInspector.toggle()
+        } label: {
+            Label("Inspecteur", systemImage: "sidebar.trailing")
+        }
+    }
+
+    /// Disposition des pages et thème.
+    @ViewBuilder
+    private var displayCommands: some View {
+        Picker("Pages", selection: $layout) {
+            ForEach(SheetLayout.allCases) { layout in
+                Label(layout.title, systemImage: layout.symbol).tag(layout)
+            }
+        }
+        .pickerStyle(.inline)
+        if let sheet {
+            Section {
+                ThemeMenu(sheet: sheet)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var exportLink: some View {
+        if let file = exportFile {
+            ShareLink(item: file, preview: SharePreview(file.document.title)) {
+                Label("Exporter", systemImage: "square.and.arrow.up")
+            }
+        }
+    }
+
+    private var modePicker: some View {
+        Picker("Mode", selection: $mode) {
+            ForEach(SheetMode.allCases) { mode in
+                Text(mode.title).tag(mode)
+            }
+        }
+        .pickerStyle(.segmented)
+        .fixedSize()
     }
 
     /// Fichier d'export du personnage ou du template ouvert.

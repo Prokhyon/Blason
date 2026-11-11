@@ -7,6 +7,7 @@ struct TemplateGrid: View {
     @Binding var path: NavigationPath
 
     @Environment(\.modelContext) private var context
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @Query(sort: \SheetTemplate.name) private var templates: [SheetTemplate]
     @Query private var characters: [PlayerCharacter]
 
@@ -34,7 +35,7 @@ struct TemplateGrid: View {
     var body: some View {
         let usage = usage
         ScrollView {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 200, maximum: 280), spacing: 16)], spacing: 16) {
+            LazyVGrid(columns: LibraryGridLayout.columns(for: sizeClass), spacing: 16) {
                 ForEach(filtered) { template in
                     NavigationLink(value: template) {
                         TemplateCard(template: template, characterCount: usage[template.uid] ?? 0)

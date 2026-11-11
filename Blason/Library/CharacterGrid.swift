@@ -7,6 +7,7 @@ struct CharacterGrid: View {
     @Binding var path: NavigationPath
 
     @Environment(\.modelContext) private var context
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @Query(sort: \PlayerCharacter.updatedAt, order: .reverse) private var characters: [PlayerCharacter]
     @Query(sort: \SheetTemplate.name) private var templates: [SheetTemplate]
 
@@ -28,7 +29,7 @@ struct CharacterGrid: View {
 
     var body: some View {
         ScrollView {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 200, maximum: 280), spacing: 16)], spacing: 16) {
+            LazyVGrid(columns: LibraryGridLayout.columns(for: sizeClass), spacing: 16) {
                 ForEach(filtered) { character in
                     NavigationLink(value: character) {
                         CharacterCard(character: character)

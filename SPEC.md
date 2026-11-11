@@ -157,12 +157,23 @@ Interface en français, avec un String Catalog prêt pour l'anglais.
 
 **V1.2 terminée** (11 novembre 2026) : synchronisation validée sur des appareils réels, indicateur de diagnostic retiré (seul l'avis de problème reste), schéma CloudKit déployé en production, app créée dans App Store Connect (**Blason - Fiches JDR**, `ch.loristhomas.blason`). La vérification des marques est remise à plus tard (§10).
 
+### 5.11 iPhone (V2.0)
+- Même app, même base iCloud : la cible accepte l'iPhone (portrait et paysage). Pas de changement du modèle.
+- **Bibliothèque** : un onglet par catégorie (Personnages, Templates), chacun avec sa pile ; deux cartes par ligne. Sur iPad, la barre latérale reste. La disposition suit l'appareil, pas la largeur : tourner un grand iPhone ne recrée pas la fiche ouverte. Les onglets se masquent quand une fiche est ouverte.
+- **Fiche** : le mode (Structure / Remplir / Jouer) passe dans la barre du bas, sous le pouce ; en haut, annuler / rétablir, l'inspecteur (Structure) et un menu « Plus » (édition, disposition des pages, thème, export). Les pages sont des pastilles qui défilent horizontalement. L'inspecteur s'ouvre en feuille à mi-hauteur **quand on touche un élément** et se ferme en désélectionnant (sinon il couvrait la barre du bas et le choix du mode) ; la fiche défile pour garder l'élément sélectionné visible au-dessus de la feuille, et garde en bas une marge de la hauteur de la feuille.
+- **Cartes de la bibliothèque** : hauteur fixe, quel que soit le texte : deux lignes réservées au nom (coupé au-delà), une au système ou au template d'origine, même vide.
+- **Tableaux** : un tableau trop large pour l'écran défile horizontalement, quel que soit son nombre de colonnes (avant : au-delà de 4 colonnes seulement).
+- Critère de fin : jouer et tenir à jour la fiche de Leo sur iPhone en vraie partie.
+
 ## 6. Hors V1 (feuille de route)
 
 | Prio | Fonction |
 |---|---|
 | V1.2 | **Synchronisation iCloud** (voir §5.10) : **terminée** le 11 novembre 2026 ; prérequis pour iPhone et Mac |
-| V2 (prochaine) | iPhone et Mac en premier ; inventaire avancé ; **journal de campagne et documents** de session |
+| V2.0 (en cours) | **iPhone** (voir §5.11) |
+| V2.1 | **Mac** : app macOS native dans la même cible SwiftUI (pas Mac Catalyst) |
+| V2.2 – V2.3 | Inventaire avancé (« Besace ») ; **journal de campagne et documents** de session. Premiers changements du modèle : un seul `SheetSchemaV2` si possible, migration testée, schéma CloudKit redéployé |
+| après la V2 | **Refonte de la navigation et de l'interface**, réfléchie en profondeur une fois les fonctions en place : position et style des boutons, barres d'outils, sélecteur Structure / Remplir / Jouer, et un **langage visuel propre** à Blason (voir §10.1) |
 | plus tard | D'autres thèmes de fiche (parchemin, dossier années 20, terminal…), un fichier chacun |
 | plus tard | Mise à jour d'un personnage depuis son template, Apple Pencil, volet MJ |
 | bien plus tard | Jets de dés (depuis un champ ou une ligne, ex. d100 contre la compétence), après l'inventaire et les notes |
@@ -269,6 +280,10 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-11 | Clôture de la V1.2 : le schéma V1 est figé (test d'empreinte des attributs et relations) ; plus de recréation automatique de la base, ni au changement de révision ni quand elle ne s'ouvre pas ; `-resetStore YES` la vide à la demande en développement (base, images et cache iCloud). L'indicateur iCloud reste dans les builds de développement le temps de valider la synchronisation sur des appareils réels. Prochaine étape : V2, en commençant par iPhone et Mac. |
 | 2026-11-11 | Indicateur iCloud de diagnostic retiré (seul l'avis de problème reste ; le correctif des exports annulés, qui ne sont pas des échecs, est conservé). App créée dans App Store Connect sous le nom « Blason - Fiches JDR » ; le nom affiché sous l'icône reste « Blason ». |
 | 2026-11-11 | **V1.2 terminée** : synchronisation validée sur des appareils réels, schéma CloudKit déployé en production. Vérification des marques remise à plus tard. Suite : V2, en commençant par iPhone et Mac. |
+| 2026-11-11 | **Début de la V2**, découpée en lots : V2.0 iPhone, V2.1 Mac (natif, pas Catalyst), puis inventaire et journal, qui changent le modèle. iPhone et Mac d'abord parce qu'ils ne touchent pas au schéma. |
+| 2026-11-11 | V2.0 : bibliothèque en onglets sur iPhone (barre latérale sur iPad), choisie selon l'appareil ; mode de la fiche dans la barre du bas ; pages en pastilles ; tableau trop large → défilement horizontal. |
+| 2026-11-11 | V2.0 : cartes de la bibliothèque à hauteur fixe (nom sur deux lignes au plus, coupé au-delà). La navigation, la barre d'outils, le sélecteur de mode et le langage visuel seront repensés en profondeur après les fonctions de la V2 ; d'ici là, seulement des corrections. |
+| 2026-11-11 | V2.0 : sur iPhone, le choix du mode était inaccessible en Structure : l'inspecteur, ouvert d'office, couvrait la barre du bas. Il ne s'ouvre plus qu'avec une sélection ; la fiche défile jusqu'à l'élément sélectionné (sur iPad aussi, s'il est hors de l'écran, par exemple après un ajout). |
 
 ## 10. Questions ouvertes
 
