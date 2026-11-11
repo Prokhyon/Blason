@@ -12,8 +12,8 @@ struct ImageFieldView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if let data = field.imageData, let image = UIImage(data: data) {
-                Image(uiImage: image)
+            if let data = field.imageData, let image = PlatformImage(data: data) {
+                Image(platformImage: image)
                     .resizable()
                     .scaledToFit()
                     .frame(maxHeight: 280)
@@ -55,14 +55,6 @@ struct ImageFieldView: View {
 
     /// Réduit l'image (1024 px max, JPEG) pour garder la base légère.
     static func downscaled(_ data: Data) -> Data {
-        guard let image = UIImage(data: data),
-              let thumbnail = image.preparingThumbnail(of: fittingSize(image.size, maxSide: 1024)),
-              let jpeg = thumbnail.jpegData(compressionQuality: 0.85) else { return data }
-        return jpeg
-    }
-
-    private static func fittingSize(_ size: CGSize, maxSide: CGFloat) -> CGSize {
-        let scale = min(1, maxSide / max(size.width, size.height, 1))
-        return CGSize(width: size.width * scale, height: size.height * scale)
+        ImageData.downscaled(data)
     }
 }

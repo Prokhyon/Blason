@@ -49,7 +49,7 @@ struct LookupTableEditor: View {
                 Section {
                     TextField("Valeur cherchée", text: $table.input, prompt: Text("ex. FOR+TAI"))
                         .font(.body.monospaced())
-                        .textInputAutocapitalization(.characters)
+                        .textCapitalization(.characters)
                         .autocorrectionDisabled()
                 } header: {
                     Text("Valeur cherchée")
@@ -109,7 +109,7 @@ struct LookupTableEditor: View {
                 }
             }
             .navigationTitle("Table de correspondance")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Annuler") { dismiss() }
@@ -121,9 +121,12 @@ struct LookupTableEditor: View {
                     }
                     .disabled(table.formula == nil || inputError != nil)
                 }
+                #if os(iOS)
+                // Sur Mac, les lignes se déplacent directement à la souris.
                 ToolbarItem(placement: .primaryAction) {
                     EditButton()
                 }
+                #endif
             }
         }
     }

@@ -26,7 +26,13 @@ struct BlasonApp: App {
         do {
             // Une base qui ne s'ouvre pas n'est jamais effacée : elle contient de vraies fiches.
             // Un changement du modèle passe par une nouvelle version de schéma (voir SheetStore).
-            container = try SheetStore.makeContainer(syncsWithICloud: true)
+            var syncsWithICloud = true
+            #if DEBUG
+            // -noCloud YES : sans iCloud, pour lancer une version signée localement (sans les droits
+            // iCloud, CloudKit arrête l'app). La base locale est la même.
+            if UserDefaults.standard.bool(forKey: "noCloud") { syncsWithICloud = false }
+            #endif
+            container = try SheetStore.makeContainer(syncsWithICloud: syncsWithICloud)
         } catch {
             fatalError("Impossible d'ouvrir la base de données : \(error)")
         }

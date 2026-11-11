@@ -41,7 +41,7 @@ struct NewCharacterView: View {
                 }
             }
             .navigationTitle("Nouveau personnage")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Annuler") { dismiss() }
@@ -95,7 +95,7 @@ struct NewTemplateView: View {
                 }
             }
             .navigationTitle("Nouveau template")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Annuler") { dismiss() }

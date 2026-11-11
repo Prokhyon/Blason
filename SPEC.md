@@ -165,13 +165,20 @@ Interface en français, avec un String Catalog prêt pour l'anglais.
 - **Tableaux** : un tableau trop large pour l'écran défile horizontalement, quel que soit son nombre de colonnes (avant : au-delà de 4 colonnes seulement).
 - Critère de fin : jouer et tenir à jour la fiche de Leo sur iPhone en vraie partie.
 
+### 5.12 Mac (V2.1)
+- **App macOS native** dans la même cible (destination « Mac », pas Mac Catalyst ni « Conçue pour iPad »), macOS 26. Même identifiant et même conteneur iCloud ; droits propres au Mac dans `Blason-macOS.entitlements` (bac à sable, réseau sortant, fichiers choisis par l'utilisateur, iCloud, notifications).
+- Les vues n'utilisent ni UIKit ni AppKit : ce qui diffère est réuni dans `Platform/Platform.swift` (couleurs du système, image décodée, réduction des images importées par ImageIO, modificateurs propres à iOS sans effet sur Mac). Les textures et pastilles sont dessinées avec Core Graphics, identiques partout.
+- Sur Mac, la largeur est toujours « normale » : barre latérale, inspecteur en panneau, barre d'outils en haut.
+- En développement, `-noCloud YES` lance l'app sans iCloud (une version signée localement, sans les droits iCloud, est sinon arrêtée par CloudKit).
+- Reste à faire : premier lancement signé depuis Xcode (« My Mac » : Xcode crée le profil de développement Mac), synchronisation vérifiée avec l'iPad et l'iPhone ; puis ce qui rend l'app agréable sur Mac : menus (Fichier, Édition, Affichage, modes au clavier), taille minimale de fenêtre, glisser une image depuis le Finder.
+
 ## 6. Hors V1 (feuille de route)
 
 | Prio | Fonction |
 |---|---|
 | V1.2 | **Synchronisation iCloud** (voir §5.10) : **terminée** le 11 novembre 2026 ; prérequis pour iPhone et Mac |
-| V2.0 (en cours) | **iPhone** (voir §5.11) |
-| V2.1 | **Mac** : app macOS native dans la même cible SwiftUI (pas Mac Catalyst) |
+| V2.0 | **iPhone** (voir §5.11) : à valider en vraie partie |
+| V2.1 (en cours) | **Mac** : app macOS native dans la même cible SwiftUI (voir §5.12) |
 | V2.2 – V2.3 | Inventaire avancé (« Besace ») ; **journal de campagne et documents** de session. Premiers changements du modèle : un seul `SheetSchemaV2` si possible, migration testée, schéma CloudKit redéployé |
 | après la V2 | **Refonte de la navigation et de l'interface**, réfléchie en profondeur une fois les fonctions en place : position et style des boutons, barres d'outils, sélecteur Structure / Remplir / Jouer, et un **langage visuel propre** à Blason (voir §10.1) |
 | plus tard | D'autres thèmes de fiche (parchemin, dossier années 20, terminal…), un fichier chacun |
@@ -284,6 +291,7 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-11 | V2.0 : bibliothèque en onglets sur iPhone (barre latérale sur iPad), choisie selon l'appareil ; mode de la fiche dans la barre du bas ; pages en pastilles ; tableau trop large → défilement horizontal. |
 | 2026-11-11 | V2.0 : cartes de la bibliothèque à hauteur fixe (nom sur deux lignes au plus, coupé au-delà). La navigation, la barre d'outils, le sélecteur de mode et le langage visuel seront repensés en profondeur après les fonctions de la V2 ; d'ici là, seulement des corrections. |
 | 2026-11-11 | V2.0 : sur iPhone, le choix du mode était inaccessible en Structure : l'inspecteur, ouvert d'office, couvrait la barre du bas. Il ne s'ouvre plus qu'avec une sélection ; la fiche défile jusqu'à l'élément sélectionné (sur iPad aussi, s'il est hors de l'écran, par exemple après un ajout). |
+| 2026-11-11 | V2.1 : destination Mac native ajoutée à la cible ; les appels UIKit passent par `Platform.swift` (couleurs, images, textures en Core Graphics, modificateurs iOS). `-noCloud YES` (développement) pour lancer sans iCloud. |
 
 ## 10. Questions ouvertes
 

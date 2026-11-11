@@ -1,4 +1,9 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#else
+import AppKit
+#endif
 
 extension SheetTheme {
     /// « Couleur du template » : la fiche native, teintée de la couleur choisie (titres, en-têtes
@@ -12,7 +17,7 @@ extension SheetTheme {
         theme.inputFill = tint.opacity(0.10)
         theme.pageBackground = {
             AnyView(ZStack {
-                Color(.systemGroupedBackground)
+                Color.groupedBackground
                 tint.opacity(0.07)
             })
         }
@@ -25,14 +30,27 @@ extension SheetTheme {
 
 /// La couleur assombrie en mode clair, éclaircie en mode sombre, pour le texte et les pleins sous texte blanc.
 private func readable(_ tint: Color) -> Color {
+    #if canImport(UIKit)
     let base = UIColor(tint)
     return Color(uiColor: UIColor { traits in
         let color = base.resolvedColor(with: traits)
         let dark = traits.userInterfaceStyle == .dark
         return color.mixed(with: dark ? .white : .black, amount: dark ? 0.15 : 0.32)
     })
+    #else
+    let base = NSColor(tint)
+    return Color(nsColor: NSColor(name: nil) { appearance in
+        let dark = appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+        var color = base
+        appearance.performAsCurrentDrawingAppearance {
+            color = base.usingColorSpace(.sRGB) ?? base
+        }
+        return color.blended(withFraction: dark ? 0.15 : 0.32, of: dark ? .white : .black) ?? color
+    })
+    #endif
 }
 
+#if canImport(UIKit)
 private extension UIColor {
     func mixed(with other: UIColor, amount: CGFloat) -> UIColor {
         var (r1, g1, b1, a1): (CGFloat, CGFloat, CGFloat, CGFloat) = (0, 0, 0, 0)
@@ -43,6 +61,7 @@ private extension UIColor {
                        blue: b1 + (b2 - b1) * amount, alpha: a1)
     }
 }
+#endif
 
 /// Section avec un bandeau de titre teinté et un liseré.
 private struct TintedSectionFrame: View {
@@ -63,7 +82,7 @@ private struct TintedSectionFrame: View {
                 .padding(14)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color.secondaryGroupedBackground)
         .clipShape(shape)
         .overlay(shape.strokeBorder(tint.opacity(0.35), lineWidth: 1))
     }

@@ -201,7 +201,7 @@ private struct PageChips: View {
                                 .lineLimit(1)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 6)
-                                .background(selected ? Color.accentColor.opacity(0.15) : Color(.tertiarySystemFill),
+                                .background(selected ? Color.accentColor.opacity(0.15) : Color.tertiaryFill,
                                             in: Capsule())
                                 .foregroundStyle(selected ? Color.accentColor : .primary)
                         }

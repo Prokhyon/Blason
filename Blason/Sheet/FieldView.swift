@@ -318,7 +318,7 @@ struct NumberField: View {
     var body: some View {
         TextField("", text: $text, prompt: prompt.map(Text.init))
             .focused($isFocused)
-            .keyboardType(integer ? .numberPad : .decimalPad)
+            .numericKeyboard(integer: integer)
             .multilineTextAlignment(.trailing)
             .monospacedDigit()
             .frame(width: width * scale)

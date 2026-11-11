@@ -40,7 +40,7 @@ struct CharacterGrid: View {
             }
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color.groupedBackground)
         .overlay { emptyState }
         .navigationTitle("Personnages")
         .searchable(text: $search, prompt: "Rechercher un personnage")

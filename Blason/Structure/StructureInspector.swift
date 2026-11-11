@@ -39,7 +39,7 @@ struct StructureInspector: View {
             Divider()
             content
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color.groupedBackground)
         .onChange(of: focus) { _, value in
             editor.isEditingText = value != nil
         }
@@ -415,7 +415,7 @@ private struct FieldInspector: View {
                     get: { field.code },
                     set: { field.code = $0.filter { !$0.isWhitespace } }
                 ), prompt: "ex. FOR", focus: focus, focusValue: .other("code"), monospaced: true)
-                .textInputAutocapitalization(.characters)
+                .textCapitalization(.characters)
                 .autocorrectionDisabled()
                 Picker("Type", selection: Binding(
                     get: { field.kind },
@@ -577,7 +577,7 @@ private struct ColumnInspector: View {
                     get: { column.code },
                     set: { column.code = $0.filter { !$0.isWhitespace } }
                 ), prompt: "ex. valeur", focus: focus, focusValue: .other("code"), monospaced: true)
-                .textInputAutocapitalization(.never)
+                .textCapitalization(.never)
                 .autocorrectionDisabled()
                 Picker("Type", selection: $column.kind) {
                     ForEach(ColumnKind.allCases, id: \.self) { kind in

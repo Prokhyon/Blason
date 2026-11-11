@@ -46,7 +46,7 @@ struct TemplateGrid: View {
             }
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color.groupedBackground)
         .overlay { emptyState }
         .navigationTitle("Templates")
         .searchable(text: $search, prompt: "Rechercher un template")

@@ -25,6 +25,8 @@ final class SyncMonitor {
         case "failed": syncProblem = .failed("Le serveur iCloud a refusé la demande."); return
         default: break
         }
+        // -noCloud YES : pas d'iCloud, pas de suivi (CloudKit arrêterait l'app sans ses droits).
+        if UserDefaults.standard.bool(forKey: "noCloud") { return }
         #endif
         let center = NotificationCenter.default
         observers.append(center.addObserver(forName: .CKAccountChanged, object: nil, queue: .main) { [weak self] _ in

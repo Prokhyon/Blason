@@ -65,7 +65,7 @@ struct SheetView: View {
         }
         .animation(.default, value: showsSidePanel)
         .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
         .toolbar { toolbar }
         .sheet(isPresented: compactInspectorShown) {
             StructureInspector(editor: editor, isTemplate: sheet?.template != nil) {
@@ -156,11 +156,15 @@ struct SheetView: View {
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
+        #if os(iOS)
         if sizeClass == .compact {
             compactToolbar
         } else {
             regularToolbar
         }
+        #else
+        regularToolbar
+        #endif
     }
 
     /// iPad : tout dans la barre du haut.
@@ -194,6 +198,7 @@ struct SheetView: View {
         }
     }
 
+    #if os(iOS)
     /// iPhone : le mode en bas, sous le pouce ; en haut, annuler et un menu qui regroupe
     /// édition, affichage et export. L'inspecteur s'ouvre en touchant un élément.
     @ToolbarContentBuilder
@@ -220,6 +225,7 @@ struct SheetView: View {
             modePicker
         }
     }
+    #endif
 
     private var inspectorButton: some View {
         Button {

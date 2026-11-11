@@ -42,7 +42,7 @@ struct PasteListView: View {
                         .font(.body.monospaced())
                         .frame(minHeight: 220)
                         .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
+                        .textCapitalization(.never)
                         .focused($focused)
                 } header: {
                     Text("Une ligne par élément")
@@ -61,7 +61,7 @@ struct PasteListView: View {
                 }
             }
             .navigationTitle("Coller dans \(destination)")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Annuler") { dismiss() }

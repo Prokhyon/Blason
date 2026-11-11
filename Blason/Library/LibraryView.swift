@@ -114,7 +114,7 @@ struct LibraryView: View {
                     initialMode: .play,
                     onEdit: { character.touch() }
                 )
-                .toolbar(.hidden, for: .tabBar)
+                .hidesTabBar()
             }
             .navigationDestination(for: SheetTemplate.self) { template in
                 SheetView(
@@ -123,7 +123,7 @@ struct LibraryView: View {
                     initialMode: .structure,
                     onEdit: { template.updatedAt = Date() }
                 )
-                .toolbar(.hidden, for: .tabBar)
+                .hidesTabBar()
             }
         }
     }

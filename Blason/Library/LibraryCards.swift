@@ -29,14 +29,14 @@ struct CharacterCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(12)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        .background(Color.secondaryGroupedBackground, in: RoundedRectangle(cornerRadius: 14))
         .contentShape(RoundedRectangle(cornerRadius: 14))
     }
 
     @ViewBuilder
     private var portrait: some View {
-        if let data = character.portraitData, let image = UIImage(data: data) {
-            Image(uiImage: image)
+        if let data = character.portraitData, let image = PlatformImage(data: data) {
+            Image(platformImage: image)
                 .resizable()
                 .scaledToFill()
         } else {
@@ -64,7 +64,7 @@ struct TemplateCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             ZStack {
-                Color(.tertiarySystemFill)
+                Color.tertiaryFill
                 Image(systemName: "doc.text")
                     .font(.system(size: 40))
                     .foregroundStyle(.secondary)
@@ -92,7 +92,7 @@ struct TemplateCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(12)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        .background(Color.secondaryGroupedBackground, in: RoundedRectangle(cornerRadius: 14))
         .contentShape(RoundedRectangle(cornerRadius: 14))
     }
 }

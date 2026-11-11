@@ -30,33 +30,34 @@ enum PaperTheme {
     static let paper = Color(red: 0.955, green: 0.93, blue: 0.865)
 
     /// Grain du papier : une tuile dessinée une fois (points et fibres, tirage reproductible).
-    @MainActor static let texture: UIImage = {
+    /// Dessinée avec Core Graphics, à 3 pixels par point, identique sur iOS et macOS.
+    @MainActor static let texture: CGImage? = {
         let side: CGFloat = 256
         var random = SplitMix64(seed: 0x5EED)
+        func srgb(_ red: CGFloat, _ green: CGFloat, _ blue: CGFloat, _ alpha: CGFloat = 1) -> CGColor {
+            CGColor(srgbRed: red, green: green, blue: blue, alpha: alpha)
+        }
         // Tuile opaque, points mélangés au papier (et non copiés : ils feraient des trous).
-        let format = UIGraphicsImageRendererFormat.default()
-        format.opaque = true
-        return UIGraphicsImageRenderer(size: CGSize(width: side, height: side), format: format).image { context in
-            UIColor(paper).setFill()
+        return DrawnImage.make(width: side, height: side, opaque: true) { context in
+            context.setFillColor(srgb(0.955, 0.93, 0.865))
             context.fill(CGRect(x: 0, y: 0, width: side, height: side))
             for _ in 0..<7000 {
                 let dark = Bool.random(using: &random)
                 let alpha = CGFloat.random(in: 0.015...0.06, using: &random)
-                (dark ? UIColor(red: 0.35, green: 0.28, blue: 0.18, alpha: alpha) : UIColor(white: 1, alpha: alpha * 1.5)).setFill()
+                context.setFillColor(dark ? srgb(0.35, 0.28, 0.18, alpha) : srgb(1, 1, 1, alpha * 1.5))
                 let size = CGFloat.random(in: 0.6...1.6, using: &random)
                 context.fill(CGRect(x: .random(in: 0..<side, using: &random), y: .random(in: 0..<side, using: &random),
-                                    width: size, height: size), blendMode: .normal)
+                                    width: size, height: size))
             }
-            context.cgContext.setLineWidth(0.5)
+            context.setLineWidth(0.5)
             for _ in 0..<45 {
-                UIColor(red: 0.45, green: 0.36, blue: 0.24, alpha: .random(in: 0.04...0.09, using: &random)).setStroke()
+                context.setStrokeColor(srgb(0.45, 0.36, 0.24, .random(in: 0.04...0.09, using: &random)))
                 let start = CGPoint(x: .random(in: 0..<side, using: &random), y: .random(in: 0..<side, using: &random))
-                let path = UIBezierPath()
-                path.move(to: start)
-                path.addQuadCurve(
-                    to: CGPoint(x: start.x + .random(in: -14...14, using: &random), y: start.y + .random(in: -14...14, using: &random)),
-                    controlPoint: CGPoint(x: start.x + .random(in: -8...8, using: &random), y: start.y + .random(in: -8...8, using: &random)))
-                path.stroke()
+                let end = CGPoint(x: start.x + .random(in: -14...14, using: &random), y: start.y + .random(in: -14...14, using: &random))
+                let control = CGPoint(x: start.x + .random(in: -8...8, using: &random), y: start.y + .random(in: -8...8, using: &random))
+                context.move(to: start)
+                context.addQuadCurve(to: end, control: control)
+                context.strokePath()
             }
         }
     }()
@@ -77,8 +78,12 @@ private struct SplitMix64: RandomNumberGenerator {
 
 private struct PaperBackground: View {
     var body: some View {
-        Image(uiImage: PaperTheme.texture)
-            .resizable(resizingMode: .tile)
+        if let texture = PaperTheme.texture {
+            Image(decorative: texture, scale: 3)
+                .resizable(resizingMode: .tile)
+        } else {
+            PaperTheme.paper
+        }
     }
 }
 

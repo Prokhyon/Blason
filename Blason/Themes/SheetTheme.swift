@@ -22,9 +22,9 @@ struct SheetTheme {
     /// Couleur des titres (page, section, groupe) ; nil : celle du texte.
     var headingColor: Color?
     /// Fond d'une section (cadre natif).
-    var cardBackground: Color = Color(.secondarySystemGroupedBackground)
+    var cardBackground: Color = Color.secondaryGroupedBackground
     /// Fond discret d'une zone de saisie et d'une case de piste.
-    var inputFill: Color = Color(.tertiarySystemFill)
+    var inputFill: Color = Color.tertiaryFill
     /// Contour d'une case de piste ; nil : aucun.
     var trackStroke: Color?
     /// Clair ou sombre imposé (une fiche papier reste claire) ; nil : réglage du système.
@@ -43,7 +43,7 @@ struct SheetTheme {
 
     /// Fond derrière les pages.
     var pageBackground: @MainActor @Sendable () -> AnyView = {
-        AnyView(Color(.systemGroupedBackground))
+        AnyView(Color.groupedBackground)
     }
     /// Cadre d'une section : place son titre et son contenu.
     var sectionFrame: @MainActor @Sendable (SectionFrameConfiguration) -> AnyView = { configuration in

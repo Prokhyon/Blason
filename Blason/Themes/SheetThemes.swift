@@ -63,11 +63,12 @@ enum ThemePalette {
 
     /// Pastille de couleur pour un menu (les menus affichent les images en une seule teinte, sauf celles-ci).
     static func swatch(_ color: Color) -> Image {
-        let size = CGSize(width: 18, height: 18)
-        let image = UIGraphicsImageRenderer(size: size).image { _ in
-            UIColor(color).setFill()
-            UIBezierPath(ovalIn: CGRect(origin: .zero, size: size)).fill()
-        }
-        return Image(uiImage: image.withRenderingMode(.alwaysOriginal))
+        let side: CGFloat = 18
+        let fill = color.resolve(in: EnvironmentValues()).cgColor
+        guard let image = DrawnImage.make(width: side, height: side, draw: { context in
+            context.setFillColor(fill)
+            context.fillEllipse(in: CGRect(x: 0, y: 0, width: side, height: side))
+        }) else { return Image(systemName: "circle.fill") }
+        return Image(decorative: image, scale: 3).renderingMode(.original)
     }
 }
