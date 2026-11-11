@@ -14,7 +14,13 @@ Couleurs (`planche-couleurs-…`, palettes `HUES`, `CONTRASTS`, `HUES_GOLD`, `HU
 - huit teintes (terre cuite, gueules, or, sinople, sarcelle, azur, pourpre, graphite), candidates pour des icônes alternatives au choix dans l'app ;
 - coins en métal héraldique (or ou argent) à étudier ; pas de métal sur métal (la teinte Or prend des coins d'argent).
 
-**Pour essayer dans Icon Composer : le dossier [`Finale`](Finale/README.md)**, une version par teinte (unie, ou avec des coins en or), avec les calques à importer et les couleurs de chaque apparence. Essais en cours : un or plus lumineux en sombre (`planche-or-sombre`) et d'autres fonds clairs (`planche-fonds-clairs`).
+**Pour essayer dans Icon Composer : le dossier [`Finale`](Finale/README.md)**, une version par teinte (unie, ou avec des coins en or), avec les calques à importer et les couleurs de chaque apparence. Choix faits : or « +2 » en sombre (`#BA7517`), fond crème.
+
+Position : descendu de 2 unités (32 px), parce que le chef plat et la pointe le faisaient paraître haut. Les autres positions essayées sont sur `planche-position`.
+
+**Les icônes : le dossier [`Icones`](Icones)**, un document Icon Composer par teinte (`Blason-<teinte>.icon`). Chacun contient les trois calques, chacun dans son groupe de verre, avec les couleurs claires et sombres, et le fond crème ou sombre. Ils s'ouvrent dans Icon Composer. `make.py` les installe aussi dans l'app : `Character Sheet/AppIcon.icon` pour l'icône principale (`MAIN_ICON`, terre cuite unie) et `Character Sheet/AppIcons/AppIcon-<teinte>.icon` pour les quinze alternatives, déclarées dans `ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES` du projet (à mettre à jour si la liste change). Le teinté et le transparent sont calculés par le système. Si Icon Composer est installé, `make.py` en tire le vrai rendu avec `ictool` : `Icones/Rendus` et `planche-icones.png` (clair, sombre, teinté sombre, transparent clair). Les réglages du verre (translucidité 0,5, ombre neutre 0,5) sont dans `icon_document`.
+
+Exemples à plusieurs couches (`planche-couches`, calques dans [`Couches`](Couches)) : verre sur chaque groupe, un « 0 » de dé sur la face, des coins dépolis, ou une plaque en forme d'écu derrière le dé. L'aperçu simule grossièrement le verre (ombre, reflet, transparence) ; le vrai rendu se voit dans Icon Composer, en mettant chaque calque dans son propre groupe.
 
 ## Les pistes (`DESIGNS` dans `make.py`)
 

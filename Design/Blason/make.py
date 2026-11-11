@@ -300,7 +300,7 @@ ELANCE = {
     "Chef-Elance-34": ("34° ×1,4", dict(tilt=34, elong=1.4)),
     # 32° retenu, élargi un peu
     "Chef-Elance-32-l6": ("32° large 6 %", dict(tilt=32, elong=1.4, widen=1.06)),
-    "Chef-Elance-32-l12": ("32° large 12 %", dict(tilt=32, elong=1.4, widen=1.12)),
+    "Chef-Elance-32-l12": ("32° large 12 %", dict(tilt=32, elong=1.4, widen=1.12, dy=2)),   # descendu de 2 (validé)
     "Chef-Elance-32-l18": ("32° large 18 %", dict(tilt=32, elong=1.4, widen=1.18)),
 }
 for name, (_, view) in ELANCE.items():
@@ -347,7 +347,7 @@ def metal_corners(pal, light, dark):
     return {"Clair": dict(pal["Clair"], corner=light), "Sombre": dict(pal["Sombre"], corner=dark)}
 
 
-GOLD, SILVER = ("#FAC775", "#854F0B"), ("#D3D1C7", "#888780")
+GOLD, SILVER = ("#FAC775", "#BA7517"), ("#D3D1C7", "#888780")     # or « +2 » en sombre
 # Pas de métal sur métal : la teinte Or prend des coins d'argent dans la série « or ».
 HUES_GOLD = {name: metal_corners(pal, *(SILVER if name == "Or" else GOLD)) for name, pal in HUES.items()}
 HUES_SILVER = {name: metal_corners(pal, *SILVER) for name, pal in HUES.items()}
@@ -528,6 +528,9 @@ def write_final(out):
 
 Généré par `make.py` (ne pas modifier à la main) : forme `{CHOSEN}`, une version par teinte.
 
+Les documents Icon Composer complets, prêts à l'emploi, sont dans `../Icones`. Les dossiers ci-dessous
+servent à reconstruire une icône à la main.
+
 ## Essayer dans Icon Composer
 
 Dans le dossier d'une teinte, glisser dans l'ordre :
@@ -550,6 +553,271 @@ sans le verre.
         f.write(readme)
 
 
+# Position verticale ---------------------------------------------------------------------------
+# Le dé est centré sur sa boîte, mais le chef plat et la pointe le font paraître haut :
+# on le descend de quelques unités (grille de 64 ; 1 = 16 px dans l'icône de 1024).
+
+CHOSEN_VIEW = dict(tilt=32, elong=1.4, widen=1.12, size=46)   # sans dy : la planche le fait varier
+POSITIONS = (0, 1, 2, 3, 4)
+POSITION_DESIGNS = {dy: chef(projected(dict(CHOSEN_VIEW, dy=dy))) for dy in POSITIONS}
+
+
+def position_sheet(out, filename, pal):
+    """Chaque décalage en clair et en sombre, avec les axes du centre de l'icône."""
+    cell, pad, label = 1024, 160, 120
+    width = pad + len(POSITIONS) * (cell + pad)
+    height = label + 2 * (cell + pad) + 600
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width // 8}" height="{height // 8}" '
+             f'viewBox="0 0 {width} {height}"><rect width="{width}" height="{height}" fill="#FFFFFF"/>']
+    for col, dy in enumerate(POSITIONS):
+        x = pad + col * (cell + pad)
+        design = POSITION_DESIGNS[dy]
+        parts.append(f'<text x="{x + cell / 2}" y="{label - 20}" font-family="Helvetica" font-size="80" '
+                     f'text-anchor="middle" fill="#444441">+{dy} ({dy * 16} px)</text>')
+        for row, appearance in enumerate(("Clair", "Sombre")):
+            y = label + row * (cell + pad)
+            parts.append(icon_group(x, y, cell, design, {**APPEARANCES[appearance], **pal[appearance]}))
+            parts.append(f'<path d="M{x + 512} {y} V{y + 1024} M{x} {y + 512} H{x + 1024}" '
+                         f'stroke="#378ADD" stroke-width="3" stroke-dasharray="16 12" opacity="0.6"/>')
+        parts.append(icon_group(x + cell / 2 - 116, label + 2 * (cell + pad) + 100, 232, design,
+                                {**APPEARANCES["Clair"], **pal["Clair"]}))
+    parts.append("</svg>\n")
+    path = os.path.join(out, filename)
+    with open(path, "w") as f:
+        f.write("".join(parts))
+    if shutil.which("rsvg-convert"):
+        subprocess.run(["rsvg-convert", path, "-o", path[:-4] + ".png"], check=True)
+
+
+# Exemples à plusieurs couches -------------------------------------------------------------------
+# Icon Composer donne à chaque groupe de calques du verre, des reflets, une ombre et de la
+# profondeur. Ces exemples séparent davantage les calques ; l'aperçu simule grossièrement le verre
+# (ombre portée, reflet en haut, transparence), le vrai rendu se voit dans Icon Composer.
+
+LAYERED_DY = 2
+
+
+def raw_chosen(dy=LAYERED_DY):
+    return add_corners(recolor(projected(dict(CHOSEN_VIEW, dy=dy)), "die", "face"), role="corner")
+
+
+def outline(faces):
+    """Contour extérieur de l'ensemble des faces, dans l'ordre."""
+    count = edge_count([p for _, p in faces])
+    nxt = {}
+    for k, n in count.items():
+        if n == 1:
+            a, b = tuple(k)
+            nxt.setdefault(a, []).append(b)
+            nxt.setdefault(b, []).append(a)
+    start = next(iter(nxt))
+    loop, prev = [start], None
+    while True:
+        here = loop[-1]
+        step = next(p for p in nxt[here] if p != prev)
+        if step == start:
+            return loop
+        prev = here
+        loop.append(step)
+
+
+def zero_glyph(face):
+    """Un « 0 » de dé, centré sur la face principale."""
+    xs, ys = [p[0] for p in face], [p[1] for p in face]
+    cx, cy = (min(xs) + max(xs)) / 2, min(ys) + (max(ys) - min(ys)) * 0.42
+    rx, ry = (max(xs) - min(xs)) * 0.2, (max(ys) - min(ys)) * 0.22
+    t = rx * 0.45
+    def ellipse(a, b):
+        return (f"M{(cx + a) * SCALE:.1f} {cy * SCALE:.1f} A{a * SCALE:.1f} {b * SCALE:.1f} 0 1 0 "
+                f"{(cx - a) * SCALE:.1f} {cy * SCALE:.1f} A{a * SCALE:.1f} {b * SCALE:.1f} 0 1 0 "
+                f"{(cx + a) * SCALE:.1f} {cy * SCALE:.1f} Z")
+    return ellipse(rx, ry) + " " + ellipse(rx - t, ry - t)
+
+
+def layered_examples():
+    """{nom: [(fichier, rôle, formes, effets)]} ; effets : opacité, ombre, reflet."""
+    faces = raw_chosen()
+    base = layers(faces, ["corner", "die", "face"])
+    corners, die, face = base
+    glass = dict(shadow=True, highlight=True)
+    face_poly = face[2][0]
+    plaque = ("1-plaque", "corner", [rounded(outline(faces), 2.0)], dict(opacity=0.55, highlight=True))
+    return {
+        "Plat": [(f, r, s, {}) for f, r, s in base],
+        "Verre": [(f, r, s, glass) for f, r, s in base],
+        "Chiffre": [(f, r, s, glass) for f, r, s in base] + [("4-chiffre", "corner", [zero_glyph(face_poly)], glass)],
+        "Coins-depolis": [(corners[0], "corner", corners[2], dict(opacity=0.45, highlight=True)),
+                          (die[0], "die", die[2], glass), (face[0], "face", face[2], glass)],
+        "Plaque": [plaque, ("2-de", "die", die[2], glass), ("3-face", "face", face[2], glass)],
+    }
+
+
+def glass_group(x, y, size, layers_fx, colors, uid):
+    k = size / 1024
+    g = [f'<g transform="translate({x} {y}) scale({k})">',
+         f'<rect width="1024" height="1024" rx="230" fill="{colors["bg"]}"/>']
+    for i, (_, role, shapes, fx) in enumerate(layers_fx):
+        ds = paths(shapes)
+        if fx.get("shadow"):
+            g += [f'<path d="{d}" fill="#000000" opacity="0.28" filter="url(#ombre)" fill-rule="evenodd"/>' for d in ds]
+        g += [f'<path d="{d}" fill="{colors[role]}" opacity="{fx.get("opacity", 1)}" fill-rule="evenodd"/>' for d in ds]
+        if fx.get("highlight"):
+            g += [f'<path d="{d}" fill="url(#reflet)" fill-rule="evenodd"/>' for d in ds]
+            g += [f'<path d="{d}" fill="none" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="5" '
+                  f'fill-rule="evenodd"/>' for d in ds]
+    return "".join(g) + "</g>"
+
+
+def layered_sheet(out, examples, pal, filename):
+    cell, pad, label = 1024, 160, 120
+    width = pad + len(examples) * (cell + pad)
+    height = label + 2 * (cell + pad) + 600
+    defs = ('<defs><filter id="ombre" x="-20%" y="-20%" width="140%" height="140%">'
+            '<feGaussianBlur stdDeviation="14"/><feOffset dy="14"/></filter>'
+            '<linearGradient id="reflet" x1="0" y1="0" x2="0" y2="1">'
+            '<stop offset="0" stop-color="#FFFFFF" stop-opacity="0.45"/>'
+            '<stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient></defs>')
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width // 8}" height="{height // 8}" '
+             f'viewBox="0 0 {width} {height}">{defs}<rect width="{width}" height="{height}" fill="#FFFFFF"/>']
+    for col, (name, layers_fx) in enumerate(examples.items()):
+        x = pad + col * (cell + pad)
+        parts.append(f'<text x="{x + cell / 2}" y="{label - 20}" font-family="Helvetica" font-size="80" '
+                     f'text-anchor="middle" fill="#444441">{name}</text>')
+        for row, appearance in enumerate(("Clair", "Sombre")):
+            colors = {**APPEARANCES[appearance], **pal[appearance]}
+            parts.append(glass_group(x, label + row * (cell + pad), cell, layers_fx, colors, f"{col}{row}"))
+        parts.append(glass_group(x + cell / 2 - 116, label + 2 * (cell + pad) + 100, 232, layers_fx,
+                                 {**APPEARANCES["Clair"], **pal["Clair"]}, f"{col}p"))
+    parts.append("</svg>\n")
+    path = os.path.join(out, filename)
+    with open(path, "w") as f:
+        f.write("".join(parts))
+    if shutil.which("rsvg-convert"):
+        subprocess.run(["rsvg-convert", path, "-o", path[:-4] + ".png"], check=True)
+
+
+def write_layered(out, examples, pal):
+    """Couches/<exemple>/ : les calques à importer, un groupe par calque dans Icon Composer."""
+    base = os.path.join(out, "Couches")
+    if os.path.isdir(base):
+        shutil.rmtree(base)
+    for name, layers_fx in examples.items():
+        if name == "Plat":
+            continue
+        folder = os.path.join(base, name)
+        os.makedirs(folder)
+        for filename, role, shapes, _ in layers_fx:
+            with open(os.path.join(folder, f"{filename}.svg"), "w") as f:
+                f.write(layer_svg(shapes, pal["Clair"][role]))
+
+
+# Icônes Icon Composer ---------------------------------------------------------------------------
+# Icones/Blason-<teinte>.icon : un document Icon Composer complet par teinte (calques, couleurs
+# claires et sombres, fond), prêt à glisser dans Xcode. Le teinté est calculé par le système.
+# Si Icon Composer est installé, ictool en tire le vrai rendu Liquid Glass.
+
+ICTOOL = "/Applications/Icon Composer.app/Contents/Executables/ictool"
+RENDITIONS = {"clair": "Default", "sombre": "Dark", "teinte": "TintedDark", "transparent": "ClearLight"}
+
+
+def srgb(color):
+    r, g, b = (int(color[i:i + 2], 16) / 255 for i in (1, 3, 5))
+    return f"srgb:{r:.5f},{g:.5f},{b:.5f},1.00000"
+
+
+def specialized(light, dark, key="solid"):
+    return [{"value": {key: srgb(light)}}, {"appearance": "dark", "value": {key: srgb(dark)}}]
+
+
+def icon_document(design, pal):
+    """icon.json : un groupe par calque, le plus haut d'abord (comme la liste d'Icon Composer)."""
+    groups = []
+    for filename, role, _ in reversed(design):
+        layer = {"blend-mode": "normal", "glass": True, "hidden": False,
+                 "fill-specializations": specialized(pal["Clair"][role], pal["Sombre"][role]),
+                 "image-name": f"{filename}.svg", "name": filename.split("-", 1)[1],
+                 "position": {"scale": 1, "translation-in-points": [0, 0]}}
+        groups.append({"blur-material": None, "hidden": False, "layers": [layer], "lighting": "individual",
+                       "shadow": {"kind": "neutral", "opacity": 0.5}, "specular": True,
+                       "translucency": {"enabled": True, "value": 0.5}})
+    return {"fill-specializations": specialized(APPEARANCES["Clair"]["bg"], APPEARANCES["Sombre"]["bg"]),
+            "groups": groups,
+            "supported-platforms": {"circles": ["watchOS"], "squares": "shared"}}
+
+
+MAIN_ICON = "Terre-cuite"                                  # l'icône de l'app ; les autres sont alternatives
+APP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Character Sheet")
+
+
+def write_icon_bundle(bundle, design, pal):
+    import json
+    if os.path.isdir(bundle):
+        shutil.rmtree(bundle)
+    os.makedirs(os.path.join(bundle, "Assets"))
+    for filename, role, shapes in design:
+        with open(os.path.join(bundle, "Assets", f"{filename}.svg"), "w") as f:
+            f.write(layer_svg(shapes, pal["Clair"][role]))
+    with open(os.path.join(bundle, "icon.json"), "w") as f:
+        json.dump(icon_document(design, pal), f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+
+def alternate_names():
+    return [f"AppIcon-{slug}" for slug in final_sets() if slug != MAIN_ICON]
+
+
+def write_icons(out):
+    base = os.path.join(out, "Icones")
+    if os.path.isdir(base):
+        shutil.rmtree(base)
+    design = DESIGNS[CHOSEN]
+    renders = os.path.join(base, "Rendus")
+    os.makedirs(renders)
+    for slug, (_, _, pal) in final_sets().items():
+        bundle = os.path.join(base, f"Blason-{slug}.icon")
+        write_icon_bundle(bundle, design, pal)
+        if os.path.exists(ICTOOL):
+            for suffix, rendition in RENDITIONS.items():
+                subprocess.run([ICTOOL, bundle, "--export-image", "--output-file",
+                                os.path.join(renders, f"{slug}-{suffix}.png"), "--platform", "iOS",
+                                "--rendition", rendition, "--width", "1024", "--height", "1024", "--scale", "1"],
+                               check=True, capture_output=True)
+    if os.path.exists(ICTOOL):
+        render_sheet(out, renders)
+
+
+def install_icons(app=APP):
+    """Dans l'app : AppIcon.icon (MAIN_ICON) et AppIcons/AppIcon-<teinte>.icon (les alternatives,
+    listées dans ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES du projet)."""
+    if not os.path.isdir(app):
+        return
+    design = DESIGNS[CHOSEN]
+    alternates = os.path.join(app, "AppIcons")
+    if os.path.isdir(alternates):
+        shutil.rmtree(alternates)
+    for slug, (_, _, pal) in final_sets().items():
+        name = "AppIcon" if slug == MAIN_ICON else f"AppIcon-{slug}"
+        write_icon_bundle(os.path.join(app if slug == MAIN_ICON else alternates, f"{name}.icon"), design, pal)
+
+
+def render_sheet(out, renders):
+    """planche-icones.png : les rendus d'ictool, une colonne par teinte."""
+    from PIL import Image, ImageDraw, ImageFont
+    slugs = list(final_sets())
+    cell, pad = 256, 32
+    rows = list(RENDITIONS)
+    sheet = Image.new("RGB", (pad + len(slugs) * (cell + pad), pad + len(rows) * (cell + pad) + 40), "#FFFFFF")
+    font = ImageFont.load_default(size=18)
+    draw = ImageDraw.Draw(sheet)
+    for col, slug in enumerate(slugs):
+        x = pad + col * (cell + pad)
+        draw.text((x + cell / 2, pad / 2 + 4), slug, fill="#444441", font=font, anchor="mm")
+        for row, suffix in enumerate(rows):
+            img = Image.open(os.path.join(renders, f"{slug}-{suffix}.png")).convert("RGBA").resize((cell, cell))
+            sheet.paste(img, (x, pad + 40 + row * (cell + pad)), img)
+    sheet.save(os.path.join(out, "planche-icones.png"))
+
+
 if __name__ == "__main__":
     out = sys.argv[1] if len(sys.argv) > 1 else "."
     write(out, DESIGNS)
@@ -561,3 +829,9 @@ if __name__ == "__main__":
     for filename, rows in GRIDS.items():
         grid(out, DESIGNS[CHOSEN], HUES_GOLD, rows, filename)
     write_final(out)
+    position_sheet(out, "planche-position.svg", HUES_GOLD["Gueules"])
+    examples = layered_examples()
+    layered_sheet(out, examples, HUES_GOLD["Gueules"], "planche-couches.svg")
+    write_layered(out, examples, HUES_GOLD["Gueules"])
+    write_icons(out)
+    install_icons()

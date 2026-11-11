@@ -1,0 +1,152 @@
+{
+  "fill-specializations": [
+    {
+      "value": {
+        "solid": "srgb:0.95686,0.94902,0.92549,1.00000"
+      }
+    },
+    {
+      "appearance": "dark",
+      "value": {
+        "solid": "srgb:0.12157,0.12157,0.11373,1.00000"
+      }
+    }
+  ],
+  "groups": [
+    {
+      "blur-material": null,
+      "hidden": false,
+      "layers": [
+        {
+          "blend-mode": "normal",
+          "glass": true,
+          "hidden": false,
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "srgb:0.44314,0.16863,0.07451,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "srgb:0.96078,0.76863,0.70196,1.00000"
+              }
+            }
+          ],
+          "image-name": "3-face.svg",
+          "name": "face",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "lighting": "individual",
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.5
+      }
+    },
+    {
+      "blur-material": null,
+      "hidden": false,
+      "layers": [
+        {
+          "blend-mode": "normal",
+          "glass": true,
+          "hidden": false,
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "srgb:0.84706,0.35294,0.18824,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "srgb:0.84706,0.35294,0.18824,1.00000"
+              }
+            }
+          ],
+          "image-name": "2-de.svg",
+          "name": "de",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "lighting": "individual",
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.5
+      }
+    },
+    {
+      "blur-material": null,
+      "hidden": false,
+      "layers": [
+        {
+          "blend-mode": "normal",
+          "glass": true,
+          "hidden": false,
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "srgb:0.98039,0.78039,0.45882,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "srgb:0.72941,0.45882,0.09020,1.00000"
+              }
+            }
+          ],
+          "image-name": "1-coins.svg",
+          "name": "coins",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "lighting": "individual",
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.5
+      }
+    }
+  ],
+  "supported-platforms": {
+    "circles": [
+      "watchOS"
+    ],
+    "squares": "shared"
+  }
+}

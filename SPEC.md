@@ -263,7 +263,7 @@ TableCell  { columnCode, value typée, formula? }
 
 ## 10. Questions ouvertes
 
-- **Nom de l'app et icône** : **Blason** est retenu pour l'instant (à confirmer : nom libre dans App Store Connect, marques sur Swissreg et à l'EUIPO). L'icône actuelle (feuille + dé, sources dans `Design/IconeProvisoire`) est provisoire ; la nouvelle doit évoquer le JDR ou la fiche, pas un blason générique. **Le nom est à fixer avant la synchronisation iCloud** : il donne l'identifiant de l'app (`loristhomas.Character-Sheet` aujourd'hui) et celui du conteneur iCloud, sans accent (ex. `…blason`). Le nom affiché, lui, peut changer plus tard.
+- **Nom de l'app et icône** : **Blason** est retenu pour l'instant (à confirmer : nom libre dans App Store Connect, marques sur Swissreg et à l'EUIPO). L'icône est un d10 taillé en blason, en terre cuite (`AppIcon.icon`, sources dans `Design/Blason`) ; l'ancienne icône provisoire (feuille + dé) reste dans `Design/IconeProvisoire`. **Le nom est à fixer avant la synchronisation iCloud** : il donne l'identifiant de l'app (`loristhomas.Character-Sheet` aujourd'hui) et celui du conteneur iCloud, sans accent (ex. `…blason`). Le nom affiché, lui, peut changer plus tard.
 
 ### 10.1 Pistes autour de « Blason »
 
@@ -273,7 +273,7 @@ Des idées à garder pour y revenir, **pas des exigences**.
 - **Règle des émaux** : pas de métal (or, argent) sur métal, ni de couleur (azur, gueules, sinople, sable) sur couleur. C'est une règle de contraste, utilisable pour l'icône et pour la palette « Couleur du template ».
 - **Hachures** héraldiques (azur en traits horizontaux, gueules en traits verticaux, or en points…) : le thème Fiche papier pourrait rendre la couleur du template en hachures, en restant monochrome.
 - **Un petit écu par personnage** dans la bibliothèque, teinté de la couleur de son template, quand il n'a pas de portrait.
-- **Icône alternative** au choix dans l'app, par exemple une version gravée pour le thème papier, ou la même icône en plusieurs teintes héraldiques (gueules, or, sinople, azur, pourpre…). Sources et pistes dans `Design/Blason`.
+- **Icônes alternatives** au choix dans l'app : les autres teintes héraldiques (gueules, or, sinople, sarcelle, azur, pourpre, graphite), unies ou à coins d'or, et la terre cuite à coins d'or, sont déjà dans le projet (`AppIcons/`, déclarées dans `ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES`). Reste à faire le choix dans les réglages (`setAlternateIconName`). Autre idée : une version gravée pour le thème papier.
 - **Icône iOS 26** en calques (Icon Composer : clair, sombre, teinté) : l'écu et ses motifs sur des calques séparés.
 - **Constellations de dés** (d20, d100 en deux d10) : plutôt en illustration (bibliothèque vide, À propos) qu'en icône, où elles deviennent illisibles en petit.
 - **Écu et sécurité** : un écu seul, surtout avec une coche, évoque les apps de sécurité ou de VPN. L'icône doit montrer la fiche ou le JDR.
