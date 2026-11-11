@@ -51,7 +51,14 @@ struct TemplateGrid: View {
         .searchable(text: $search, prompt: "Rechercher un template")
         .toolbar {
             Button("Importer", systemImage: "square.and.arrow.down") { importing = true }
-            Button("Nouveau template", systemImage: "plus") { showingNew = true }
+            Menu {
+                Button("Nouveau template", systemImage: "plus") { showingNew = true }
+                ExampleButton()
+            } label: {
+                Label("Nouveau template", systemImage: "plus")
+            } primaryAction: {
+                showingNew = true
+            }
         }
         .sheetImporter(isPresented: $importing) { item in
             switch item {
@@ -124,6 +131,8 @@ struct TemplateGrid: View {
                 Button("Nouveau template") { showingNew = true }
                     .buttonStyle(.borderedProminent)
                 Button("Importer un fichier") { importing = true }
+                ExampleButton()
+                    .labelStyle(.titleOnly)
             }
         } else if filtered.isEmpty {
             ContentUnavailableView.search(text: search)

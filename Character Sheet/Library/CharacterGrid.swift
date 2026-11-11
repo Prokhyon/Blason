@@ -45,7 +45,14 @@ struct CharacterGrid: View {
         .searchable(text: $search, prompt: "Rechercher un personnage")
         .toolbar {
             Button("Importer", systemImage: "square.and.arrow.down") { importing = true }
-            Button("Nouveau personnage", systemImage: "plus") { showingNew = true }
+            Menu {
+                Button("Nouveau personnage", systemImage: "plus") { showingNew = true }
+                ExampleButton()
+            } label: {
+                Label("Nouveau personnage", systemImage: "plus")
+            } primaryAction: {
+                showingNew = true
+            }
         }
         .sheetImporter(isPresented: $importing) { item in
             switch item {
@@ -107,6 +114,8 @@ struct CharacterGrid: View {
                 Button("Nouveau personnage") { showingNew = true }
                     .buttonStyle(.borderedProminent)
                 Button("Importer un fichier") { importing = true }
+                ExampleButton()
+                    .labelStyle(.titleOnly)
             }
         } else if filtered.isEmpty {
             ContentUnavailableView.search(text: search)
@@ -120,4 +129,16 @@ func isPresented<Item>(_ item: Binding<Item?>) -> Binding<Bool> {
         get: { item.wrappedValue != nil },
         set: { if !$0 { item.wrappedValue = nil } }
     )
+}
+
+/// Ajoute le template BRP et Leo, pour découvrir l'app sans tout saisir.
+/// Rien n'est créé automatiquement : avec iCloud, chaque appareil créerait le sien (SPEC §5.10).
+struct ExampleButton: View {
+    @Environment(\.modelContext) private var context
+
+    var body: some View {
+        Button("Ajouter l'exemple BRP", systemImage: "wand.and.stars") {
+            withAnimation { _ = try? DemoData.addExample(in: context) }
+        }
+    }
 }

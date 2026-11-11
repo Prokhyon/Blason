@@ -17,12 +17,19 @@ public enum SheetStore {
 
     public static var schema: Schema { Schema(versionedSchema: SheetSchemaV1.self) }
 
-    /// Conteneur de l'app. Stockage local uniquement (iCloud prévu en V1.2).
+    /// Conteneur iCloud de l'app (aussi déclaré dans `Blason.entitlements`).
+    public static let cloudContainerID = "iCloud.ch.loristhomas.blason"
+
+    /// Conteneur de l'app. `syncsWithICloud` : la base se synchronise avec la base privée iCloud
+    /// de l'utilisateur (SPEC §5.10) ; sans compte iCloud, elle reste locale et se synchronisera
+    /// à la connexion. Les tests et les aperçus restent locaux.
     /// Le fichier s'appelle `CharacterSheet.store` : l'ancien `default.store` (modèle v0) est ignoré.
-    public static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {
+    public static func makeContainer(inMemory: Bool = false, syncsWithICloud: Bool = false) throws -> ModelContainer {
+        let cloud: ModelConfiguration.CloudKitDatabase = syncsWithICloud && !inMemory
+            ? .private(cloudContainerID) : .none
         let configuration = inMemory
             ? ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
-            : ModelConfiguration("CharacterSheet", schema: schema, cloudKitDatabase: .none)
+            : ModelConfiguration("CharacterSheet", schema: schema, cloudKitDatabase: cloud)
         return try ModelContainer(
             for: schema,
             migrationPlan: SheetMigrationPlan.self,
@@ -40,7 +47,9 @@ public enum SheetStore {
     }
 
     /// Supprime le fichier de la base locale. Réservé au développement : tant que la V1
-    /// n'est pas utilisée pour de vrai, le schéma V1 évolue sans migration.
+    /// n'est pas utilisée pour de vrai, le schéma V1 évolue sans migration. Avec iCloud, les
+    /// données reviennent ensuite du cloud : pour repartir de zéro, réinitialiser aussi
+    /// l'environnement de développement dans CloudKit Console.
     public static func destroyStore() {
         let url = ModelConfiguration("CharacterSheet", schema: schema, cloudKitDatabase: .none).url
         for suffix in ["", "-shm", "-wal"] {

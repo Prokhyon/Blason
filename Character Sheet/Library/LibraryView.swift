@@ -12,6 +12,7 @@ struct LibraryView: View {
 
     @Query private var characters: [PlayerCharacter]
     @Query private var templates: [SheetTemplate]
+    @Environment(SyncMonitor.self) private var syncMonitor
 
     @State private var category: Category? = .characters
     @State private var path = NavigationPath()
@@ -35,6 +36,10 @@ struct LibraryView: View {
                     case .characters: CharacterGrid(path: $path)
                     case .templates: TemplateGrid(path: $path)
                     }
+                }
+                // Sous les cartes (la barre latérale est souvent masquée en portrait) ; pas dans les fiches.
+                .safeAreaInset(edge: .bottom) {
+                    if let problem = syncMonitor.problem { SyncNotice(problem: problem) }
                 }
                 .navigationDestination(for: PlayerCharacter.self) { character in
                     SheetView(
@@ -109,4 +114,5 @@ struct LibraryView: View {
 #Preview {
     LibraryView()
         .modelContainer(PreviewData.container)
+        .environment(SyncMonitor())
 }

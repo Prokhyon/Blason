@@ -80,4 +80,18 @@ struct DemoDataTests {
         #expect(try context.fetchCount(FetchDescriptor<SheetTemplate>()) == 1)
         #expect(try context.fetchCount(FetchDescriptor<PlayerCharacter>()) == 1)
     }
+
+    @Test("L'exemple s'ajoute à la demande, à côté des fiches existantes")
+    func addExample() throws {
+        let context = try makeContext()
+        let first = try DemoData.addExample(in: context)
+        #expect(first.template.name == DemoData.templateName)
+        #expect(first.character.sourceTemplateUID == first.template.uid)
+        #expect(first.character.displayName == "Leo")
+
+        let second = try DemoData.addExample(in: context)
+        #expect(second.template.uid != first.template.uid)
+        #expect(try context.fetchCount(FetchDescriptor<SheetTemplate>()) == 2)
+        #expect(try context.fetchCount(FetchDescriptor<PlayerCharacter>()) == 2)
+    }
 }

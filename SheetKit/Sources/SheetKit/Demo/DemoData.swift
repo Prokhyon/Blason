@@ -15,7 +15,18 @@ public enum DemoData {
         .init(upTo: 72, result: "+3d6"), .init(upTo: 88, result: "+4d6"), .init(upTo: 104, result: "+5d6"),
     ]).formula
 
-    /// Crée le template et Leo si la base ne contient aucun template.
+    /// Ajoute l'exemple : le template BRP et Leo, à la demande (« Ajouter l'exemple BRP »).
+    /// Rien n'est créé automatiquement : avec iCloud, chaque appareil vide créerait son exemple,
+    /// en double après synchronisation (SPEC §5.10). Ajouter l'exemple deux fois donne deux copies.
+    @discardableResult
+    public static func addExample(in context: ModelContext) throws -> (template: SheetTemplate, character: PlayerCharacter) {
+        let template = brpTemplate(in: context)
+        let character = leo(from: template, in: context)
+        try context.save()
+        return (template, character)
+    }
+
+    /// Crée le template et Leo si la base ne contient aucun template (aperçus, captures).
     public static func seedIfEmpty(in context: ModelContext) throws {
         guard try context.fetchCount(FetchDescriptor<SheetTemplate>()) == 0 else { return }
         let template = brpTemplate(in: context)

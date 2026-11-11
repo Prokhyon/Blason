@@ -133,8 +133,8 @@ Pour chaque champ : libellé, **code** (pour les formules), unité, aide, valeur
 - **Tables de correspondance** (V1.1) : `=table(FOR+TAI; 12; "-1d6"; 16; "-1d4"; 24; "aucun"; …)`, éditables ligne à ligne dans l'inspecteur. Le résultat peut être un texte (« +1d4 »).
 
 ### 5.7 Données
-- Stockage local (SwiftData) avec sauvegarde automatique. Les données actuelles sont jetables (repartir de zéro est accepté).
-- Le modèle doit rester **compatible CloudKit** dès maintenant. Schéma versionné (`VersionedSchema`).
+- SwiftData avec sauvegarde automatique, **synchronisé par iCloud** depuis la V1.2 (§5.10). Schéma versionné (`VersionedSchema`).
+- Le modèle reste **compatible CloudKit**. Une fois le schéma déployé en production, il ne peut plus qu'**ajouter** : nouveaux attributs (optionnels ou avec valeur par défaut) et nouveaux modèles ; jamais renommer, retyper ni supprimer un attribut ou un modèle.
 - **Export / import JSON** des templates et des personnages (Fichiers, partage), pour la sauvegarde et le partage de templates.
 
 ### 5.8 Langue
@@ -147,17 +147,18 @@ Interface en français, avec un String Catalog prêt pour l'anglais.
 - Le template choisit le thème (menu « Affichage ») ; ses personnages le suivent, même s'il change ensuite. Un personnage peut choisir le sien, ou revenir à « Comme le template ».
 - **Ajouter un thème** : un fichier dans `Themes/` qui part de `SheetTheme()` et remplace ce qu'il veut — couleurs, polices (celles d'iOS : rien à télécharger ni à licencier), et pièces : fond de page, cadre de section, zone de saisie, case à cocher ; textures dessinées par le code. Puis une ligne dans `SheetThemes.all`. Les vues de la fiche ne changent pas.
 
-### 5.10 Synchronisation iCloud (V1.2, décidé, pas commencé)
-- **Toujours active** dès que l'appareil est connecté à iCloud, comme Notes ; elle se coupe dans Réglages d'iOS (compte Apple › iCloud), pas dans l'app.
-- L'app ne signale que les **problèmes** : un avis discret dans la bibliothèque quand iCloud est indisponible (pas de compte, stockage plein) ou que la synchronisation échoue.
-- Plus de données de démo créées automatiquement (chaque appareil vide créerait les siennes, en double après synchronisation) : un bouton « Ajouter l'exemple BRP » dans la bibliothèque vide et dans un menu.
-- Conteneur iCloud enregistré par Xcode (Signing & Capabilities). **En attente du nom définitif de l'app** : le conteneur ne peut être ni supprimé ni renommé, et l'identifiant de l'app (bundle ID) se choisit en même temps.
+### 5.10 Synchronisation iCloud (V1.2)
+- **Toujours active** dès que l'appareil est connecté à iCloud, comme Notes ; elle se coupe dans Réglages d'iOS (compte Apple › iCloud), pas dans l'app. Base privée de l'utilisateur, conteneur `iCloud.ch.loristhomas.blason` ; SwiftData fait le travail.
+- L'app ne signale que les **problèmes**, par un avis discret sous les cartes de la bibliothèque : iCloud désactivé ou bloqué (avis masquable : le joueur peut choisir de ne pas utiliser iCloud), compte à revalider, stockage plein, échec. Les erreurs passagères (réseau, service occupé) ne s'affichent pas ; un échec s'efface à la synchronisation réussie suivante.
+- Plus de données de démo créées automatiquement (chaque appareil vide créerait les siennes, en double après synchronisation) : « Ajouter l'exemple BRP » dans la bibliothèque vide et dans le menu du bouton + (appui long).
+- Conflits : la dernière modification d'un objet l'emporte (CloudKit). Deux appareils qui modifient le même champ en même temps gardent la dernière valeur reçue.
+- **Avant la première publication** (TestFlight, App Store) : lancer une fois l'app de développement avec `-initCloudKitSchema YES` (connecté à iCloud) pour créer tous les types et champs, puis déployer le schéma en production dans CloudKit Console. Ensuite, le modèle ne fait plus qu'ajouter (§5.7).
 
 ## 6. Hors V1 (feuille de route)
 
 | Prio | Fonction |
 |---|---|
-| V1.2 | **Synchronisation iCloud** : prérequis pour iPhone et Mac (voir §5.10) |
+| V1.2 | **Synchronisation iCloud** (voir §5.10) : faite ; prérequis pour iPhone et Mac |
 | V2 | iPhone et Mac ; inventaire avancé ; **journal de campagne et documents** de session |
 | plus tard | D'autres thèmes de fiche (parchemin, dossier années 20, terminal…), un fichier chacun |
 | plus tard | Mise à jour d'un personnage depuis son template, Apple Pencil, volet MJ |
@@ -260,10 +261,11 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-09 | V1.1 : palette plutôt que couleur libre ; en « Couleur du template », titres et pleins sont assombris en clair et éclaircis en sombre pour rester lisibles (sarcelle, orange). La fiche papier reste claire en mode sombre, comme une vraie feuille. |
 | 2026-11-09 | M7 : accessibilité de base : chaque saisie, case et ressource porte le nom de son champ (ou « ligne, colonne » dans un tableau) ; en lecture, libellé et valeur sont lus ensemble ; une ressource s'ajuste par balayage avec VoiceOver ; titres de page et de section annoncés comme titres ; tailles qui suivent la taille du texte. |
 | 2026-11-10 | V1.2 : synchronisation iCloud toujours active, sans réglage dans l'app ; seuls les problèmes s'affichent ; exemple BRP ajouté par un bouton plutôt qu'au premier lancement. Les jets de dés passent bien plus tard, après l'inventaire et les notes. |
+| 2026-11-11 | V1.2 : synchronisation iCloud par SwiftData (base privée). Nom affiché « Blason », identifiant `ch.loristhomas.blason`. Les avis de problème se placent sous les cartes de la bibliothèque (la barre latérale est souvent masquée en portrait), pas dans les fiches. L'exemple BRP s'ajoute à la demande ; en développement, `-seedDemo YES` le crée au lancement pour les captures. |
 
 ## 10. Questions ouvertes
 
-- **Nom de l'app et icône** : **Blason** est retenu pour l'instant (à confirmer : nom libre dans App Store Connect, marques sur Swissreg et à l'EUIPO). L'icône est un d10 taillé en blason, en terre cuite (`AppIcon.icon`, sources dans `Design/Blason`) ; l'ancienne icône provisoire (feuille + dé) reste dans `Design/IconeProvisoire`. **Le nom est à fixer avant la synchronisation iCloud** : il donne l'identifiant de l'app (`loristhomas.Character-Sheet` aujourd'hui) et celui du conteneur iCloud, sans accent (ex. `…blason`). Le nom affiché, lui, peut changer plus tard.
+- **Nom de l'app et icône** : **Blason** est retenu pour l'instant (à confirmer : nom libre dans App Store Connect, marques sur Swissreg et à l'EUIPO). L'icône est un d10 taillé en blason, en terre cuite (`AppIcon.icon`, sources dans `Design/Blason`) ; l'ancienne icône provisoire (feuille + dé) reste dans `Design/IconeProvisoire`. Identifiant de l'app fixé avec la synchronisation iCloud : `ch.loristhomas.blason`, conteneur `iCloud.ch.loristhomas.blason` (définitif). Le nom affiché, lui, peut changer plus tard.
 
 ### 10.1 Pistes autour de « Blason »
 
