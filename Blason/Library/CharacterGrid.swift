@@ -5,6 +5,8 @@ import SheetKit
 /// Grille des personnages, du plus récemment modifié au plus ancien.
 struct CharacterGrid: View {
     @Binding var path: NavigationPath
+    /// Demande venue d'un menu (Nouveau, Importer) : traitée puis effacée.
+    @Binding var request: LibraryRequest?
 
     @Environment(\.modelContext) private var context
     @Environment(\.horizontalSizeClass) private var sizeClass
@@ -54,6 +56,14 @@ struct CharacterGrid: View {
             } primaryAction: {
                 showingNew = true
             }
+        }
+        .onChange(of: request, initial: true) { _, value in
+            switch value {
+            case .newCharacter: showingNew = true
+            case .importFiles: importing = true
+            default: return
+            }
+            request = nil
         }
         .sheetImporter(isPresented: $importing) { item in
             switch item {

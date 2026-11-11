@@ -30,6 +30,8 @@ struct LibraryView: View {
     /// Un chemin de navigation par catégorie : sur iPhone, chaque onglet garde sa pile.
     @State private var paths: [Category: NavigationPath] = [:]
     @State private var columnVisibility: NavigationSplitViewVisibility = .automatic
+    /// Demande venue d'un menu (nouveau, importer), traitée par la grille concernée.
+    @State private var request: LibraryRequest?
 
     private var currentCategory: Category { category ?? .characters }
 
@@ -61,9 +63,22 @@ struct LibraryView: View {
                 splitView
             }
         }
+        .focusedSceneValue(\.libraryActions, LibraryActions(perform: perform))
         #if DEBUG
         .task { await openDemoTarget() }
         #endif
+    }
+
+    /// Menu Fichier : revient à la grille concernée (fiche ouverte refermée) et lui passe la demande.
+    private func perform(_ newRequest: LibraryRequest) {
+        let target: Category = switch newRequest {
+        case .newCharacter: .characters
+        case .newTemplate: .templates
+        case .importFiles: currentCategory
+        }
+        paths[target] = nil
+        category = target
+        request = newRequest
     }
 
     /// iPad : barre latérale (Personnages / Templates), masquée quand une fiche est ouverte.
@@ -96,11 +111,13 @@ struct LibraryView: View {
     /// Pile de navigation d'une catégorie : sa grille, puis les fiches ouvertes.
     private func stack(for category: Category) -> some View {
         let path = path(for: category)
+        // Seule la grille affichée reçoit les demandes des menus.
+        let request = category == currentCategory ? $request : .constant(nil)
         return NavigationStack(path: path) {
             Group {
                 switch category {
-                case .characters: CharacterGrid(path: path)
-                case .templates: TemplateGrid(path: path)
+                case .characters: CharacterGrid(path: path, request: request)
+                case .templates: TemplateGrid(path: path, request: request)
                 }
             }
             // Sous les cartes (la barre latérale est souvent masquée en portrait) ; pas dans les fiches.

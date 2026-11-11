@@ -81,6 +81,7 @@ struct SheetView: View {
         }
         .background { if mode == .structure { shortcuts } }
         .environment(\.sheetMode, mode)
+        .focusedSceneValue(\.sheetModeBinding, $mode)
         .environment(\.structureEditor, editor)
         .onChange(of: mode) { _, newMode in
             if newMode != .structure { editor.clearSelection() }

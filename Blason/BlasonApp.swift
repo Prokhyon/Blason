@@ -51,7 +51,14 @@ struct BlasonApp: App {
         WindowGroup {
             LibraryView()
                 .environment(syncMonitor)
+                #if os(macOS)
+                .frame(minWidth: 760, minHeight: 520)
+                #endif
         }
         .modelContainer(container)
+        .commands { BlasonCommands() }
+        #if os(macOS)
+        .defaultSize(width: 1280, height: 860)
+        #endif
     }
 }

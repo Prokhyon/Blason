@@ -170,7 +170,11 @@ Interface en français, avec un String Catalog prêt pour l'anglais.
 - Les vues n'utilisent ni UIKit ni AppKit : ce qui diffère est réuni dans `Platform/Platform.swift` (couleurs du système, image décodée, réduction des images importées par ImageIO, modificateurs propres à iOS sans effet sur Mac). Les textures et pastilles sont dessinées avec Core Graphics, identiques partout.
 - Sur Mac, la largeur est toujours « normale » : barre latérale, inspecteur en panneau, barre d'outils en haut.
 - En développement, `-noCloud YES` lance l'app sans iCloud (une version signée localement, sans les droits iCloud, est sinon arrêtée par CloudKit).
-- Reste à faire : premier lancement signé depuis Xcode (« My Mac » : Xcode crée le profil de développement Mac), synchronisation vérifiée avec l'iPad et l'iPhone ; puis ce qui rend l'app agréable sur Mac : menus (Fichier, Édition, Affichage, modes au clavier), taille minimale de fenêtre, glisser une image depuis le Finder.
+- **Synchronisation vérifiée** entre Mac, iPad et iPhone (11 novembre 2026).
+- **Menus** (Mac, et iPad avec un clavier) : Fichier › Nouveau personnage (⌘N), Nouveau template (⇧⌘N), Importer… (⌘O), qui reviennent à la grille concernée ; menu **Fiche** › Structure / Remplir / Jouer (⌘1, ⌘2, ⌘3).
+- Fenêtre de 1280 × 860 au premier lancement, 760 × 520 au minimum.
+- Une image se **glisse** dans un champ image modifiable (Finder, Photos, autre app), réduite comme une image choisie.
+- À vérifier sur Mac : les raccourcis de la fiche (⌘C ⌘V ⌘D ⌘⌫, ⌘Z) face aux menus standard Édition.
 
 ## 6. Hors V1 (feuille de route)
 
@@ -292,6 +296,7 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-11 | V2.0 : cartes de la bibliothèque à hauteur fixe (nom sur deux lignes au plus, coupé au-delà). La navigation, la barre d'outils, le sélecteur de mode et le langage visuel seront repensés en profondeur après les fonctions de la V2 ; d'ici là, seulement des corrections. |
 | 2026-11-11 | V2.0 : sur iPhone, le choix du mode était inaccessible en Structure : l'inspecteur, ouvert d'office, couvrait la barre du bas. Il ne s'ouvre plus qu'avec une sélection ; la fiche défile jusqu'à l'élément sélectionné (sur iPad aussi, s'il est hors de l'écran, par exemple après un ajout). |
 | 2026-11-11 | V2.1 : destination Mac native ajoutée à la cible ; les appels UIKit passent par `Platform.swift` (couleurs, images, textures en Core Graphics, modificateurs iOS). `-noCloud YES` (développement) pour lancer sans iCloud. |
+| 2026-11-11 | V2.1 : synchronisation iCloud vérifiée sur Mac. Menus Fichier (nouveau, importer) et Fiche (modes ⌘1–⌘3), taille de fenêtre, glisser une image dans un champ image. Le reste du confort Mac attend la refonte de l'interface. |
 
 ## 10. Questions ouvertes
 

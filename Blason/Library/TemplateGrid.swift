@@ -5,6 +5,8 @@ import SheetKit
 /// Grille des templates, par ordre alphabétique.
 struct TemplateGrid: View {
     @Binding var path: NavigationPath
+    /// Demande venue d'un menu (Nouveau, Importer) : traitée puis effacée.
+    @Binding var request: LibraryRequest?
 
     @Environment(\.modelContext) private var context
     @Environment(\.horizontalSizeClass) private var sizeClass
@@ -60,6 +62,14 @@ struct TemplateGrid: View {
             } primaryAction: {
                 showingNew = true
             }
+        }
+        .onChange(of: request, initial: true) { _, value in
+            switch value {
+            case .newTemplate: showingNew = true
+            case .importFiles: importing = true
+            default: return
+            }
+            request = nil
         }
         .sheetImporter(isPresented: $importing) { item in
             switch item {

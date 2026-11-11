@@ -42,6 +42,12 @@ struct ImageFieldView: View {
                 .font(.callout)
             }
         }
+        // Glisser une image depuis le Finder, Photos ou une autre app (Mac, iPad).
+        .dropDestination(for: DroppedImage.self) { images, _ in
+            guard editable, let image = images.first else { return false }
+            field.imageData = Self.downscaled(image.data)
+            return true
+        }
         .onChange(of: selection) { _, item in
             guard let item else { return }
             Task {
@@ -56,5 +62,14 @@ struct ImageFieldView: View {
     /// Réduit l'image (1024 px max, JPEG) pour garder la base légère.
     static func downscaled(_ data: Data) -> Data {
         ImageData.downscaled(data)
+    }
+}
+
+/// Image déposée par glisser-déposer : n'importe quel format d'image lisible.
+struct DroppedImage: Transferable {
+    let data: Data
+
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(importedContentType: .image) { DroppedImage(data: $0) }
     }
 }
