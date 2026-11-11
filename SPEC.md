@@ -155,6 +155,8 @@ Interface en français, avec un String Catalog prêt pour l'anglais.
 - **Schéma CloudKit de production** : déployé le 11 novembre 2026. À refaire à chaque nouvelle version du schéma, avant de la publier : lancer l'app de développement avec `-initCloudKitSchema YES` (connecté à iCloud) pour créer les nouveaux types et champs, puis « Deploy Schema Changes » dans CloudKit Console. Le modèle ne fait plus qu'ajouter (§5.7).
 - **Schéma V1 figé** : de vraies fiches existent, sur l'appareil et dans iCloud. La base n'est plus jamais recréée automatiquement (fin de `developmentRevision`) ; en développement, `-resetStore YES` la vide à la demande. Un test compare le schéma V1 à son empreinte : tout changement du modèle passe par un `SheetSchemaV2` et une migration testée.
 
+**En pause** depuis le 11 novembre 2026, le temps de mettre au point le modèle V2 (§5.16).
+
 **V1.2 terminée** (11 novembre 2026) : synchronisation validée sur des appareils réels, indicateur de diagnostic retiré (seul l'avis de problème reste), schéma CloudKit déployé en production, app créée dans App Store Connect (**Blason - Fiches JDR**, `ch.loristhomas.blason`). La vérification des marques est remise à plus tard (§10).
 
 ### 5.11 iPhone (V2.0)
@@ -176,17 +178,78 @@ Interface en français, avec un String Catalog prêt pour l'anglais.
 - Une image se **glisse** dans un champ image modifiable (Finder, Photos, autre app), réduite comme une image choisie.
 - À vérifier sur Mac : les raccourcis de la fiche (⌘C ⌘V ⌘D ⌘⌫, ⌘Z) face aux menus standard Édition.
 
+### 5.13 Besace : inventaire (V2.2) — conception
+Un nouveau type de section, **Besace**, à côté de « Champs » et « Tableau ». Elle se place sur la fiche comme une autre section ; une fiche en a en général une seule. Les objets sont saisis librement (pas de catalogue ; « Coller une liste » marche aussi).
+
+**Objets**
+- Un objet : nom, **type**, quantité, poids unitaire, valeur, équipé ou non, description, notes, image, et les **propriétés** de son type.
+- **Types d'objets** : une liste de départ (Argent, Arme, Armure, Habits, Équipement, Consommable, Divers), chacun avec une icône. Le template ou le joueur peut **créer un type** : nom, icône, et ses propriétés.
+- Les **propriétés sont typées comme les colonnes d'un tableau** : libellé, code, genre (texte, nombre, pourcentage, case à cocher, formule), valeur par défaut. Une arme a par exemple Dégâts (`degats`), Portée (`portee`), % (`pct`) et Exp. (`exp`, vivante). Elles se calculent avec le moteur de formules, comme une cellule.
+- Sur la fiche, une ligne par objet : icône du type, nom, quantité (et poids si activé). Toucher l'objet ouvre sa **fiche d'objet** (§5.15), modifiable en Remplir ; en Jouer, seules la quantité, l'état équipé et les propriétés vivantes changent.
+
+**Quantités en partie**
+- En mode Jouer, la quantité s'ajuste d'un toucher (+ / −) : munitions, rations, charges. Un objet à 0 reste affiché, estompé, jusqu'à ce qu'on le retire.
+
+**Emplacements et contenants**
+- Au premier niveau, des **emplacements** : le template en propose (« Sur soi », « Monture »), et le joueur en **crée** autant qu'il veut (« Bateau », « Cale », « Planque à Tortuga »). Un emplacement a un nom, une icône, un réglage « compte dans l'encombrement » et une **capacité** optionnelle, avec son propre total (la cale tient 10 tonneaux).
+- Dans un emplacement, un objet peut être un **contenant** (sac à dos, bourse, carquois) : **un seul niveau** de contenant (Sur soi › Sac à dos › Corde). Un contenant ne contient pas d'autre contenant.
+- Ranger un objet ailleurs : glisser-déposer, ou « Ranger dans… ».
+
+**Argent**
+- Les **monnaies** sont définies dans la Besace : nom, abréviation, valeur relative (pièce de cuivre = 1, d'argent = 10, d'or = 100). Une seule monnaie suffit pour un système simple.
+- L'argent est un **compteur par monnaie** (en Jouer : + / −), rangé dans un emplacement ou un contenant (une bourse, un coffre). La Besace affiche la fortune totale convertie (« 12 po 4 pa 3 pc ») sans toucher aux pièces : pas de conversion automatique, pas de poids des pièces.
+
+**Poids et encombrement (option)**
+- Réglage de la Besace « Poids et encombrement », activé ou non dans le template. **Désactivé**, on joue sans : aucun champ de poids ni total n'est affiché, nulle part.
+- Activé : poids total (quantité × poids) par contenant, par emplacement et pour tout ce qui compte dans l'encombrement. Unité choisie dans le template (kg, livres, points d'encombrement). **Limite** par formule (`=FOR*2`).
+- **Paliers** optionnels (léger, chargé, surchargé…) : un nom et un **seuil par formule** (`=BESACE.limite`, `=BESACE.limite*1.5`). Le palier atteint s'affiche sur la fiche.
+- **Malus** optionnel, à activer séparément : chaque palier définit un nombre (−10) et/ou un texte d'effet (« Mouvement −2 »). Le nombre du palier atteint est disponible dans les formules (`BESACE.malus`, 0 sans palier atteint), à utiliser là où il s'applique (`=DEX*2+BESACE.malus`).
+- Dans les formules : `BESACE.poids`, `BESACE.limite`, `BESACE.malus`, `BESACE.argent` (fortune dans la plus petite monnaie). `BESACE` est le code de la section, modifiable.
+
+**Équipement sur la fiche : vue de la Besace**
+- Une arme, une armure, un bouclier… se marque **équipé** depuis la Besace (Remplir et Jouer).
+- La Besace reste la **seule source** : une **vue de la Besace** est une section qu'on place ailleurs sur la fiche (page Combat) et qui montre les objets **équipés** d'un ou plusieurs types, avec les propriétés choisies en colonnes (Arme : `pct`, `degats`, `portee`, `exp`). Une valeur modifiée dans la vue l'est dans l'objet ; déséquipé, l'objet quitte la vue et garde ses valeurs.
+- Les lignes qui ne sont pas des objets (Bagarre, Lutte) restent dans un tableau ordinaire, à côté de la vue.
+
+**Template et personnage**
+- Le template définit les types et leurs propriétés, les monnaies, les emplacements de départ, l'option de poids (unité, limite, paliers, malus) ; ses objets sont l'**équipement de départ**, copié dans chaque nouveau personnage.
+
+### 5.14 Journal du personnage (V2.3) — conception
+Chaque personnage a sa fiche, ses statistiques, sa Besace **et son journal**. Pas de campagne : elle pourra revenir avec un éventuel volet MJ.
+
+- **Toujours disponible**, sans rien à définir dans le template : il appartient au personnage (pas à sa fiche) et s'ouvre par un bouton **Journal** de la fiche, à côté d'elle (§5.15). Une fiche libre en a un aussi ; un template n'en a pas.
+- **Sessions** : une entrée par session, avec numéro (proposé automatiquement), date réelle, date en jeu (texte libre : « 3 Thermidor 1792 »), titre, résumé court, **texte mis en forme** (titres, gras, italique, listes : l'éditeur de texte riche du système) et une rubrique **Gains** en texte libre (expérience, objets, argent : reportés à la main). Liste de la plus récente à la plus ancienne, recherche dans tout le journal. « Session du jour » se crée d'un toucher pendant la partie.
+- **PNJ, lieux, indices** : des fiches courtes, rangées par genre (PNJ, Lieu, Indice, Faction, Autre) : nom, image, description, état libre (« vivant », « résolu »). Une session liste les fiches qui y **apparaissent** (choisies dans une liste, pas de mention dans le texte) ; chaque fiche montre ses sessions.
+- **Documents** : PDF et images (aides de jeu, cartes, lettres du MJ) importés depuis Fichiers, Photos ou par glisser-déposer ; titre, rattachement optionnel à une session ou à une fiche PNJ / lieu. Consultation dans l'app (PDF paginé, image zoomable).
+- **Copie et export** : dupliquer un personnage ne copie pas son journal ; « Enregistrer comme template » ne l'emporte pas. L'export JSON du personnage inclut le journal et ses documents.
+
+### 5.15 Panneau latéral de la fiche (V2) — provisoire
+Trois choses veulent la place à droite de la fiche : l'inspecteur, la fiche d'objet et le journal. Règle commune, en attendant la refonte de l'interface :
+- **Un seul panneau** à droite (iPad, Mac), une **feuille** sur iPhone.
+- En **Structure** : l'inspecteur. En **Remplir** et **Jouer** : la fiche d'objet quand on touche un objet, sinon le journal.
+- Un sélecteur en haut du panneau passe de l'un à l'autre (Objet / Journal) ; le bouton Journal de la barre ouvre ou ferme le panneau.
+
+### 5.16 Modèle V2 et pause d'iCloud
+- **iCloud en pause** pendant la mise au point de la Besace et du journal : la synchronisation est coupée dans toutes les versions ; chaque appareil garde sa base locale telle quelle (rien n'est perdu, ni sur l'appareil ni dans iCloud). On joue sur un appareil principal ; une fiche passe d'un appareil à l'autre par l'export / import JSON.
+- Le schéma CloudKit de **production** n'est pas touché. Seul un déploiement manuel le modifie, et il ne retire jamais rien : on ne déploiera que le modèle V2 **final**.
+- **Modèle V2 en brouillon** : tant qu'il change, pas de migration entre brouillons. Avant d'installer une version où le modèle a changé, on exporte ses fiches ; si la base ne s'ouvre plus, on la vide et on réimporte. L'export JSON suit donc le modèle à chaque étape (Besace et journal compris).
+- **À la fin** : une seule migration, testée, de la base V1 réelle vers le V2 final (`SheetSchemaV2`, ajouts seulement) ; format d'export `blason` version 2, version 1 toujours acceptée.
+- **Réactivation d'iCloud**, une fois l'ensemble validé : choisir un appareil de référence, initialiser et déployer le schéma V2 (`-initCloudKitSchema YES`, puis CloudKit Console), puis faire repartir les autres appareils de cette base. À préparer le moment venu.
+- Entités prévues : `InventoryItem` (objet ; emplacement, contenant), `ItemType` et ses propriétés typées, `Currency` et les compteurs d'argent, `InventorySlot`, `EncumbranceLevel`, les vues de Besace (`SectionKind.inventory` et `.inventoryView`) ; `Journal` (lié à `PlayerCharacter`), `JournalSession`, `CodexEntry`, `JournalDocument` (stockage externe). Elles respectent les contraintes CloudKit (§7) pour que la réactivation soit possible.
+
 ## 6. Hors V1 (feuille de route)
 
 | Prio | Fonction |
 |---|---|
 | V1.2 | **Synchronisation iCloud** (voir §5.10) : **terminée** le 11 novembre 2026 ; prérequis pour iPhone et Mac |
 | V2.0 | **iPhone** (voir §5.11) : à valider en vraie partie |
-| V2.1 (en cours) | **Mac** : app macOS native dans la même cible SwiftUI (voir §5.12) |
-| V2.2 – V2.3 | Inventaire avancé (« Besace ») ; **journal de campagne et documents** de session. Premiers changements du modèle : un seul `SheetSchemaV2` si possible, migration testée, schéma CloudKit redéployé |
+| V2.1 | **Mac** : app macOS native dans la même cible SwiftUI (voir §5.12) ; synchronisation vérifiée |
+| V2.2 (prochaine) | **Besace** : inventaire, vues de Besace pour l'équipement (§5.13), panneau latéral (§5.15) ; iCloud en pause, modèle V2 en brouillon (§5.16) |
+| V2.3 | **Journal du personnage** : sessions, PNJ / lieux / indices, documents (§5.14) |
+| fin de V2 | Modèle V2 final, migration V1 → V2 testée, réactivation d'iCloud (§5.16) |
 | après la V2 | **Refonte de la navigation et de l'interface**, réfléchie en profondeur une fois les fonctions en place : position et style des boutons, barres d'outils, sélecteur Structure / Remplir / Jouer, et un **langage visuel propre** à Blason (voir §10.1) |
 | plus tard | D'autres thèmes de fiche (parchemin, dossier années 20, terminal…), un fichier chacun |
-| plus tard | Mise à jour d'un personnage depuis son template, Apple Pencil, volet MJ |
+| plus tard | Mise à jour d'un personnage depuis son template, Apple Pencil, volet MJ (avec des campagnes regroupant des personnages) |
 | bien plus tard | Jets de dés (depuis un champ ou une ligne, ex. d100 contre la compétence), après l'inventaire et les notes |
 
 ---
@@ -297,6 +360,13 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-11 | V2.0 : sur iPhone, le choix du mode était inaccessible en Structure : l'inspecteur, ouvert d'office, couvrait la barre du bas. Il ne s'ouvre plus qu'avec une sélection ; la fiche défile jusqu'à l'élément sélectionné (sur iPad aussi, s'il est hors de l'écran, par exemple après un ajout). |
 | 2026-11-11 | V2.1 : destination Mac native ajoutée à la cible ; les appels UIKit passent par `Platform.swift` (couleurs, images, textures en Core Graphics, modificateurs iOS). `-noCloud YES` (développement) pour lancer sans iCloud. |
 | 2026-11-11 | V2.1 : synchronisation iCloud vérifiée sur Mac. Menus Fichier (nouveau, importer) et Fiche (modes ⌘1–⌘3), taille de fenêtre, glisser une image dans un champ image. Le reste du confort Mac attend la refonte de l'interface. |
+| 2026-11-11 | V2.2 : l'inventaire sera une **section Besace dédiée** (plutôt qu'un tableau enrichi) : types d'objets extensibles, monnaies avec conversion, contenants imbriqués, quantités ajustables en Jouer, fiche d'objet, poids et encombrement. Objets saisis librement, sans catalogue. |
+| 2026-11-11 | V2.2 : un seul `SheetSchemaV2` pour la Besace et le journal, conçus ensemble avant tout code. Armes équipées depuis la Besace, reprises dans un tableau alimenté par elle (colonnes ↔ propriétés par code). Poids et encombrement en option (désactivé : aucun champ de poids affiché) ; malus par palier en option, exposé en `BESACE.malus`. |
+| 2026-11-11 | V2.3 : le journal est rattaché à une **campagne**, nouvel élément de la bibliothèque qui regroupe des personnages. Il contient les comptes rendus de session, des fiches PNJ / lieux / indices citées par les sessions, des documents (PDF, images) et les gains de session reportables sur la fiche et la Besace. Il s'ouvre depuis la fiche, à côté d'elle. |
+| 2026-11-11 | Revue critique de la conception V2 : le schéma de production CloudKit ne fait qu'ajouter, donc on n'y mettra que le modèle final. Retirés : report automatique des gains, mentions `@Nom`, conversion automatique et poids des pièces, contenants imbriqués sur plusieurs niveaux, export des documents d'une campagne. |
+| 2026-11-11 | **iCloud en pause** pendant la mise au point du modèle V2 : synchronisation coupée, bases locales conservées, modèle V2 en brouillon (export / réimport plutôt que migrations), une seule migration V1 → V2 à la fin puis réactivation (§5.16). |
+| 2026-11-11 | Besace : l'équipement s'affiche ailleurs sur la fiche par une **vue de la Besace** (objets équipés d'un type, propriétés en colonnes), seule source de vérité ; remplace le tableau alimenté par la Besace. Propriétés d'objet typées comme les colonnes. Emplacements créés par le joueur, avec capacité optionnelle ; un seul niveau de contenant. Paliers d'encombrement à seuil par formule. |
+| 2026-11-11 | Le journal appartient au **personnage**, toujours disponible, sans campagne (remplace la décision précédente) : sessions, PNJ / lieux / indices, documents, gains en texte. Un seul panneau à droite de la fiche pour l'inspecteur, la fiche d'objet et le journal (§5.15). |
 
 ## 10. Questions ouvertes
 
