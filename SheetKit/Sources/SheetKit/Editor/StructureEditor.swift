@@ -502,7 +502,7 @@ public final class StructureEditor {
         return Self.dragToken
     }
 
-    public static let dragToken = "character-sheet.structure-item"
+    public static let dragToken = "blason.structure-item"
 
     /// Dépose l'élément glissé sur `target` : il prend la place de la cible (ou de son conteneur
     /// le plus proche qui l'accepte). Renvoie faux si le dépôt n'a pas de sens.

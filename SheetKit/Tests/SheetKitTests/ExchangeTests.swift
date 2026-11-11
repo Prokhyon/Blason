@@ -124,18 +124,33 @@ struct ExchangeTests {
         #expect(checked == records.count, "entités : \(SheetStore.schema.entities.map(\.name))")
     }
 
+    @Test("Ancien identifiant de format « character-sheet » accepté ; l'export écrit « blason »")
+    func legacyFormatIdentifier() throws {
+        let context = try makeContext()
+        let template = DemoData.brpTemplate(in: context)
+        let data = try SheetDocument(template: template).jsonData()
+        var object = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        #expect(object["format"] as? String == "blason")
+        object["format"] = "character-sheet"
+        let legacy = try JSONSerialization.data(withJSONObject: object)
+        guard case .template(let imported) = try SheetDocument.decode(legacy).insert(into: context) else {
+            Issue.record("pas un template"); return
+        }
+        #expect(imported.name == template.name)
+    }
+
     @Test("Fichiers refusés : autre JSON, version future, document vide, contenu abîmé")
     func rejectedFiles() throws {
         #expect(throws: SheetImportError.notASheetDocument) { try SheetDocument.decode(Data("pas du json".utf8)) }
         #expect(throws: SheetImportError.notASheetDocument) { try SheetDocument.decode(Data(#"{"name": "Leo"}"#.utf8)) }
         #expect(throws: SheetImportError.unsupportedVersion(2)) {
-            try SheetDocument.decode(Data(#"{"format": "character-sheet", "version": 2}"#.utf8))
+            try SheetDocument.decode(Data(#"{"format": "blason", "version": 2}"#.utf8))
         }
         #expect(throws: SheetImportError.empty) {
-            try SheetDocument.decode(Data(#"{"format": "character-sheet", "version": 1, "exportedAt": "2026-11-09T10:00:00Z"}"#.utf8))
+            try SheetDocument.decode(Data(#"{"format": "blason", "version": 1, "exportedAt": "2026-11-09T10:00:00Z"}"#.utf8))
         }
         do {
-            _ = try SheetDocument.decode(Data(#"{"format": "character-sheet", "version": 1, "exportedAt": "2026-11-09T10:00:00Z", "template": {"name": "T"}}"#.utf8))
+            _ = try SheetDocument.decode(Data(#"{"format": "blason", "version": 1, "exportedAt": "2026-11-09T10:00:00Z", "template": {"name": "T"}}"#.utf8))
             Issue.record("un template incomplet devrait être refusé")
         } catch {
             guard case .invalid(let detail) = error else { Issue.record("\(error)"); return }

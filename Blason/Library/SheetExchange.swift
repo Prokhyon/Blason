@@ -61,7 +61,7 @@ private struct SheetImporterModifier: ViewModifier {
                 case .failure(let error): errorMessage = error.localizedDescription
                 }
             }
-            .alert("Import impossible", isPresented: Character_Sheet.isPresented($errorMessage)) {
+            .alert("Import impossible", isPresented: Blason.isPresented($errorMessage)) {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(errorMessage ?? "")

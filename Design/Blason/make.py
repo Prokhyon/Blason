@@ -746,7 +746,7 @@ def icon_document(design, pal):
 
 
 MAIN_ICON = "Terre-cuite"                                  # l'icône de l'app ; les autres sont alternatives
-APP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Character Sheet")
+APP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Blason")
 
 
 def write_icon_bundle(bundle, design, pal):

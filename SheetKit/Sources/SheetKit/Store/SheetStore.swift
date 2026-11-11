@@ -23,18 +23,57 @@ public enum SheetStore {
     /// Conteneur de l'app. `syncsWithICloud` : la base se synchronise avec la base privée iCloud
     /// de l'utilisateur (SPEC §5.10) ; sans compte iCloud, elle reste locale et se synchronisera
     /// à la connexion. Les tests et les aperçus restent locaux.
-    /// Le fichier s'appelle `CharacterSheet.store` : l'ancien `default.store` (modèle v0) est ignoré.
+    /// Le fichier s'appelle `Blason.store` ; une base `CharacterSheet.store` (ancien nom du projet)
+    /// est d'abord renommée. L'ancien `default.store` (modèle v0) est ignoré.
     public static func makeContainer(inMemory: Bool = false, syncsWithICloud: Bool = false) throws -> ModelContainer {
         let cloud: ModelConfiguration.CloudKitDatabase = syncsWithICloud && !inMemory
             ? .private(cloudContainerID) : .none
+        if !inMemory {
+            moveLegacyStore(in: storeURL.deletingLastPathComponent())
+        }
         let configuration = inMemory
             ? ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
-            : ModelConfiguration("CharacterSheet", schema: schema, cloudKitDatabase: cloud)
+            : ModelConfiguration(storeName, schema: schema, cloudKitDatabase: cloud)
         return try ModelContainer(
             for: schema,
             migrationPlan: SheetMigrationPlan.self,
             configurations: configuration
         )
+    }
+
+    /// Nom de la base : `Blason.store`.
+    public static let storeName = "Blason"
+    /// Nom de la base avant le renommage du projet (11 novembre 2026).
+    static let legacyStoreName = "CharacterSheet"
+
+    /// Emplacement de la base (dossier Application Support de l'app).
+    static var storeURL: URL {
+        ModelConfiguration(storeName, schema: schema, cloudKitDatabase: .none).url
+    }
+
+    /// Renomme une base `CharacterSheet.store` en `Blason.store`, avec ses fichiers associés :
+    /// journal (`-wal`, `-shm`), images (`.CharacterSheet_SUPPORT`) et cache iCloud
+    /// (`CharacterSheet_ckAssets`). L'état de la synchronisation est dans la base : il suit.
+    /// Ne fait rien si `Blason.store` existe déjà. La base elle-même est déplacée en dernier :
+    /// si un déplacement échoue, le suivant reprend au prochain lancement.
+    static func moveLegacyStore(in directory: URL) {
+        let fileManager = FileManager.default
+        let old = directory.appending(path: "\(legacyStoreName).store")
+        let new = directory.appending(path: "\(storeName).store")
+        guard fileManager.fileExists(atPath: old.path), !fileManager.fileExists(atPath: new.path) else { return }
+        let companions = [
+            ("\(legacyStoreName).store-wal", "\(storeName).store-wal"),
+            ("\(legacyStoreName).store-shm", "\(storeName).store-shm"),
+            (".\(legacyStoreName)_SUPPORT", ".\(storeName)_SUPPORT"),
+            ("\(legacyStoreName)_ckAssets", "\(storeName)_ckAssets"),
+            ("\(legacyStoreName).store", "\(storeName).store"),
+        ]
+        for (from, to) in companions {
+            let source = directory.appending(path: from)
+            let destination = directory.appending(path: to)
+            guard fileManager.fileExists(atPath: source.path), !fileManager.fileExists(atPath: destination.path) else { continue }
+            try? fileManager.moveItem(at: source, to: destination)
+        }
     }
 
     /// Identifiants des objets insérés, modifiés ou supprimés lors d'un enregistrement
@@ -51,7 +90,7 @@ public enum SheetStore {
     /// données reviennent ensuite du cloud : pour repartir de zéro, réinitialiser aussi
     /// l'environnement de développement dans CloudKit Console.
     public static func destroyStore() {
-        let url = ModelConfiguration("CharacterSheet", schema: schema, cloudKitDatabase: .none).url
+        let url = storeURL
         for suffix in ["", "-shm", "-wal"] {
             try? FileManager.default.removeItem(at: URL(fileURLWithPath: url.path + suffix))
         }

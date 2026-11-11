@@ -1,7 +1,7 @@
 // swift-tools-version: 6.2
 import PackageDescription
 
-// SheetKit : modèle de données et logique métier de Character Sheet,
+// SheetKit : modèle de données et logique métier de Blason,
 // indépendants de l'interface (testables sur Mac avec `swift test`).
 let package = Package(
     name: "SheetKit",

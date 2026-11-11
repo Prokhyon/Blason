@@ -3,7 +3,7 @@ import SwiftData
 import SheetKit
 
 @main
-struct Character_SheetApp: App {
+struct BlasonApp: App {
     let container: ModelContainer
     @State private var syncMonitor = SyncMonitor()
 

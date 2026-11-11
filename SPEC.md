@@ -1,4 +1,4 @@
-# Character Sheet — Spécification
+# Blason — Spécification
 
 > **Statut** : v1 validée (9 novembre 2026). Toute évolution est notée dans le journal des décisions (section 9).
 > Fiche de référence : `Leo character sheet.pdf` (feuille officielle BRP, partiellement remplie), conservée localement et hors de git.
@@ -232,7 +232,7 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-09 | M1 : un champ de la fiche peut porter le nom du personnage (`isNameField`) ; c'est lui qu'affiche la bibliothèque. |
 | 2026-11-09 | M1 : « Enregistrer comme template » conserve les valeurs du personnage (elles deviennent les défauts), à nettoyer en mode Remplir. |
 | 2026-11-09 | M1 : syntaxe de formule pour le maximum d'une ressource : `PV.max`. Une ressource avec formule voit celle-ci calculer son maximum. |
-| 2026-11-09 | M1 : base stockée dans `CharacterSheet.store` ; l'ancienne `default.store` (modèle v0) est ignorée. |
+| 2026-11-09 | M1 : base stockée dans `CharacterSheet.store` (devenue `Blason.store` le 2026-11-11) ; l'ancienne `default.store` (modèle v0) est ignorée. |
 | 2026-11-09 | M2 : types de tableau renommés `SheetTableColumn`, `SheetTableGroup`, `SheetTableRow`, `SheetTableCell` (collision avec SwiftUI `TableColumn` / `TableRow`). |
 | 2026-11-09 | M2 : **SwiftData migre silencieusement** une base dont le modèle a changé, même sans nouvelle version de schéma (constaté : tableaux perdus). En développement, `SheetStore.developmentRevision` (à incrémenter à chaque changement du modèle) recrée la base. **Dès que de vraies fiches existent, tout changement du modèle passe par un `SheetSchemaV2` et une migration testée.** |
 | 2026-11-09 | M3 : personnages triés par date de modification (mise à jour à chaque enregistrement fait pendant que la fiche est ouverte) ; templates triés par nom, plus utile pour retrouver un système. Ouvrir une fiche masque la barre latérale. |
@@ -248,7 +248,7 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-09 | M5 : une valeur non saisie rend le calcul vide (« — »), sans erreur ; codes inconnus, cycles, divisions par zéro et syntaxe invalide s'affichent dans le champ. |
 | 2026-11-09 | M5 : formule = valeur **par défaut** pour tout champ ou cellule numérique (affichée en gris en Remplir) ; la saisie la remplace, l'effacer revient au calcul. Champ ou colonne « Calcul » : lecture seule. Ressource : la formule calcule le maximum ; `PV` = actuel, `PV.max` = maximum. |
 | 2026-11-09 | M5 : dans un tableau, une référence désigne d'abord une colonne de la même ligne, puis `groupe` (valeur du groupe, 0 si vide), puis un champ. Une colonne peut porter une formule par défaut : le template BRP de démo calcule `% = base + groupe`. Référence à une ligne d'un autre tableau (ex. `Esquive.valeur`) : pas en V1. |
-| 2026-11-09 | M6 : un fichier `.json` par template ou personnage (format `character-sheet`, version 1), lisible et stable : clés triées, ordre des éléments donné par les tableaux, dates ISO 8601 à la milliseconde (arrondie : réexporter un fichier importé donne le même fichier), images en base64. Un test vérifie que chaque attribut du modèle figure dans le format. |
+| 2026-11-09 | M6 : un fichier `.json` par template ou personnage (format `character-sheet`, renommé `blason` le 2026-11-11, version 1), lisible et stable : clés triées, ordre des éléments donné par les tableaux, dates ISO 8601 à la milliseconde (arrondie : réexporter un fichier importé donne le même fichier), images en base64. Un test vérifie que chaque attribut du modèle figure dans le format. |
 | 2026-11-09 | M6 : « Exporter… » ouvre la feuille de partage (Enregistrer dans Fichiers, AirDrop, Mail…) depuis le menu d'une carte ou la barre de la fiche ; « Importer » dans la bibliothèque accepte plusieurs fichiers, templates et personnages mélangés, et ouvre l'élément s'il est seul. Un élément importé une deuxième fois reçoit un nouvel identifiant. Un fichier d'une version plus récente est refusé avec un message clair. |
 | 2026-11-09 | M7 : deux dispositions des pages, au choix dans le menu « Affichage » de la barre (préférence de l'appareil, commune aux fiches) : **une page à la fois** (onglets) ou **toutes les pages à la suite**, chacune sous son titre ; la barre des pages suit alors la page visible et un **Sommaire** mène à n'importe quelle section. |
 | 2026-11-09 | M7 : thème **natif** seul pour l'instant (couleurs et typographie du système, clair / sombre). Les couleurs, formes et polices de la fiche passent toutes par un thème (`SheetTheme`), pour ajouter ensuite « couleur du template » et « fiche papier » sans toucher aux vues. |
@@ -262,6 +262,7 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-09 | M7 : accessibilité de base : chaque saisie, case et ressource porte le nom de son champ (ou « ligne, colonne » dans un tableau) ; en lecture, libellé et valeur sont lus ensemble ; une ressource s'ajuste par balayage avec VoiceOver ; titres de page et de section annoncés comme titres ; tailles qui suivent la taille du texte. |
 | 2026-11-10 | V1.2 : synchronisation iCloud toujours active, sans réglage dans l'app ; seuls les problèmes s'affichent ; exemple BRP ajouté par un bouton plutôt qu'au premier lancement. Les jets de dés passent bien plus tard, après l'inventaire et les notes. |
 | 2026-11-11 | V1.2 : synchronisation iCloud par SwiftData (base privée). Nom affiché « Blason », identifiant `ch.loristhomas.blason`. Les avis de problème se placent sous les cartes de la bibliothèque (la barre latérale est souvent masquée en portrait), pas dans les fiches. L'exemple BRP s'ajoute à la demande ; en développement, `-seedDemo YES` le crée au lancement pour les captures. |
+| 2026-11-11 | Projet renommé **Blason** partout : dossier des sources et projet Xcode (`Blason/`, `Blason.xcodeproj`), cible et produit, `BlasonApp`. La base devient `Blason.store` : une base `CharacterSheet.store` est renommée au lancement avec son journal, ses images et son cache iCloud (l'état de la synchronisation, stocké dans la base, suit). Le format d'export s'appelle `blason` ; `character-sheet` reste accepté à l'import (même format, version 1). |
 
 ## 10. Questions ouvertes
 

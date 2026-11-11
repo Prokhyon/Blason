@@ -4,7 +4,7 @@ import SwiftData
 // Export / import JSON d'un template ou d'un personnage (SPEC §5.7).
 //
 // Format versionné, lisible et stable (clés triées) :
-//   { "format": "character-sheet", "version": 1, "exportedAt": "…",
+//   { "format": "blason", "version": 1, "exportedAt": "…",
 //     "template": { "name": …, "sheet": { "pages": [ { "rows": [ { "sections": [ … ] } ] } ] } } }
 // ou "character" à la place de "template".
 //
@@ -14,7 +14,10 @@ import SwiftData
 
 /// Document d'échange : un template ou un personnage, avec sa fiche complète.
 public struct SheetDocument: Codable, Equatable, Sendable {
-    public static let formatIdentifier = "character-sheet"
+    public static let formatIdentifier = "blason"
+    /// Identifiants acceptés à l'import : `character-sheet` est l'ancien nom du format
+    /// (fichiers exportés avant le renommage du projet), identique pour le reste.
+    public static let acceptedFormatIdentifiers: Set<String> = [formatIdentifier, "character-sheet"]
     public static let currentVersion = 1
 
     public var format: String
@@ -227,7 +230,7 @@ extension SheetDocument {
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "date « \(text) »")
         }
         guard let header = try? decoder.decode(Header.self, from: data),
-              header.format == formatIdentifier, let version = header.version else {
+              let format = header.format, acceptedFormatIdentifiers.contains(format), let version = header.version else {
             throw .notASheetDocument
         }
         guard version <= currentVersion else { throw .unsupportedVersion(version) }
