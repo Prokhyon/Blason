@@ -9,13 +9,10 @@ struct BlasonApp: App {
 
     init() {
         #if DEBUG
-        let revisionKey = "SheetStore.developmentRevision"
-        if UserDefaults.standard.integer(forKey: revisionKey) != SheetStore.developmentRevision {
+        // Repartir d'une base vide : -resetStore YES (jamais automatique, voir SheetStore.destroyStore).
+        if UserDefaults.standard.bool(forKey: "resetStore") {
             SheetStore.destroyStore()
-            UserDefaults.standard.set(SheetStore.developmentRevision, forKey: revisionKey)
         }
-        #endif
-        #if DEBUG
         // Avant de déployer le schéma iCloud en production : -initCloudKitSchema YES (voir SheetStore).
         if UserDefaults.standard.bool(forKey: "initCloudKitSchema") {
             do {
@@ -27,19 +24,11 @@ struct BlasonApp: App {
         }
         #endif
         do {
+            // Une base qui ne s'ouvre pas n'est jamais effacée : elle contient de vraies fiches.
+            // Un changement du modèle passe par une nouvelle version de schéma (voir SheetStore).
             container = try SheetStore.makeContainer(syncsWithICloud: true)
         } catch {
-            #if DEBUG
-            // Le schéma V1 évolue pendant le développement : une base incompatible est recréée.
-            SheetStore.destroyStore()
-            do {
-                container = try SheetStore.makeContainer(syncsWithICloud: true)
-            } catch {
-                fatalError("Impossible d'ouvrir la base de données : \(error)")
-            }
-            #else
             fatalError("Impossible d'ouvrir la base de données : \(error)")
-            #endif
         }
         #if DEBUG
         // Captures : -seedDemo YES crée le template BRP et Leo dans une base vide. Sinon, rien n'est

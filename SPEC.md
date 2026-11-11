@@ -153,12 +153,19 @@ Interface en français, avec un String Catalog prêt pour l'anglais.
 - Plus de données de démo créées automatiquement (chaque appareil vide créerait les siennes, en double après synchronisation) : « Ajouter l'exemple BRP » dans la bibliothèque vide et dans le menu du bouton + (appui long).
 - Conflits : la dernière modification d'un objet l'emporte (CloudKit). Deux appareils qui modifient le même champ en même temps gardent la dernière valeur reçue.
 - **Avant la première publication** (TestFlight, App Store) : lancer une fois l'app de développement avec `-initCloudKitSchema YES` (connecté à iCloud) pour créer tous les types et champs, puis déployer le schéma en production dans CloudKit Console. Ensuite, le modèle ne fait plus qu'ajouter (§5.7).
+- **Schéma V1 figé** : de vraies fiches existent, sur l'appareil et dans iCloud. La base n'est plus jamais recréée automatiquement (fin de `developmentRevision`) ; en développement, `-resetStore YES` la vide à la demande. Un test compare le schéma V1 à son empreinte : tout changement du modèle passe par un `SheetSchemaV2` et une migration testée.
+
+**Clôture de la V1.2** (11 novembre 2026) — reste à faire à la main, hors du code :
+1. Valider la synchronisation sur deux appareils réels (création, modification, suppression, image, hors ligne puis reconnexion), avec l'indicateur iCloud des builds de développement.
+2. Retirer ensuite cet indicateur (`Library/SyncDiagnostics.swift` et son bouton dans `LibraryView`) ; l'avis de problème reste.
+3. Avant TestFlight : `-initCloudKitSchema YES` sur un appareil connecté à iCloud, puis « Deploy Schema Changes » dans CloudKit Console.
+4. Vérifier la disponibilité du nom Blason (App Store Connect, Swissreg, EUIPO), §10.
 
 ## 6. Hors V1 (feuille de route)
 
 | Prio | Fonction |
 |---|---|
-| V1.2 | **Synchronisation iCloud** (voir §5.10) : faite ; prérequis pour iPhone et Mac |
+| V1.2 | **Synchronisation iCloud** (voir §5.10) : faite et close côté code (validation sur appareils et schéma de production à faire) ; prérequis pour iPhone et Mac |
 | V2 | iPhone et Mac ; inventaire avancé ; **journal de campagne et documents** de session |
 | plus tard | D'autres thèmes de fiche (parchemin, dossier années 20, terminal…), un fichier chacun |
 | plus tard | Mise à jour d'un personnage depuis son template, Apple Pencil, volet MJ |
@@ -234,7 +241,7 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-09 | M1 : syntaxe de formule pour le maximum d'une ressource : `PV.max`. Une ressource avec formule voit celle-ci calculer son maximum. |
 | 2026-11-09 | M1 : base stockée dans `CharacterSheet.store` (devenue `Blason.store` le 2026-11-11) ; l'ancienne `default.store` (modèle v0) est ignorée. |
 | 2026-11-09 | M2 : types de tableau renommés `SheetTableColumn`, `SheetTableGroup`, `SheetTableRow`, `SheetTableCell` (collision avec SwiftUI `TableColumn` / `TableRow`). |
-| 2026-11-09 | M2 : **SwiftData migre silencieusement** une base dont le modèle a changé, même sans nouvelle version de schéma (constaté : tableaux perdus). En développement, `SheetStore.developmentRevision` (à incrémenter à chaque changement du modèle) recrée la base. **Dès que de vraies fiches existent, tout changement du modèle passe par un `SheetSchemaV2` et une migration testée.** |
+| 2026-11-09 | M2 : **SwiftData migre silencieusement** une base dont le modèle a changé, même sans nouvelle version de schéma (constaté : tableaux perdus). En développement, `SheetStore.developmentRevision` (à incrémenter à chaque changement du modèle) recrée la base (retiré le 2026-11-11 : schéma V1 figé). **Dès que de vraies fiches existent, tout changement du modèle passe par un `SheetSchemaV2` et une migration testée.** |
 | 2026-11-09 | M3 : personnages triés par date de modification (mise à jour à chaque enregistrement fait pendant que la fiche est ouverte) ; templates triés par nom, plus utile pour retrouver un système. Ouvrir une fiche masque la barre latérale. |
 | 2026-11-09 | M2 : un tableau affiche autant de colonnes d'affichage que la largeur le permet (au plus `columnCount`) ; la saisie demande plus de place que la lecture (ex. compétences : 3 colonnes en Jouer, 2 en Remplir en portrait). |
 | 2026-11-09 | M4 : la logique de l'éditeur (`StructureEditor` : sélection, presse-papiers, coller une liste, glisser-déposer, déplacements) vit dans SheetKit et est testée ; l'app n'en garde que l'affichage. |
@@ -263,6 +270,7 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-10 | V1.2 : synchronisation iCloud toujours active, sans réglage dans l'app ; seuls les problèmes s'affichent ; exemple BRP ajouté par un bouton plutôt qu'au premier lancement. Les jets de dés passent bien plus tard, après l'inventaire et les notes. |
 | 2026-11-11 | V1.2 : synchronisation iCloud par SwiftData (base privée). Nom affiché « Blason », identifiant `ch.loristhomas.blason`. Les avis de problème se placent sous les cartes de la bibliothèque (la barre latérale est souvent masquée en portrait), pas dans les fiches. L'exemple BRP s'ajoute à la demande ; en développement, `-seedDemo YES` le crée au lancement pour les captures. |
 | 2026-11-11 | Projet renommé **Blason** partout : dossier des sources et projet Xcode (`Blason/`, `Blason.xcodeproj`), cible et produit, `BlasonApp`. La base devient `Blason.store` : une base `CharacterSheet.store` est renommée au lancement avec son journal, ses images et son cache iCloud (l'état de la synchronisation, stocké dans la base, suit). Le format d'export s'appelle `blason` ; `character-sheet` reste accepté à l'import (même format, version 1). |
+| 2026-11-11 | Clôture de la V1.2 : le schéma V1 est figé (test d'empreinte des attributs et relations) ; plus de recréation automatique de la base, ni au changement de révision ni quand elle ne s'ouvre pas ; `-resetStore YES` la vide à la demande en développement (base, images et cache iCloud). L'indicateur iCloud reste dans les builds de développement le temps de valider la synchronisation sur des appareils réels. Prochaine étape : V2, en commençant par iPhone et Mac. |
 
 ## 10. Questions ouvertes
 

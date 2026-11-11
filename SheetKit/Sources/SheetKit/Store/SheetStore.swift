@@ -9,12 +9,11 @@ public enum SheetMigrationPlan: SchemaMigrationPlan {
 }
 
 public enum SheetStore {
-    /// Révision du modèle pendant le développement. **À incrémenter à chaque modification
-    /// du modèle** tant que la V1 n'est pas utilisée pour de vrai : l'app de développement
-    /// recrée alors la base. Sans cela, SwiftData migre silencieusement l'ancienne base
-    /// (constaté en M2 : tableaux perdus, colonnes ignorées).
-    public static let developmentRevision = 5
-
+    /// Le schéma V1 est **figé** depuis la synchronisation iCloud (test « Schéma V1 figé ») : de vraies
+    /// fiches existent, sur l'appareil et dans iCloud. Tout changement du modèle passe par un
+    /// `SheetSchemaV2`, une étape de `SheetMigrationPlan` et un test de migration ; côté iCloud,
+    /// il ne fait qu'ajouter (SPEC §5.7). Sans nouvelle version, SwiftData migre silencieusement
+    /// l'ancienne base (constaté en M2 : tableaux perdus, colonnes ignorées).
     public static var schema: Schema { Schema(versionedSchema: SheetSchemaV1.self) }
 
     /// Conteneur iCloud de l'app (aussi déclaré dans `Blason.entitlements`).
@@ -85,14 +84,17 @@ public enum SheetStore {
         }
     }
 
-    /// Supprime le fichier de la base locale. Réservé au développement : tant que la V1
-    /// n'est pas utilisée pour de vrai, le schéma V1 évolue sans migration. Avec iCloud, les
-    /// données reviennent ensuite du cloud : pour repartir de zéro, réinitialiser aussi
-    /// l'environnement de développement dans CloudKit Console.
+    /// Supprime la base locale, ses images et son cache iCloud. Réservé au développement, à la
+    /// demande (`-resetStore YES`) : jamais automatique. Avec iCloud, les données reviennent ensuite
+    /// du cloud : pour repartir de zéro, réinitialiser aussi l'environnement de développement
+    /// dans CloudKit Console.
     public static func destroyStore() {
         let url = storeURL
-        for suffix in ["", "-shm", "-wal"] {
-            try? FileManager.default.removeItem(at: URL(fileURLWithPath: url.path + suffix))
+        let directory = url.deletingLastPathComponent()
+        let items = ["", "-shm", "-wal"].map { URL(fileURLWithPath: url.path + $0) }
+            + [directory.appending(path: ".\(storeName)_SUPPORT"), directory.appending(path: "\(storeName)_ckAssets")]
+        for item in items {
+            try? FileManager.default.removeItem(at: item)
         }
     }
 }
