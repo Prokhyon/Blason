@@ -152,21 +152,17 @@ Interface en français, avec un String Catalog prêt pour l'anglais.
 - L'app ne signale que les **problèmes**, par un avis discret sous les cartes de la bibliothèque : iCloud désactivé ou bloqué (avis masquable : le joueur peut choisir de ne pas utiliser iCloud), compte à revalider, stockage plein, échec. Les erreurs passagères (réseau, service occupé) ne s'affichent pas ; un échec s'efface à la synchronisation réussie suivante.
 - Plus de données de démo créées automatiquement (chaque appareil vide créerait les siennes, en double après synchronisation) : « Ajouter l'exemple BRP » dans la bibliothèque vide et dans le menu du bouton + (appui long).
 - Conflits : la dernière modification d'un objet l'emporte (CloudKit). Deux appareils qui modifient le même champ en même temps gardent la dernière valeur reçue.
-- **Avant la première publication** (TestFlight, App Store) : lancer une fois l'app de développement avec `-initCloudKitSchema YES` (connecté à iCloud) pour créer tous les types et champs, puis déployer le schéma en production dans CloudKit Console. Ensuite, le modèle ne fait plus qu'ajouter (§5.7).
+- **Schéma CloudKit de production** : déployé le 11 novembre 2026. À refaire à chaque nouvelle version du schéma, avant de la publier : lancer l'app de développement avec `-initCloudKitSchema YES` (connecté à iCloud) pour créer les nouveaux types et champs, puis « Deploy Schema Changes » dans CloudKit Console. Le modèle ne fait plus qu'ajouter (§5.7).
 - **Schéma V1 figé** : de vraies fiches existent, sur l'appareil et dans iCloud. La base n'est plus jamais recréée automatiquement (fin de `developmentRevision`) ; en développement, `-resetStore YES` la vide à la demande. Un test compare le schéma V1 à son empreinte : tout changement du modèle passe par un `SheetSchemaV2` et une migration testée.
 
-**Clôture de la V1.2** (11 novembre 2026) — reste à faire à la main, hors du code :
-1. Indicateur iCloud de diagnostic retiré (11 novembre 2026) ; seul l'avis de problème reste. Valider la synchronisation sur deux appareils réels (création, modification, suppression, image, hors ligne puis reconnexion) avant TestFlight.
-2. App créée dans App Store Connect : **Blason - Fiches JDR**, identifiant `ch.loristhomas.blason`.
-3. Avant TestFlight : `-initCloudKitSchema YES` sur un appareil connecté à iCloud, puis « Deploy Schema Changes » dans CloudKit Console.
-4. Vérifier les marques Blason (Swissreg, EUIPO), §10.
+**V1.2 terminée** (11 novembre 2026) : synchronisation validée sur des appareils réels, indicateur de diagnostic retiré (seul l'avis de problème reste), schéma CloudKit déployé en production, app créée dans App Store Connect (**Blason - Fiches JDR**, `ch.loristhomas.blason`). La vérification des marques est remise à plus tard (§10).
 
 ## 6. Hors V1 (feuille de route)
 
 | Prio | Fonction |
 |---|---|
-| V1.2 | **Synchronisation iCloud** (voir §5.10) : faite et close côté code (validation sur appareils et schéma de production à faire) ; prérequis pour iPhone et Mac |
-| V2 | iPhone et Mac ; inventaire avancé ; **journal de campagne et documents** de session |
+| V1.2 | **Synchronisation iCloud** (voir §5.10) : **terminée** le 11 novembre 2026 ; prérequis pour iPhone et Mac |
+| V2 (prochaine) | iPhone et Mac en premier ; inventaire avancé ; **journal de campagne et documents** de session |
 | plus tard | D'autres thèmes de fiche (parchemin, dossier années 20, terminal…), un fichier chacun |
 | plus tard | Mise à jour d'un personnage depuis son template, Apple Pencil, volet MJ |
 | bien plus tard | Jets de dés (depuis un champ ou une ligne, ex. d100 contre la compétence), après l'inventaire et les notes |
@@ -272,10 +268,11 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-11 | Projet renommé **Blason** partout : dossier des sources et projet Xcode (`Blason/`, `Blason.xcodeproj`), cible et produit, `BlasonApp`. La base devient `Blason.store` : une base `CharacterSheet.store` est renommée au lancement avec son journal, ses images et son cache iCloud (l'état de la synchronisation, stocké dans la base, suit). Le format d'export s'appelle `blason` ; `character-sheet` reste accepté à l'import (même format, version 1). |
 | 2026-11-11 | Clôture de la V1.2 : le schéma V1 est figé (test d'empreinte des attributs et relations) ; plus de recréation automatique de la base, ni au changement de révision ni quand elle ne s'ouvre pas ; `-resetStore YES` la vide à la demande en développement (base, images et cache iCloud). L'indicateur iCloud reste dans les builds de développement le temps de valider la synchronisation sur des appareils réels. Prochaine étape : V2, en commençant par iPhone et Mac. |
 | 2026-11-11 | Indicateur iCloud de diagnostic retiré (seul l'avis de problème reste ; le correctif des exports annulés, qui ne sont pas des échecs, est conservé). App créée dans App Store Connect sous le nom « Blason - Fiches JDR » ; le nom affiché sous l'icône reste « Blason ». |
+| 2026-11-11 | **V1.2 terminée** : synchronisation validée sur des appareils réels, schéma CloudKit déployé en production. Vérification des marques remise à plus tard. Suite : V2, en commençant par iPhone et Mac. |
 
 ## 10. Questions ouvertes
 
-- **Nom de l'app et icône** : **Blason** est retenu. Nom réservé dans App Store Connect : « Blason - Fiches JDR » (le nom sous l'icône reste « Blason »). Reste à vérifier les marques sur Swissreg et à l'EUIPO. L'icône est un d10 taillé en blason, en terre cuite (`AppIcon.icon`, sources dans `Design/Blason`) ; l'ancienne icône provisoire (feuille + dé) reste dans `Design/IconeProvisoire`. Identifiant de l'app fixé avec la synchronisation iCloud : `ch.loristhomas.blason`, conteneur `iCloud.ch.loristhomas.blason` (définitif). Le nom affiché, lui, peut changer plus tard.
+- **Nom de l'app et icône** : **Blason** est retenu. Nom réservé dans App Store Connect : « Blason - Fiches JDR » (le nom sous l'icône reste « Blason »). Vérification des marques (Swissreg, EUIPO) remise à plus tard, à faire avant une publication publique. L'icône est un d10 taillé en blason, en terre cuite (`AppIcon.icon`, sources dans `Design/Blason`) ; l'ancienne icône provisoire (feuille + dé) reste dans `Design/IconeProvisoire`. Identifiant de l'app fixé avec la synchronisation iCloud : `ch.loristhomas.blason`, conteneur `iCloud.ch.loristhomas.blason` (définitif). Le nom affiché, lui, peut changer plus tard.
 
 ### 10.1 Pistes autour de « Blason »
 
