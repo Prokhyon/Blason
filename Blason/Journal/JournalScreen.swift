@@ -2,8 +2,10 @@ import SwiftUI
 import SwiftData
 import SheetKit
 
-/// Onglet Journal du personnage (SPEC §5.14). Grand écran : la liste des sessions à gauche
-/// (repliable), la session ouverte au centre, le carnet et les documents à droite à la demande.
+/// Onglet Journal du personnage (SPEC §5.14, §5.17). Grand écran : sous les onglets, la rangée des
+/// sessions dans l'ordre chronologique (repliée sur la session ouverte et ses deux précédentes) ;
+/// la liste complète, avec la recherche, en panneau à gauche ; la session au centre ; le carnet et
+/// les documents à droite à la demande.
 /// iPhone : la liste, puis la session en plein écran ; carnet et documents en feuille.
 struct JournalScreen: View {
     let character: PlayerCharacter
@@ -42,18 +44,50 @@ struct JournalScreen: View {
         }
         .environment(\.journalNavigator, JournalNavigator { route in navigate(to: route) })
         .toolbar {
-            if sizeClass != .compact {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        withAnimation(.snappy) { showsSessions.toggle() }
-                    } label: {
-                        Label("Sessions", systemImage: "list.bullet.rectangle.portrait")
-                    }
-                    .keyboardShortcut("s", modifiers: [.command, .control])
+            ToolbarItem(placement: .primaryAction) { libraryButton }
+            ToolbarSpacer(.fixed, placement: .primaryAction)
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    newSession(in: journal)
+                    if sizeClass != .compact { hideSessions() }
+                } label: {
+                    Label(journal.session(on: Date()) == nil ? "Nouvelle session" : "Session du jour",
+                          systemImage: "square.and.pencil")
+                }
+                .buttonStyle(.glassProminent)
+            }
+        }
+    }
+
+    /// Rangée des sessions, de la plus ancienne à la plus récente ; le bouton à gauche ouvre la liste.
+    private func sessionBar(_ journal: Journal) -> some View {
+        let sessions = Array(journal.sortedSessions.reversed())
+        return HStack(spacing: 4) {
+            Button {
+                withAnimation(.snappy) { showsSessions.toggle() }
+            } label: {
+                Label("Sessions", systemImage: "list.bullet")
+                    .labelStyle(.iconOnly)
+                    .font(.body.weight(.semibold))
+                    .frame(width: 36, height: 36)
+            }
+            .buttonStyle(.plain)
+            .glassEffect(.regular.interactive(), in: .circle)
+            .keyboardShortcut("s", modifiers: [.command, .control])
+            .padding(.leading)
+            if !sessions.isEmpty {
+                SecondaryRow(
+                    items: sessions.map { .init(id: $0.persistentModelID, title: $0.title.isEmpty ? $0.numberTitle : $0.title) },
+                    selection: selected?.persistentModelID,
+                    collapsedBefore: 2
+                ) { id in
+                    selected = sessions.first { $0.persistentModelID == id }
+                    hideSessions()
                 }
             }
-            ToolbarItem(placement: .primaryAction) { libraryButton }
+            Spacer(minLength: 0)
         }
+        .padding(.vertical, 4)
     }
 
     private var libraryButton: some View {
@@ -80,6 +114,7 @@ struct JournalScreen: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .safeAreaBar(edge: .top, spacing: 0) { sessionBar(journal) }
         .overlay(alignment: .leading) {
             if showsSessions {
                 SessionSidebar(journal: journal, selection: sidebarSelection, query: $query,

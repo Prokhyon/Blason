@@ -14,83 +14,63 @@ extension EnvironmentValues {
     @Entry var inventoryItemOpener: InventoryItemOpener?
 }
 
-/// Onglet Inventaire : la Besace en blocs (SPEC §5.13). En tête, la fortune, la charge et les
-/// réglages ; puis un bloc par emplacement, sur deux colonnes quand la place le permet.
+/// Emplacements de la Besace, en cartes, sur deux colonnes quand la place le permet (onglet
+/// Inventaire). Fortune et charge sont dans la rangée sous les onglets (`InventoryTabView`).
 struct InventoryBoard: View {
     let section: SheetSection
+    /// Position de chaque emplacement dans le contenu : la rangée suit celui du haut.
+    var onSlotFrame: (PersistentIdentifier, CGRect) -> Void = { _, _ in }
 
     @Environment(\.sheetMode) private var mode
     @Environment(\.sheetTheme) private var theme
     @Environment(\.modelContext) private var context
-    @State private var showsSettings = false
     @State private var width: CGFloat = 0
+
+    static let coordinateSpace = "inventaire"
 
     var body: some View {
         if let inventory = section.inventory {
             VStack(alignment: .leading, spacing: 16) {
-                theme.sectionFrame(SectionFrameConfiguration(title: title, content: AnyView(header(inventory))))
-                    .structureItem(.section(section))
                 let slots = inventory.sortedSlots
+                if slots.isEmpty {
+                    Text("Aucun emplacement").font(.callout).foregroundStyle(.secondary)
+                }
                 if width >= 640, slots.count > 1 {
                     let columns = Self.balanced(slots)
                     HStack(alignment: .top, spacing: 16) {
-                        column(columns.0, inventory: inventory)
-                        column(columns.1, inventory: inventory)
+                        column(columns.0, inventory: inventory, addsSlot: false)
+                        column(columns.1, inventory: inventory, addsSlot: mode == .fill)
                     }
                 } else {
-                    column(slots, inventory: inventory)
+                    column(slots, inventory: inventory, addsSlot: mode == .fill)
                 }
             }
+            .coordinateSpace(.named(Self.coordinateSpace))
             .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
             // En Structure, toucher la Besace sélectionne la section.
             .allowsHitTesting(mode != .structure)
-            .sheet(isPresented: $showsSettings) {
-                InventorySettingsView(inventory: inventory)
-            }
         }
     }
 
-    private var title: AnyView? {
-        let text = section.title.isEmpty ? String(localized: "Besace") : section.title
-        return AnyView(Text(text)
-            .font(theme.sectionTitleFont)
-            .textCase(theme.sectionTitleCase)
-            .tracking(theme.sectionTitleTracking)
-            .sheetHeading(theme)
-            .accessibilityAddTraits(.isHeader))
-    }
-
-    private func header(_ inventory: Inventory) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            InventorySummary(inventory: inventory)
-            if inventory.sortedSlots.isEmpty {
-                Text("Aucun emplacement").font(.callout).foregroundStyle(.secondary)
-            }
-            if mode == .fill {
-                HStack(spacing: 16) {
-                    Button {
-                        inventory.addSlot(name: String(localized: "Nouvel emplacement"), in: context)
-                    } label: {
-                        Label("Emplacement", systemImage: "plus")
-                    }
-                    Button {
-                        showsSettings = true
-                    } label: {
-                        Label("Réglages de la Besace", systemImage: "slider.horizontal.3")
-                    }
-                    Spacer(minLength: 0)
-                }
-                .font(.callout)
-                .buttonStyle(.borderless)
-            }
-        }
-    }
-
-    private func column(_ slots: [InventorySlot], inventory: Inventory) -> some View {
+    private func column(_ slots: [InventorySlot], inventory: Inventory, addsSlot: Bool) -> some View {
         VStack(spacing: 16) {
             ForEach(slots) { slot in
                 theme.sectionFrame(SectionFrameConfiguration(
                     title: nil, content: AnyView(SlotView(slot: slot, inventory: inventory))))
+                    .id(slot.persistentModelID)
+                    .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(Self.coordinateSpace)) } action: {
+                        onSlotFrame(slot.persistentModelID, $0)
+                    }
+            }
+            if addsSlot {
+                DashedAddZone {
+                    Button {
+                        inventory.addSlot(name: String(localized: "Nouvel emplacement"), in: context)
+                    } label: {
+                        AddButtonLabel(title: "Emplacement")
+                    }
+                    .buttonStyle(.borderless)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .top)
@@ -160,14 +140,22 @@ struct InventorySectionView: View {
     }
 }
 
-/// Fortune et charge, en tête de la Besace.
-private struct InventorySummary: View {
+/// Fortune et charge : en tête de la Besace, ou en pastilles de verre dans la rangée de l'onglet
+/// Inventaire (`pills`).
+struct InventorySummary: View {
     let inventory: Inventory
+    var pills = false
 
     var body: some View {
         let engine = FormulaEngine(sheet: inventory.sheet)
         let hasMoney = inventory.allItems.contains(where: \.isMoney)
-        if hasMoney || inventory.tracksWeight {
+        if pills {
+            HStack(spacing: 8) {
+                content(engine, hasMoney: hasMoney)
+            }
+            .font(.subheadline)
+            .labelStyle(PillLabelStyle())
+        } else if hasMoney || inventory.tracksWeight {
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 18) { content(engine, hasMoney: hasMoney) }
                 VStack(alignment: .leading, spacing: 6) { content(engine, hasMoney: hasMoney) }
@@ -199,6 +187,20 @@ private struct InventorySummary: View {
                         .foregroundStyle(.orange)
                 }
             }
+        }
+    }
+
+    /// Pastille de verre : icône discrète, valeur.
+    private struct PillLabelStyle: LabelStyle {
+        func makeBody(configuration: Configuration) -> some View {
+            HStack(spacing: 5) {
+                configuration.icon.foregroundStyle(.secondary)
+                configuration.title
+            }
+            .lineLimit(1)
+            .padding(.horizontal, 11)
+            .padding(.vertical, 6)
+            .glassEffect(.regular, in: .capsule)
         }
     }
 
@@ -247,22 +249,24 @@ private struct SlotView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 8) {
-            Label(slot.name.isEmpty ? String(localized: "Sans nom") : slot.name, systemImage: slot.icon)
-                .font(.subheadline.weight(.semibold))
-                .sheetHeading(theme)
-            if inventory.tracksWeight && !slot.countsTowardEncumbrance {
-                Image(systemName: "scalemass")
-                    .symbolVariant(.slash)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .help("Ne compte pas dans la charge")
-                    .accessibilityLabel("Ne compte pas dans la charge")
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: slot.icon)
+                .foregroundStyle(theme.accent)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(slot.name.isEmpty ? String(localized: "Sans nom") : slot.name)
+                    .sheetHeading(theme)
+                    .accessibilityAddTraits(.isHeader)
+                if inventory.tracksWeight && !slot.countsTowardEncumbrance {
+                    Text("Hors charge")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             Spacer(minLength: 8)
             if inventory.tracksWeight {
                 Text(weightText)
-                    .font(.caption)
+                    .font(.subheadline)
                     .monospacedDigit()
                     .foregroundStyle(slot.isOverCapacity ? Color.red : Color.secondary)
             }
@@ -270,6 +274,8 @@ private struct SlotView: View {
                 addMenu
             }
         }
+        .font(.title3.weight(.bold))
+        .padding(.bottom, 4)
     }
 
     private var weightText: String {
@@ -302,8 +308,10 @@ private struct SlotView: View {
                 }
             }
         } label: {
-            Label("Ajouter dans \(slot.name)", systemImage: "plus.circle")
+            Label("Ajouter dans \(slot.name)", systemImage: "plus.circle.fill")
                 .labelStyle(.iconOnly)
+                .font(.title3)
+                .symbolRenderingMode(.hierarchical)
         }
         .menuIndicator(.hidden)
         .buttonStyle(.borderless)

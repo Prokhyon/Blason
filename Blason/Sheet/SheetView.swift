@@ -18,6 +18,8 @@ struct SheetView: View {
     /// Mode quitté en ouvrant la Structure, retrouvé par « Terminé ».
     @State private var modeBeforeStructure: SheetMode?
     @State private var showsInspector = true
+    /// Réglages de la Besace (onglet Inventaire, Remplir).
+    @State private var showsInventorySettings = false
     /// Objet de la Besace ouvert (Remplir, Jouer) : panneau latéral, ou feuille sur iPhone.
     @State private var openedItem: InventoryItem?
     /// Hauteur de la feuille de l'inspecteur (iPhone) : la fiche garde cette marge en bas
@@ -135,7 +137,7 @@ struct SheetView: View {
     private var tabContent: some View {
         switch tab {
         case .inventory:
-            InventoryTabView(sheet: sheet)
+            InventoryTabView(sheet: sheet, showsSettings: $showsInventorySettings)
                 .safeAreaPadding(.bottom, showsCompactInspector || compactOpenedItem.wrappedValue != nil ? inspectorSheetHeight : 0)
                 .sheetTheme(SheetThemes.theme(for: sheet?.appearance(in: context) ?? .standard))
         default:
@@ -251,9 +253,16 @@ struct SheetView: View {
                         showsInspector = true
                     }
                 }
-            } else if !isTemplate {
-                Button("Éditer la structure", systemImage: "square.stack.3d.up") {
-                    mode = .structure
+            } else {
+                if tab == .inventory, mode == .fill, sheet?.inventory != nil {
+                    Button("Réglages de la Besace", systemImage: "slider.horizontal.3") {
+                        showsInventorySettings = true
+                    }
+                }
+                if !isTemplate {
+                    Button("Éditer la structure", systemImage: "square.stack.3d.up") {
+                        mode = .structure
+                    }
                 }
             }
             displayCommands

@@ -180,40 +180,11 @@ private struct PageRow: View {
 
     var body: some View {
         let pages = editor.pages
-        ScrollViewReader { proxy in
-            ScrollView(.horizontal) {
-                HStack(spacing: 22) {
-                    ForEach(pages.indices, id: \.self) { index in
-                        let selected = index == editor.pageIndex
-                        Button {
-                            withAnimation(.snappy) { editor.pageIndex = index }
-                        } label: {
-                            Text(pages[index].title.isEmpty ? "Sans titre" : pages[index].title)
-                                .font(.body.weight(.semibold))
-                                .lineLimit(1)
-                                .foregroundStyle(selected ? .primary : .secondary)
-                                .padding(.vertical, 8)
-                                .overlay(alignment: .bottom) {
-                                    if selected {
-                                        Capsule()
-                                            .fill(.tint)
-                                            .frame(height: 3)
-                                    }
-                                }
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityAddTraits(selected ? .isSelected : [])
-                        .id(index)
-                    }
-                }
-                .padding(.horizontal)
-            }
-            .scrollIndicators(.hidden)
-            .onAppear { proxy.scrollTo(editor.pageIndex) }
-            .onChange(of: editor.pageIndex) { _, index in
-                withAnimation { proxy.scrollTo(index) }
-            }
+        SecondaryRow(
+            items: pages.indices.map { .init(id: $0, title: pages[$0].title.isEmpty ? String(localized: "Sans titre") : pages[$0].title) },
+            selection: editor.pageIndex
+        ) { index in
+            withAnimation(.snappy) { editor.pageIndex = index }
         }
     }
 }

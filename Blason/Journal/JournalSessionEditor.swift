@@ -4,8 +4,9 @@ import SwiftData
 import SheetKit
 
 /// Rédaction d'une session, comme dans Notes : un petit en-tête (numéro, date, titre, date en jeu,
-/// détails repliables) puis le récit sur toute la place. La boîte à outils met en forme, cite les
-/// fiches du carnet (PNJ, lieux…), joint documents, croquis et zones manuscrites.
+/// détails repliables) qui défile avec le récit, sur toute la place (SPEC §5.17). La boîte à outils
+/// flotte en bas, en verre : elle met en forme, cite les fiches du carnet (PNJ, lieux…), joint
+/// documents, croquis et zones manuscrites.
 struct JournalSessionEditor: View {
     @Bindable var session: JournalSession
     let journal: Journal
@@ -48,22 +49,11 @@ struct JournalSessionEditor: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            Divider()
-            JournalTextView(controller: controller, initialText: initialText, allowsScribble: allowsScribble)
-        }
+        JournalTextView(controller: controller, initialText: initialText, allowsScribble: allowsScribble,
+                        header: AnyView(header))
         .background(Color.secondaryGroupedBackground)
-        .toolbar {
-            if sizeClass != .compact {
-                ToolbarItemGroup(placement: .primaryAction) {
-                    formatControls
-                }
-            }
-        }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            if sizeClass == .compact { compactBar }
-        }
+        // Au-dessus du récit (qui garde une marge en bas pour qu'on puisse y écrire), et du clavier.
+        .overlay(alignment: .bottom) { toolbox }
         .background { shortcuts }
         .onAppear(perform: connect)
         .onDisappear {
@@ -166,12 +156,6 @@ struct JournalSessionEditor: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .frame(maxWidth: 720, alignment: .leading)
-        .padding(.horizontal, 20)
-        .padding(.top, 12)
-        .padding(.bottom, 10)
-        .frame(maxWidth: .infinity)
-        .background(Color.secondaryGroupedBackground)
     }
 
     private var details: some View {
@@ -231,17 +215,17 @@ struct JournalSessionEditor: View {
         moreMenu
     }
 
-    /// iPhone : la boîte à outils en bas, au-dessus du clavier.
-    private var compactBar: some View {
-        HStack(spacing: 22) {
+    /// Capsule de verre flottante, centrée en bas, au-dessus du clavier.
+    private var toolbox: some View {
+        HStack(spacing: sizeClass == .compact ? 20 : 26) {
             formatControls
         }
         .labelStyle(.iconOnly)
         .font(.title3)
-        .padding(.vertical, 10)
-        .frame(maxWidth: .infinity)
-        .background(.bar)
-        .overlay(alignment: .top) { Divider() }
+        .padding(.horizontal, 22)
+        .padding(.vertical, 12)
+        .glassEffect(.regular.interactive(), in: .capsule)
+        .padding(.bottom, 12)
     }
 
     private var styleMenu: some View {

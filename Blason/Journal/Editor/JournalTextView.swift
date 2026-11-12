@@ -14,10 +14,28 @@ struct JournalTextView: View {
     /// Écriture au crayon convertie en texte (Scribble, iPad).
     var allowsScribble = true
     var placeholder: LocalizedStringKey = "Récit de la session"
+    /// En-tête posé au-dessus du récit, qui défile avec lui (iOS) ; sur Mac, il reste au-dessus.
+    var header: AnyView?
 
     var body: some View {
-        JournalTextRepresentable(controller: controller, initialText: initialText, allowsScribble: allowsScribble)
+        #if canImport(UIKit)
+        JournalTextRepresentable(controller: controller, initialText: initialText, allowsScribble: allowsScribble,
+                                 header: header)
             .accessibilityLabel(Text(placeholder))
+        #else
+        VStack(spacing: 0) {
+            if let header {
+                header
+                    .frame(maxWidth: readableWidth, alignment: .leading)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
+                    .frame(maxWidth: .infinity)
+                Divider()
+            }
+            JournalTextRepresentable(controller: controller, initialText: initialText, allowsScribble: allowsScribble)
+                .accessibilityLabel(Text(placeholder))
+        }
+        #endif
     }
 }
 
@@ -30,6 +48,7 @@ private struct JournalTextRepresentable: UIViewRepresentable {
     let controller: JournalEditorController
     let initialText: JournalText
     let allowsScribble: Bool
+    let header: AnyView?
 
     func makeCoordinator() -> Coordinator { Coordinator(controller: controller) }
 
@@ -54,17 +73,40 @@ private struct JournalTextRepresentable: UIViewRepresentable {
         let scribble = UIScribbleInteraction(delegate: context.coordinator)
         view.addInteraction(scribble)
         context.coordinator.allowsScribble = allowsScribble
+
+        if let header {
+            let host = UIHostingController(rootView: measured(header, in: view))
+            host.view.backgroundColor = .clear
+            host.safeAreaRegions = []
+            view.addSubview(host.view)
+            view.headerView = host.view
+            context.coordinator.header = host
+        }
         return view
     }
 
     func updateUIView(_ view: JournalUITextView, context: Context) {
         context.coordinator.allowsScribble = allowsScribble
+        if let header, let host = context.coordinator.header {
+            host.rootView = measured(header, in: view)
+        }
+    }
+
+    /// L'en-tête à sa hauteur naturelle, qu'il transmet à la vue de texte pour décaler le récit.
+    private func measured(_ header: AnyView, in view: JournalUITextView) -> AnyView {
+        AnyView(header
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { [weak view] height in
+                view?.headerHeight = height
+            })
     }
 
     @MainActor
     final class Coordinator: NSObject, UITextViewDelegate, UIGestureRecognizerDelegate, UIScribbleInteractionDelegate {
         let controller: JournalEditorController
         var allowsScribble = true
+        var header: UIHostingController<AnyView>?
         private var tappedItem: JournalTextItem?
 
         init(controller: JournalEditorController) {
@@ -124,14 +166,30 @@ private struct JournalTextRepresentable: UIViewRepresentable {
 
 final class JournalUITextView: UITextView, JournalTextHost {
     var journalUndo: UndoManager?
+    /// En-tête de la session, posé au-dessus du texte dans la zone qui défile.
+    var headerView: UIView?
+    var headerHeight: CGFloat = 0 {
+        didSet { if headerHeight != oldValue { setNeedsLayout() } }
+    }
 
     override var undoManager: UndoManager? { journalUndo ?? super.undoManager }
 
     override func layoutSubviews() {
         super.layoutSubviews()
         let side = max(20, (bounds.width - readableWidth) / 2)
-        let inset = UIEdgeInsets(top: 16, left: side, bottom: 120, right: side)
+        var top: CGFloat = 16
+        if let headerView {
+            headerView.frame = CGRect(x: side, y: top, width: max(0, bounds.width - 2 * side), height: headerHeight)
+            top += headerHeight + 14
+        }
+        let inset = UIEdgeInsets(top: top, left: side, bottom: 120, right: side)
         if textContainerInset != inset { textContainerInset = inset }
+    }
+
+    /// Les gestes du texte (curseur, sélection, citations) ne partent pas de l'en-tête.
+    override func gestureRecognizerShouldBegin(_ recognizer: UIGestureRecognizer) -> Bool {
+        if let headerView, headerView.frame.contains(recognizer.location(in: self)) { return false }
+        return super.gestureRecognizerShouldBegin(recognizer)
     }
 
     /// Le texte collé perd sa mise en forme d'origine.
