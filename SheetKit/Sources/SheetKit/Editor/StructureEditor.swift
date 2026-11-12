@@ -352,7 +352,7 @@ public final class StructureEditor {
     public func addSection(_ kind: SectionKind, to row: SheetRow, column: Int) {
         guard let context else { return }
         let section = kind == .inventory
-            ? row.addInventorySection(title: "", column: column, in: context)
+            ? row.addInventorySection(title: "Besace", column: column, in: context)
             : row.addSection(title: "", kind: kind, column: column, in: context)
         if kind == .table {
             section.labelColumnTitle = "Nom"

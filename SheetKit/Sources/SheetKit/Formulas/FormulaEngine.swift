@@ -348,3 +348,13 @@ extension SheetTableCell {
     /// Fiche qui contient la cellule.
     public var sheet: Sheet? { row?.group?.section?.row?.page?.sheet }
 }
+
+extension Inventory {
+    /// Fiche qui contient la Besace.
+    public var sheet: Sheet? { section?.row?.page?.sheet }
+}
+
+extension InventoryItem {
+    /// Fiche qui contient l'objet.
+    public var sheet: Sheet? { inventory?.sheet }
+}

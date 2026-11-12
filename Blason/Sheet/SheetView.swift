@@ -15,6 +15,8 @@ struct SheetView: View {
     @State private var mode: SheetMode
     @State private var editor: StructureEditor
     @State private var showsInspector = true
+    /// Objet de la Besace ouvert (Remplir, Jouer) : panneau latéral, ou feuille sur iPhone.
+    @State private var openedItem: InventoryItem?
     /// Hauteur de la feuille de l'inspecteur (iPhone) : la fiche garde cette marge en bas
     /// pour que tout élément puisse remonter au-dessus d'elle.
     @State private var inspectorSheetHeight: CGFloat = 0
@@ -39,6 +41,12 @@ struct SheetView: View {
         if let theme = defaults.string(forKey: "demoTheme") {
             sheet?.ownAppearance = SheetAppearance(themeID: theme, colorID: defaults.string(forKey: "demoColor") ?? "blue")
         }
+        if defaults.bool(forKey: "demoBesace"), let sheet, let context = sheet.modelContext {
+            DemoData.addDemoInventory(to: sheet, in: context)
+        }
+        if let name = defaults.string(forKey: "demoItem") {
+            _openedItem = State(initialValue: sheet?.inventories.flatMap(\.allItems).first { $0.name == name })
+        }
         if let code = defaults.string(forKey: "demoSelect") {
             if let field = sheet?.field(code: code) {
                 editor.select(.field(field))
@@ -56,8 +64,15 @@ struct SheetView: View {
             sheetContent
             if showsSidePanel {
                 Divider().ignoresSafeArea(edges: .bottom)
-                StructureInspector(editor: editor, isTemplate: sheet?.template != nil) {
-                    showsInspector = false
+                Group {
+                    if mode == .structure {
+                        StructureInspector(editor: editor, isTemplate: sheet?.template != nil) {
+                            showsInspector = false
+                        }
+                    } else if let openedItem {
+                        ItemDetailView(item: openedItem) { self.openedItem = nil }
+                            .id(openedItem.persistentModelID)
+                    }
                 }
                 .frame(width: 340)
                 .transition(.move(edge: .trailing))
@@ -76,6 +91,13 @@ struct SheetView: View {
             .presentationBackgroundInteraction(.enabled(upThrough: .medium))
             .environment(\.structureEditor, editor)
         }
+        .sheet(item: compactOpenedItem) { item in
+            ItemDetailView(item: item) { openedItem = nil }
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { inspectorSheetHeight = $0 }
+                .presentationDetents([.medium, .large])
+                .presentationBackgroundInteraction(.enabled(upThrough: .medium))
+                .environment(\.sheetMode, mode)
+        }
         .sheet(item: $editor.pasteList) { request in
             PasteListView(request: request, editor: editor)
         }
@@ -83,6 +105,7 @@ struct SheetView: View {
         .environment(\.sheetMode, mode)
         .focusedSceneValue(\.sheetModeBinding, $mode)
         .environment(\.structureEditor, editor)
+        .environment(\.inventoryItemOpener, InventoryItemOpener { openedItem = $0 })
         .onChange(of: mode) { _, newMode in
             if newMode != .structure { editor.clearSelection() }
         }
@@ -93,9 +116,19 @@ struct SheetView: View {
         }
     }
 
-    /// Inspecteur en panneau latéral sur grand écran, en feuille sur écran étroit.
+    /// Panneau latéral sur grand écran (feuille sur écran étroit) : l'inspecteur en Structure,
+    /// la fiche de l'objet ouvert en Remplir et Jouer (SPEC §5.15).
     private var showsSidePanel: Bool {
-        mode == .structure && showsInspector && sizeClass != .compact
+        guard sizeClass != .compact else { return false }
+        return mode == .structure ? showsInspector : openedItem != nil
+    }
+
+    /// iPhone : fiche de l'objet en feuille.
+    private var compactOpenedItem: Binding<InventoryItem?> {
+        Binding(
+            get: { mode != .structure && sizeClass == .compact ? openedItem : nil },
+            set: { openedItem = $0 }
+        )
     }
 
     /// iPhone : la feuille n'apparaît qu'avec une sélection (sinon elle couvrirait la barre du bas
@@ -135,7 +168,7 @@ struct SheetView: View {
             }
         }
         .animation(.default, value: editor.notice)
-        .safeAreaPadding(.bottom, showsCompactInspector ? inspectorSheetHeight : 0)
+        .safeAreaPadding(.bottom, showsCompactInspector || compactOpenedItem.wrappedValue != nil ? inspectorSheetHeight : 0)
         .sheetTheme(SheetThemes.theme(for: sheet?.appearance(in: context) ?? .standard))
     }
 

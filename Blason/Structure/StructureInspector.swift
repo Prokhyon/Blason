@@ -356,9 +356,12 @@ private struct SectionInspector: View {
                         Label("Ajouter une colonne", systemImage: "plus")
                     }
                 }
-            case .inventory, .inventoryView:
-                // Réglages de la Besace : étape suivante de la V2.2.
-                EmptyView()
+            case .inventory:
+                if let inventory = section.inventory {
+                    InventoryInspector(inventory: inventory)
+                }
+            case .inventoryView:
+                InventoryViewInspector(section: section)
             }
 
             if let row = section.row {

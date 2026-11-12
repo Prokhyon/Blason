@@ -37,12 +37,12 @@ struct SectionCard: View {
                 FieldsSectionView(section: section)
             case .table:
                 TableSectionView(section: section)
-            case .inventory, .inventoryView:
-                // Interface de la Besace : étape suivante de la V2.2.
-                Text(section.kind == .inventory ? "Besace" : "Vue de la Besace")
-                    .foregroundStyle(.secondary)
+            case .inventory:
+                InventorySectionView(section: section)
+            case .inventoryView:
+                InventoryViewSection(section: section)
             }
-            if mode == .structure, let editor {
+            if mode == .structure, let editor, section.kind == .fields || section.kind == .table {
                 addBar(editor)
             }
         }

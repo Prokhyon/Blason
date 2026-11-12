@@ -322,6 +322,13 @@ private struct ColumnAddZone: View {
                     Button("Tableau", systemImage: "tablecells") {
                         editor.addSection(.table, to: row, column: column)
                     }
+                    Divider()
+                    Button("Besace", systemImage: "backpack") {
+                        editor.addSection(.inventory, to: row, column: column)
+                    }
+                    Button("Vue de la Besace (objets équipés)", systemImage: "checklist") {
+                        editor.addSection(.inventoryView, to: row, column: column)
+                    }
                 } label: {
                     AddButtonLabel(title: "Section")
                 }
