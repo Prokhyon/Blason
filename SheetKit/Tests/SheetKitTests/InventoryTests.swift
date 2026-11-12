@@ -300,4 +300,35 @@ struct InventoryTests {
         #expect(signature(of: imported.sheet) == signature(of: character.sheet))
         #expect(try SheetDocument(character: imported, exportedAt: Date(timeIntervalSince1970: 0)).jsonData() == data)
     }
+
+    @Test("Ordre des types, monnaies et emplacements : glisser, monter, descendre")
+    func reordering() throws {
+        let context = try makeContext()
+        let (_, inventory) = try sheetWithInventory(context)
+        inventory.addSlot(name: "Monture", in: context)
+        inventory.addSlot(name: "Bateau", in: context)
+        #expect(inventory.sortedSlots.map(\.name) == ["Sur soi", "Monture", "Bateau"])
+
+        // Glisser « Bateau » en tête.
+        InventoryOrder.move(inventory.sortedSlots, fromOffsets: [2], toOffset: 0)
+        #expect(inventory.sortedSlots.map(\.name) == ["Bateau", "Sur soi", "Monture"])
+        // Glisser « Bateau » à la fin (décalage SwiftUI : position après le dernier).
+        InventoryOrder.move(inventory.sortedSlots, fromOffsets: [0], toOffset: 3)
+        #expect(inventory.sortedSlots.map(\.name) == ["Sur soi", "Monture", "Bateau"])
+        #expect(inventory.sortedSlots.map(\.order) == [0, 1, 2])
+
+        let types = inventory.sortedItemTypes
+        let weapon = try #require(inventory.itemType(code: "arme"))
+        #expect(!InventoryOrder.canMove(types[0], by: -1, in: types))
+        InventoryOrder.move(weapon, by: -1, in: types)
+        #expect(inventory.sortedItemTypes.prefix(2).map(\.code) == ["arme", "argent"])
+        InventoryOrder.move(weapon, by: 1, in: inventory.sortedItemTypes)
+        InventoryOrder.move(weapon, by: 1, in: inventory.sortedItemTypes)
+        #expect(inventory.sortedItemTypes.prefix(3).map(\.code) == ["argent", "armure", "arme"])
+
+        let silver = inventory.addCurrency(name: "Pièce d'argent", abbreviation: "pa", rate: 10, in: context)
+        InventoryOrder.move(silver, by: -1, in: inventory.sortedCurrencies)
+        #expect(inventory.sortedCurrencies.map(\.abbreviation) == ["pa", "po"])
+        #expect(!InventoryOrder.canMove(silver, by: -1, in: inventory.sortedCurrencies))
+    }
 }

@@ -32,6 +32,26 @@
         }
       }
     },
+    "%@ › %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ › %2$@"
+          }
+        }
+      }
+    },
+    "%@ %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@"
+          }
+        }
+      }
+    },
     "%@, %@" : {
       "localizations" : {
         "fr" : {
@@ -47,6 +67,16 @@
     },
     "%@, aucune image" : {
 
+    },
+    "%@.poids, %@.limite, %@.malus (palier atteint), %@.argent (fortune dans la plus petite monnaie)." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@.poids, %2$@.limite, %3$@.malus (palier atteint), %4$@.argent (fortune dans la plus petite monnaie)."
+          }
+        }
+      }
     },
     "%lld" : {
 
@@ -70,6 +100,15 @@
         }
       }
     },
+    "=BESACE.limite" : {
+
+    },
+    "=FOR*2" : {
+
+    },
+    "=pct/2" : {
+
+    },
     "⌘ ou ⇧ + toucher : sélection multiple" : {
 
     },
@@ -88,6 +127,9 @@
     "à préciser" : {
 
     },
+    "Abréviation" : {
+
+    },
     "Affichage" : {
 
     },
@@ -100,7 +142,22 @@
     "Ajouter à la sélection" : {
 
     },
+    "Ajouter dans %@" : {
+
+    },
     "Ajouter l'exemple BRP" : {
+
+    },
+    "Ajouter un %@" : {
+
+    },
+    "Ajouter un emplacement" : {
+
+    },
+    "Ajouter un palier" : {
+
+    },
+    "Ajouter un type" : {
 
     },
     "Ajouter une colonne" : {
@@ -112,7 +169,13 @@
     "Ajouter une ligne" : {
 
     },
+    "Ajouter une monnaie" : {
+
+    },
     "Ajouter une page" : {
+
+    },
+    "Ajouter une propriété" : {
 
     },
     "Ajouter une rangée" : {
@@ -127,6 +190,12 @@
     "Ajouter une spécialité à %@" : {
 
     },
+    "Ajoutez d'abord une section Besace à la fiche." : {
+
+    },
+    "Ajoutez une Besace à la fiche : cette vue montre ses objets équipés." : {
+
+    },
     "Ajoutez une première page pour construire la fiche." : {
 
     },
@@ -136,7 +205,22 @@
     "Aperçu" : {
 
     },
+    "Apparence, effets, histoire…" : {
+
+    },
+    "Argent" : {
+
+    },
+    "arme" : {
+
+    },
+    "Arme" : {
+
+    },
     "Astuces" : {
+
+    },
+    "Atteint quand le poids porté dépasse le seuil." : {
 
     },
     "Au-delà" : {
@@ -148,16 +232,40 @@
     "Aucun champ" : {
 
     },
+    "Aucun emplacement" : {
+
+    },
+    "Aucun objet équipé" : {
+
+    },
     "Aucun personnage" : {
 
     },
     "Aucun template" : {
 
     },
+    "Aucun type d'objet choisi." : {
+
+    },
     "Augmenter %@" : {
 
     },
     "Avec plusieurs colonnes d'affichage, les groupes se répartissent côte à côte quand la largeur le permet." : {
+
+    },
+    "Base d'essai recréée" : {
+
+    },
+    "Bateau" : {
+
+    },
+    "Besace" : {
+
+    },
+    "BESACE" : {
+
+    },
+    "Besace vide" : {
 
     },
     "Bibliothèque" : {
@@ -175,6 +283,9 @@
     "Calcule le maximum de la ressource, ex. =plafond((CON+TAI)/2). PV désigne la valeur actuelle, PV.max le maximum." : {
 
     },
+    "Capacité" : {
+
+    },
     "Case à cocher" : {
 
     },
@@ -184,7 +295,13 @@
     "Ce code est déjà utilisé par une autre colonne du tableau." : {
 
     },
+    "Ce qui est sur soi compte dans la charge ; une monture, un bateau ou une planque, non. La capacité est facultative." : {
+
+    },
     "Champ" : {
+
+    },
+    "Champs" : {
 
     },
     "Champs : `Force;11;FOR` (libellé, valeur, code)" : {
@@ -196,7 +313,16 @@
     "Chaque ligne vaut jusqu'à son seuil compris. Un résultat est un nombre (2) ou un texte (+1d4). « Au-delà » : au-dessus du dernier seuil ; vide, le champ reste vide." : {
 
     },
+    "Chargé" : {
+
+    },
+    "Charge maximale" : {
+
+    },
     "Choisir une image" : {
+
+    },
+    "Choisissez les types montrés dans l'inspecteur." : {
 
     },
     "Choix dans une liste" : {
@@ -205,7 +331,13 @@
     "coché" : {
 
     },
+    "Cochée par défaut" : {
+
+    },
     "Code" : {
+
+    },
+    "Code dans les formules" : {
 
     },
     "Coller" : {
@@ -241,7 +373,19 @@
     "Comme le template" : {
 
     },
+    "Comme les colonnes d'un tableau : chaque objet du type a sa valeur. Dans une formule de propriété, une autre propriété se désigne par son code (=pct/2), la quantité par « quantite »." : {
+
+    },
+    "Compte dans la charge" : {
+
+    },
     "Compteur" : {
+
+    },
+    "Contenant" : {
+
+    },
+    "Contenant (sac, bourse…)" : {
 
     },
     "Contenu" : {
@@ -268,7 +412,22 @@
     "Créer" : {
 
     },
+    "Dans" : {
+
+    },
+    "Dans l'ordre où elles sont cochées." : {
+
+    },
+    "Dans un template, les objets de la Besace sont l'équipement de départ de chaque nouveau personnage. Ils se saisissent en mode Remplir." : {
+
+    },
     "Date" : {
+
+    },
+    "degats" : {
+
+    },
+    "Dégâts" : {
 
     },
     "Déplacer vers un autre groupe…" : {
@@ -283,10 +442,19 @@
     "Descendre" : {
 
     },
+    "Description" : {
+
+    },
     "Désélectionner" : {
 
     },
+    "Déséquiper" : {
+
+    },
     "Diminuer %@" : {
+
+    },
+    "Directement" : {
 
     },
     "Disposition" : {
@@ -301,22 +469,52 @@
     "Édition" : {
 
     },
+    "Effet" : {
+
+    },
+    "Emplacement" : {
+
+    },
+    "Emplacements" : {
+
+    },
+    "En pièces de la plus petite monnaie." : {
+
+    },
     "Enregistrer comme template" : {
 
     },
     "Entrée dans un libellé : crée l'élément suivant" : {
 
     },
+    "équipé" : {
+
+    },
+    "Équipé" : {
+
+    },
+    "Équiper" : {
+
+    },
     "ex. +1d4" : {
 
     },
+    "ex. 25 po" : {
+
+    },
     "ex. FOR+TAI" : {
+
+    },
+    "ex. Mouvement −2" : {
 
     },
     "Exporter" : {
 
     },
     "Exporter…" : {
+
+    },
+    "Fermer la fiche de l'objet" : {
 
     },
     "Fiche" : {
@@ -332,6 +530,15 @@
 
     },
     "Formule" : {
+
+    },
+    "Formule par défaut" : {
+
+    },
+    "Fortune : %@" : {
+
+    },
+    "Genre" : {
 
     },
     "Graphite" : {
@@ -356,6 +563,9 @@
 
     },
     "iCloud est bloqué sur cet appareil (contrôle parental ou gestion). Tes fiches restent ici." : {
+
+    },
+    "Icône" : {
 
     },
     "Image" : {
@@ -388,6 +598,9 @@
     "Jusqu'à" : {
 
     },
+    "kg" : {
+
+    },
     "La fiche et toutes ses valeurs seront supprimées. Cette action est définitive." : {
 
     },
@@ -395,6 +608,9 @@
 
     },
     "La valeur est calculée et ne se saisit pas. Codes des champs, + − × ÷, parenthèses, plafond, plancher, arrondi, min, max, table. Ex. =FOR*5." : {
+
+    },
+    "La valeur est relative à la plus petite monnaie (cuivre = 1, argent = 10, or = 100). La fortune s'affiche convertie, sans changer les pièces." : {
 
     },
     "Largeur de la colonne %lld : %lld" : {
@@ -410,13 +626,22 @@
     "Largeurs relatives : 2 et 1 donnent ⅔ et ⅓. Sur un écran étroit, les colonnes s'empilent. Réduire le nombre de colonnes regroupe leurs sections dans la dernière." : {
 
     },
+    "Le code sert aux vues de la Besace (objets équipés de ce type)." : {
+
+    },
     "Le code sert dans les formules (ex. =FOR*5). Entrée dans le libellé crée le champ suivant, du même type." : {
 
     },
     "Le code sert dans les formules de ligne (ex. =valeur/2). La formule s'applique à chaque ligne : calculée pour une colonne « Calcul », valeur par défaut sinon. « groupe » désigne la valeur du groupe (ex. =base+groupe)." : {
 
     },
+    "Le modèle de l'app a changé et l'ancienne base d'essai ne s'ouvrait plus. Elle est gardée sous le nom « %@ » ; tes fiches ont été recopiées depuis la base d'avant la V2. Réimporte tes exports récents pour retrouver les dernières modifications." : {
+
+    },
     "Le personnage reçoit une copie du template : modifier le template plus tard ne changera pas ce personnage." : {
+
+    },
+    "Le poids porté additionne les emplacements qui comptent dans la charge. L'argent ne pèse rien." : {
 
     },
     "le tableau" : {
@@ -425,10 +650,25 @@
     "Le template s'ouvre ensuite en mode Structure pour construire la fiche." : {
 
     },
+    "Les compteurs de cette monnaie restent dans la Besace, comme des objets ordinaires." : {
+
+    },
+    "Les objets de ce type restent dans la Besace, sans type." : {
+
+    },
+    "Les objets rangés dans cet emplacement sont supprimés aussi." : {
+
+    },
+    "Les paliers appliquent un malus" : {
+
+    },
     "Les personnages déjà créés à partir de ce template sont conservés. Cette action est définitive." : {
 
     },
     "Les seuils doivent aller croissant : la première ligne dont le seuil atteint la valeur l'emporte." : {
+
+    },
+    "Les valeurs de cette propriété sont supprimées de tous les objets." : {
 
     },
     "Libellé" : {
@@ -452,6 +692,9 @@
     "Maintenir puis glisser : déplacer un élément" : {
 
     },
+    "Malus" : {
+
+    },
     "Masquer" : {
 
     },
@@ -467,6 +710,9 @@
     "Mode" : {
 
     },
+    "Modifiable en Jouer" : {
+
+    },
     "Modifiable en mode Jouer" : {
 
     },
@@ -479,13 +725,28 @@
     "Modifier la table…" : {
 
     },
+    "Moins" : {
+
+    },
+    "Monnaie" : {
+
+    },
+    "Monnaies" : {
+
+    },
     "Monter" : {
 
     },
     "Natif" : {
 
     },
+    "Ne compte pas dans la charge" : {
+
+    },
     "Nom" : {
+
+    },
+    "Nom de l'objet" : {
 
     },
     "Nom de la ligne" : {
@@ -509,10 +770,37 @@
     "non coché" : {
 
     },
+    "Non suivi" : {
+
+    },
+    "Notes" : {
+
+    },
+    "Notes de partie" : {
+
+    },
     "Nouveau personnage" : {
 
     },
     "Nouveau template" : {
+
+    },
+    "Nouveau type" : {
+
+    },
+    "Nouvel emplacement" : {
+
+    },
+    "Nouvelle monnaie" : {
+
+    },
+    "Objet" : {
+
+    },
+    "Objet supprimé" : {
+
+    },
+    "Objets équipés de type" : {
 
     },
     "OK" : {
@@ -527,6 +815,12 @@
     "Ouvre Réglages pour revalider ton compte Apple. La synchronisation reprendra ensuite." : {
 
     },
+    "Ouvrir" : {
+
+    },
+    "Ouvrir la fiche de l'objet" : {
+
+    },
     "Page" : {
 
     },
@@ -536,10 +830,22 @@
     "Pages" : {
 
     },
+    "Palier" : {
+
+    },
+    "Paliers d'encombrement" : {
+
+    },
     "Passez en mode Structure pour construire la fiche." : {
 
     },
     "Personnages" : {
+
+    },
+    "Pièce d'or" : {
+
+    },
+    "Pièces" : {
 
     },
     "Piste numérotée" : {
@@ -549,6 +855,21 @@
 
     },
     "Plus" : {
+
+    },
+    "po" : {
+
+    },
+    "Poids" : {
+
+    },
+    "Poids et encombrement" : {
+
+    },
+    "Poids total" : {
+
+    },
+    "Poids unitaire" : {
 
     },
     "Pourcentage" : {
@@ -561,6 +882,15 @@
 
     },
     "Précision de %@" : {
+
+    },
+    "Propriété" : {
+
+    },
+    "Propriétés" : {
+
+    },
+    "Quantité" : {
 
     },
     "Rangée" : {
@@ -582,10 +912,22 @@
         }
       }
     },
+    "Rangement" : {
+
+    },
+    "Ranger dans…" : {
+
+    },
     "Rechercher un personnage" : {
 
     },
     "Rechercher un template" : {
+
+    },
+    "Réglages de la Besace" : {
+
+    },
+    "Réglages de la Besace…" : {
 
     },
     "Réglages de la page" : {
@@ -624,6 +966,9 @@
     "Retirer de la sélection" : {
 
     },
+    "Retirer un %@" : {
+
+    },
     "rien" : {
 
     },
@@ -636,7 +981,16 @@
     "Sans libellé" : {
 
     },
+    "Sans nom" : {
+
+    },
+    "Sans poids ni encombrement, aucun poids n'est affiché." : {
+
+    },
     "Sans titre" : {
+
+    },
+    "Sans type" : {
 
     },
     "Sarcelle" : {
@@ -649,6 +1003,12 @@
 
     },
     "Section sans titre" : {
+
+    },
+    "Seuil" : {
+
+    },
+    "Soit" : {
 
     },
     "Sommaire" : {
@@ -669,7 +1029,25 @@
     "Supprimer « %@ » ?" : {
 
     },
+    "Supprimer l'emplacement" : {
+
+    },
+    "Supprimer l'objet" : {
+
+    },
     "Supprimer la ligne" : {
+
+    },
+    "Supprimer la monnaie" : {
+
+    },
+    "Supprimer la propriété" : {
+
+    },
+    "Supprimer le palier" : {
+
+    },
+    "Supprimer le type" : {
 
     },
     "Synchronisation impossible" : {
@@ -734,6 +1112,28 @@
     },
     "Type des champs" : {
 
+    },
+    "Types d'objets" : {
+
+    },
+    "Un contenant reçoit d'autres objets (« Ranger dans… »), mais pas d'autre contenant." : {
+
+    },
+    "Un objet s'équipe depuis la Besace. Déséquipé, il quitte la vue et garde ses valeurs." : {
+
+    },
+    "Un objet sans valeur propre prend la valeur par défaut, sinon le résultat de la formule." : {
+
+    },
+    "Un palier est atteint quand le poids porté dépasse son seuil. Son malus est %@.malus, à utiliser dans les formules concernées (=DEX*5+%@.malus)." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Un palier est atteint quand le poids porté dépasse son seuil. Son malus est %1$@.malus, à utiliser dans les formules concernées (=DEX*5+%2$@.malus)."
+          }
+        }
+      }
     },
     "Un template décrit la fiche d'un système de jeu. Il sert ensuite à créer des personnages." : {
 
@@ -807,7 +1207,16 @@
     "vide" : {
 
     },
+    "Vide" : {
+
+    },
     "Violet" : {
+
+    },
+    "Vue de la Besace" : {
+
+    },
+    "Vue de la Besace (objets équipés)" : {
 
     }
   },

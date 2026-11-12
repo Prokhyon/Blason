@@ -344,3 +344,39 @@ extension ItemPropertyValue {
         }
     }
 }
+
+// MARK: - Ordre des types, monnaies et emplacements
+
+/// Élément de la Besace rangé par `order`.
+public protocol InventoryOrdered: AnyObject {
+    var order: Int { get set }
+}
+
+extension ItemType: InventoryOrdered {}
+extension Currency: InventoryOrdered {}
+extension InventorySlot: InventoryOrdered {}
+
+public enum InventoryOrder {
+    /// Déplace des éléments d'une liste triée (glisser-déposer) et renumérote 0, 1, 2…
+    public static func move<T: InventoryOrdered>(_ sorted: [T], fromOffsets source: IndexSet, toOffset destination: Int) {
+        var items = sorted
+        let moved = source.sorted().map { items[$0] }
+        for index in source.sorted(by: >) { items.remove(at: index) }
+        let insertion = destination - source.filter { $0 < destination }.count
+        items.insert(contentsOf: moved, at: min(max(0, insertion), items.count))
+        for (order, item) in items.enumerated() { item.order = order }
+    }
+
+    /// Monte (`by: -1`) ou descend (`by: 1`) un élément d'une liste triée ; sans effet aux bornes.
+    public static func move<T: InventoryOrdered>(_ item: T, by delta: Int, in sorted: [T]) {
+        guard let index = sorted.firstIndex(where: { $0 === item }) else { return }
+        let target = index + delta
+        guard sorted.indices.contains(target) else { return }
+        move(sorted, fromOffsets: [index], toOffset: delta > 0 ? target + 1 : target)
+    }
+
+    public static func canMove<T: InventoryOrdered>(_ item: T, by delta: Int, in sorted: [T]) -> Bool {
+        guard let index = sorted.firstIndex(where: { $0 === item }) else { return false }
+        return sorted.indices.contains(index + delta)
+    }
+}

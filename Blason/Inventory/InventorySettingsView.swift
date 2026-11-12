@@ -38,6 +38,12 @@ struct InventorySettingsView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("OK") { dismiss() }
                 }
+                #if os(iOS)
+                // Poignées pour changer l'ordre des monnaies, types et emplacements.
+                ToolbarItem(placement: .topBarLeading) {
+                    EditButton()
+                }
+                #endif
             }
             .navigationDestination(for: SettingsRoute.self) { route in
                 switch route {
@@ -109,6 +115,7 @@ struct InventorySettingsView: View {
                     LabeledContent(currency.name, value: "\(currency.abbreviation) · \(SheetFormat.number(currency.rate))")
                 }
             }
+            .onMove { InventoryOrder.move(inventory.sortedCurrencies, fromOffsets: $0, toOffset: $1) }
             Button("Ajouter une monnaie", systemImage: "plus") {
                 inventory.addCurrency(name: String(localized: "Nouvelle monnaie"), abbreviation: "", rate: 1, in: context)
             }
@@ -130,6 +137,7 @@ struct InventorySettingsView: View {
                     }
                 }
             }
+            .onMove { InventoryOrder.move(inventory.sortedItemTypes, fromOffsets: $0, toOffset: $1) }
             Button("Ajouter un type", systemImage: "plus") {
                 inventory.addItemType(name: String(localized: "Nouveau type"), in: context)
             }
@@ -143,6 +151,7 @@ struct InventorySettingsView: View {
                     Label(slot.name, systemImage: slot.icon)
                 }
             }
+            .onMove { InventoryOrder.move(inventory.sortedSlots, fromOffsets: $0, toOffset: $1) }
             Button("Ajouter un emplacement", systemImage: "plus") {
                 inventory.addSlot(name: String(localized: "Nouvel emplacement"), in: context)
             }
@@ -165,6 +174,27 @@ private enum SettingsRoute: Hashable {
 /// Liaison texte vers une propriété optionnelle (vide ↔ nil).
 private func optional(_ binding: Binding<String?>) -> Binding<String> {
     Binding(get: { binding.wrappedValue ?? "" }, set: { binding.wrappedValue = $0.isEmpty ? nil : $0 })
+}
+
+/// Monter / descendre l'élément dans sa liste.
+private struct OrderSection<Item: InventoryOrdered>: View {
+    let item: Item
+    let sorted: [Item]
+
+    var body: some View {
+        Section {
+            HStack {
+                Button("Monter", systemImage: "arrow.up") { InventoryOrder.move(item, by: -1, in: sorted) }
+                    .disabled(!InventoryOrder.canMove(item, by: -1, in: sorted))
+                Spacer()
+                Button("Descendre", systemImage: "arrow.down") { InventoryOrder.move(item, by: 1, in: sorted) }
+                    .disabled(!InventoryOrder.canMove(item, by: 1, in: sorted))
+            }
+            .buttonStyle(.borderless)
+        } header: {
+            Text("Position dans la liste")
+        }
+    }
 }
 
 /// Bouton « Supprimer » d'un éditeur : supprime puis revient à la liste.
@@ -253,6 +283,9 @@ private struct CurrencyEditor: View {
             } footer: {
                 Text("En pièces de la plus petite monnaie.")
             }
+            if let inventory = currency.inventory {
+                OrderSection(item: currency, sorted: inventory.sortedCurrencies)
+            }
             DeleteSection(title: "Supprimer la monnaie",
                           message: "Les compteurs de cette monnaie restent dans la Besace, comme des objets ordinaires.") {
                 context.delete(currency)
@@ -308,6 +341,9 @@ private struct ItemTypeEditor: View {
                 Text("Propriétés")
             } footer: {
                 Text("Comme les colonnes d'un tableau : chaque objet du type a sa valeur. Dans une formule de propriété, une autre propriété se désigne par son code (=pct/2), la quantité par « quantite ».")
+            }
+            if let inventory = type.inventory {
+                OrderSection(item: type, sorted: inventory.sortedItemTypes)
             }
             DeleteSection(title: "Supprimer le type",
                           message: "Les objets de ce type restent dans la Besace, sans type.") {
@@ -403,6 +439,7 @@ private struct SlotEditor: View {
                     Text("Ce qui est sur soi compte dans la charge ; une monture, un bateau ou une planque, non. La capacité est facultative.")
                 }
             }
+            OrderSection(item: slot, sorted: inventory.sortedSlots)
             DeleteSection(title: "Supprimer l'emplacement",
                           message: (slot.items ?? []).isEmpty ? nil : "Les objets rangés dans cet emplacement sont supprimés aussi.") {
                 context.delete(slot)
