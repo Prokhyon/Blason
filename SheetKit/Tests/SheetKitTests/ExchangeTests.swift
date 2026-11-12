@@ -113,6 +113,13 @@ struct ExchangeTests {
             "SheetRow": properties(row), "Page": properties(page), "Sheet": properties(sheetRecord),
             "SheetTemplate": properties(try #require(document.template)),
             "PlayerCharacter": properties(try #require(character.character)),
+            "JournalSession": properties(SheetDocument.SessionRecord(
+                number: 0, date: .now, gameDate: "", title: "", summary: "", richText: nil, plainText: "", gains: "",
+                createdAt: .now, entries: [])),
+            "CodexEntry": properties(SheetDocument.EntryRecord(name: "", kind: "", summary: "", status: "", imageData: nil,
+                                                               createdAt: .now)),
+            "JournalDocument": properties(SheetDocument.DocumentRecord(title: "", contentType: "", data: nil,
+                                                                       createdAt: .now, session: nil, entry: nil)),
         ]
         var checked = 0
         for entity in SheetStore.schema.entities {

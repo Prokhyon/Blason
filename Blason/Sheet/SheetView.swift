@@ -17,6 +17,10 @@ struct SheetView: View {
     @State private var showsInspector = true
     /// Objet de la Besace ouvert (Remplir, Jouer) : panneau latéral, ou feuille sur iPhone.
     @State private var openedItem: InventoryItem?
+    /// Journal du personnage ouvert (Remplir, Jouer) : même panneau que l'objet (SPEC §5.15).
+    @State private var journalOpen = false
+    /// Contenu du panneau quand l'objet et le journal sont ouverts tous les deux.
+    @State private var panelTab: SidePanelTab = .journal
     /// Hauteur de la feuille de l'inspecteur (iPhone) : la fiche garde cette marge en bas
     /// pour que tout élément puisse remonter au-dessus d'elle.
     @State private var inspectorSheetHeight: CGFloat = 0
@@ -46,6 +50,12 @@ struct SheetView: View {
         }
         if let name = defaults.string(forKey: "demoItem") {
             _openedItem = State(initialValue: sheet?.inventories.flatMap(\.allItems).first { $0.name == name })
+            _panelTab = State(initialValue: .item)
+        }
+        // -demoJournal YES : journal d'exemple, panneau ouvert.
+        if defaults.bool(forKey: "demoJournal"), let character = sheet?.character, let context = sheet?.modelContext {
+            DemoData.addDemoJournal(to: character, in: context)
+            _journalOpen = State(initialValue: true)
         }
         if let code = defaults.string(forKey: "demoSelect") {
             if let field = sheet?.field(code: code) {
@@ -69,12 +79,11 @@ struct SheetView: View {
                         StructureInspector(editor: editor, isTemplate: sheet?.template != nil) {
                             showsInspector = false
                         }
-                    } else if let openedItem {
-                        ItemDetailView(item: openedItem) { self.openedItem = nil }
-                            .id(openedItem.persistentModelID)
+                    } else {
+                        sidePanel
                     }
                 }
-                .frame(width: 340)
+                .frame(width: mode != .structure && panelShowsJournal ? 380 : 340)
                 .transition(.move(edge: .trailing))
             }
         }
@@ -91,8 +100,8 @@ struct SheetView: View {
             .presentationBackgroundInteraction(.enabled(upThrough: .medium))
             .environment(\.structureEditor, editor)
         }
-        .sheet(item: compactOpenedItem) { item in
-            ItemDetailView(item: item) { openedItem = nil }
+        .sheet(isPresented: compactPanelShown) {
+            sidePanel
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { inspectorSheetHeight = $0 }
                 .presentationDetents([.medium, .large])
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))
@@ -105,7 +114,12 @@ struct SheetView: View {
         .environment(\.sheetMode, mode)
         .focusedSceneValue(\.sheetModeBinding, $mode)
         .environment(\.structureEditor, editor)
-        .environment(\.inventoryItemOpener, InventoryItemOpener { openedItem = $0 })
+        .environment(\.inventoryItemOpener, InventoryItemOpener { item in
+            openedItem = item
+            panelTab = .item
+        })
+        .focusedSceneValue(\.journalActions, canShowJournal && mode != .structure ? JournalActions(isOpen: panelShowsJournal && sidePanelVisible,
+                                                                              toggle: toggleJournal) : nil)
         .onChange(of: mode) { _, newMode in
             if newMode != .structure { editor.clearSelection() }
         }
@@ -116,18 +130,86 @@ struct SheetView: View {
         }
     }
 
-    /// Panneau latéral sur grand écran (feuille sur écran étroit) : l'inspecteur en Structure,
-    /// la fiche de l'objet ouvert en Remplir et Jouer (SPEC §5.15).
+    /// Panneau latéral sur grand écran (feuille sur écran étroit) : l'inspecteur en Structure ;
+    /// en Remplir et Jouer, la fiche de l'objet ouvert ou le journal (SPEC §5.15).
     private var showsSidePanel: Bool {
         guard sizeClass != .compact else { return false }
-        return mode == .structure ? showsInspector : openedItem != nil
+        return mode == .structure ? showsInspector : sidePanelVisible
     }
 
-    /// iPhone : fiche de l'objet en feuille.
-    private var compactOpenedItem: Binding<InventoryItem?> {
+    /// Objet ou journal ouvert (Remplir, Jouer).
+    private var sidePanelVisible: Bool {
+        mode != .structure && (openedItem != nil || (journalOpen && canShowJournal))
+    }
+
+    /// Le journal appartient au personnage : un template n'en a pas.
+    private var canShowJournal: Bool { sheet?.character != nil }
+
+    /// Le panneau montre le journal : seul ouvert, ou choisi dans le sélecteur.
+    private var panelShowsJournal: Bool {
+        guard journalOpen, canShowJournal else { return false }
+        return openedItem == nil || panelTab == .journal
+    }
+
+    /// Contenu du panneau (ou de la feuille sur iPhone) en Remplir et Jouer : sélecteur Objet / Journal
+    /// quand les deux sont ouverts.
+    @ViewBuilder
+    private var sidePanel: some View {
+        VStack(spacing: 0) {
+            if openedItem != nil, journalOpen, canShowJournal {
+                Picker("Panneau", selection: $panelTab) {
+                    Text("Objet").tag(SidePanelTab.item)
+                    Text("Journal").tag(SidePanelTab.journal)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .padding(.horizontal, 16)
+                .padding(.top, 10)
+            }
+            // Le journal reste monté derrière la fiche d'objet : en y revenant, on retrouve sa page.
+            ZStack {
+                if journalOpen, canShowJournal, let journal = sheet?.character?.journal {
+                    JournalPanel(journal: journal) { journalOpen = false }
+                        .id(journal.persistentModelID)
+                        .opacity(panelShowsJournal ? 1 : 0)
+                        .allowsHitTesting(panelShowsJournal)
+                        .accessibilityHidden(!panelShowsJournal)
+                }
+                if !panelShowsJournal, let openedItem {
+                    ItemDetailView(item: openedItem) { self.openedItem = nil }
+                        .id(openedItem.persistentModelID)
+                }
+            }
+        }
+        .background(Color.groupedBackground)
+    }
+
+    /// Bouton Journal : ouvre le journal, ou ferme le panneau s'il le montre déjà.
+    private func toggleJournal() {
+        if journalOpen, sidePanelVisible, panelShowsJournal {
+            journalOpen = false
+            return
+        }
+        if let character = sheet?.character, character.journal == nil, let context = character.modelContext {
+            // Le journal créé à la première ouverture n'est pas une modification à annuler.
+            context.undoManager?.disableUndoRegistration()
+            character.ensureJournal(in: context)
+            context.undoManager?.enableUndoRegistration()
+        }
+        journalOpen = true
+        panelTab = .journal
+    }
+
+    /// iPhone : objet ou journal en feuille.
+    private var compactPanelShown: Binding<Bool> {
         Binding(
-            get: { mode != .structure && sizeClass == .compact ? openedItem : nil },
-            set: { openedItem = $0 }
+            get: { sizeClass == .compact && sidePanelVisible },
+            set: { shown in
+                if !shown {
+                    openedItem = nil
+                    journalOpen = false
+                }
+            }
         )
     }
 
@@ -168,7 +250,7 @@ struct SheetView: View {
             }
         }
         .animation(.default, value: editor.notice)
-        .safeAreaPadding(.bottom, showsCompactInspector || compactOpenedItem.wrappedValue != nil ? inspectorSheetHeight : 0)
+        .safeAreaPadding(.bottom, showsCompactInspector || compactPanelShown.wrappedValue ? inspectorSheetHeight : 0)
         .sheetTheme(SheetThemes.theme(for: sheet?.appearance(in: context) ?? .standard))
     }
 
@@ -227,6 +309,11 @@ struct SheetView: View {
         ToolbarItem(placement: .primaryAction) {
             exportLink
         }
+        if canShowJournal && mode != .structure {
+            ToolbarItem(placement: .primaryAction) {
+                journalButton
+            }
+        }
         ToolbarItem(placement: .primaryAction) {
             modePicker
         }
@@ -254,12 +341,23 @@ struct SheetView: View {
             } label: {
                 Label("Plus", systemImage: "ellipsis")
             }
+            if canShowJournal && mode != .structure {
+                journalButton
+            }
         }
         ToolbarItem(placement: .bottomBar) {
             modePicker
         }
     }
     #endif
+
+    private var journalButton: some View {
+        Button {
+            toggleJournal()
+        } label: {
+            Label("Journal", systemImage: panelShowsJournal && sidePanelVisible ? "book.closed.fill" : "book.closed")
+        }
+    }
 
     private var inspectorButton: some View {
         Button {
@@ -337,6 +435,12 @@ struct SheetView: View {
     private static func containsSheetEdit(_ notification: Notification, owner: PersistentIdentifier?) -> Bool {
         SheetStore.savedIdentifiers(in: notification).contains { $0 != owner }
     }
+}
+
+/// Contenu du panneau latéral quand l'objet et le journal sont ouverts.
+enum SidePanelTab: Hashable {
+    case item
+    case journal
 }
 
 /// Copier, coller, dupliquer, supprimer : la sélection courante.

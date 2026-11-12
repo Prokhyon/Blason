@@ -61,3 +61,12 @@ public enum ColumnKind: String, Codable, CaseIterable, Sendable {
     /// Valeur calculée (ex. `=valeur/2`), en lecture seule.
     case formula
 }
+
+/// Genre d'une fiche du journal.
+public enum CodexKind: String, Codable, CaseIterable, Sendable {
+    case npc
+    case place
+    case clue
+    case faction
+    case other
+}

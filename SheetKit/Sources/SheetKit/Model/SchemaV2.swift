@@ -16,6 +16,7 @@ public enum SheetSchemaV2: VersionedSchema {
             SheetTableRow.self, SheetTableCell.self,
             Inventory.self, ItemType.self, ItemProperty.self, InventoryItem.self, ItemPropertyValue.self,
             Currency.self, InventorySlot.self, EncumbranceLevel.self,
+            Journal.self, JournalSession.self, CodexEntry.self, JournalDocument.self,
         ]
     }
 }
@@ -39,6 +40,10 @@ public typealias ItemPropertyValue = SheetSchemaV2.ItemPropertyValue
 public typealias Currency = SheetSchemaV2.Currency
 public typealias InventorySlot = SheetSchemaV2.InventorySlot
 public typealias EncumbranceLevel = SheetSchemaV2.EncumbranceLevel
+public typealias Journal = SheetSchemaV2.Journal
+public typealias JournalSession = SheetSchemaV2.JournalSession
+public typealias CodexEntry = SheetSchemaV2.CodexEntry
+public typealias JournalDocument = SheetSchemaV2.JournalDocument
 
 extension SheetSchemaV2 {
 
@@ -77,6 +82,10 @@ extension SheetSchemaV2 {
 
         @Relationship(deleteRule: .cascade, inverse: \Sheet.character)
         public var sheet: Sheet?
+
+        // V2 : journal du personnage (créé à la première ouverture).
+        @Relationship(deleteRule: .cascade, inverse: \Journal.character)
+        public var journal: Journal?
 
         public init(name: String) {
             self.name = name
@@ -515,6 +524,107 @@ extension SheetSchemaV2 {
             self.name = name
             self.thresholdFormula = thresholdFormula
             self.order = order
+        }
+    }
+
+    // MARK: Journal (V2)
+
+    /// Journal d'un personnage (SPEC §5.14) : sessions, fiches de PNJ / lieux / indices, documents.
+    /// Il appartient au personnage, pas à sa fiche : ni la copie d'une fiche ni un template ne l'emportent.
+    @Model
+    public final class Journal {
+        @Relationship(deleteRule: .cascade, inverse: \JournalSession.journal)
+        public var sessions: [JournalSession]? = []
+        @Relationship(deleteRule: .cascade, inverse: \CodexEntry.journal)
+        public var entries: [CodexEntry]? = []
+        @Relationship(deleteRule: .cascade, inverse: \JournalDocument.journal)
+        public var documents: [JournalDocument]? = []
+
+        public var character: PlayerCharacter?
+
+        public init() {}
+    }
+
+    /// Compte rendu d'une session de jeu.
+    @Model
+    public final class JournalSession {
+        /// Numéro de la session (proposé : le plus grand + 1).
+        public var number: Int = 0
+        /// Date réelle de la partie.
+        public var date: Date = Date()
+        /// Date dans le monde du jeu, en texte libre (« 3 Thermidor 1792 »).
+        public var gameDate: String = ""
+        public var title: String = ""
+        /// Résumé court, affiché dans la liste.
+        public var summary: String = ""
+        /// Récit mis en forme : texte riche encodé par l'app (JSON d'un `AttributedString`).
+        public var richText: Data?
+        /// Le même récit en texte brut : recherche, export lisible, secours si `richText` ne se lit pas.
+        public var plainText: String = ""
+        /// Gains de la session (expérience, objets, argent), reportés à la main sur la fiche.
+        public var gains: String = ""
+        public var createdAt: Date = Date()
+
+        /// Fiches (PNJ, lieux…) qui apparaissent dans la session.
+        @Relationship(deleteRule: .nullify, inverse: \CodexEntry.sessions)
+        public var entries: [CodexEntry]? = []
+        /// Documents rattachés ; la session supprimée, ils restent dans le journal.
+        @Relationship(deleteRule: .nullify, inverse: \JournalDocument.session)
+        public var documents: [JournalDocument]? = []
+
+        public var journal: Journal?
+
+        public init(number: Int, date: Date = Date()) {
+            self.number = number
+            self.date = date
+        }
+    }
+
+    /// Fiche courte du journal : PNJ, lieu, indice, faction…
+    @Model
+    public final class CodexEntry {
+        public var name: String = ""
+        public var kindRaw: String = CodexKind.npc.rawValue
+        public var summary: String = ""
+        /// État libre : « vivant », « résolu »…
+        public var status: String = ""
+        @Attribute(.externalStorage)
+        public var imageData: Data?
+        public var createdAt: Date = Date()
+
+        /// Sessions où la fiche apparaît.
+        public var sessions: [JournalSession]? = []
+        /// Documents rattachés ; la fiche supprimée, ils restent dans le journal.
+        @Relationship(deleteRule: .nullify, inverse: \JournalDocument.entry)
+        public var documents: [JournalDocument]? = []
+
+        public var journal: Journal?
+
+        public init(name: String, kind: CodexKind = .npc) {
+            self.name = name
+            self.kindRaw = kind.rawValue
+        }
+    }
+
+    /// Document du journal : PDF ou image (aide de jeu, carte, lettre du MJ).
+    @Model
+    public final class JournalDocument {
+        public var title: String = ""
+        /// Type de contenu (identifiant UTType : `com.adobe.pdf`, `public.jpeg`…).
+        public var contentType: String = ""
+        @Attribute(.externalStorage)
+        public var data: Data?
+        public var createdAt: Date = Date()
+
+        /// Rattachement optionnel à une session ou à une fiche.
+        public var session: JournalSession?
+        public var entry: CodexEntry?
+
+        public var journal: Journal?
+
+        public init(title: String, contentType: String) {
+            self.title = title
+            self.contentType = contentType
         }
     }
 }

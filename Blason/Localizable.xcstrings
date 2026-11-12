@@ -32,6 +32,16 @@
         }
       }
     },
+    "%@ · %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@"
+          }
+        }
+      }
+    },
     "%@ › %@" : {
       "localizations" : {
         "fr" : {
@@ -100,6 +110,9 @@
         }
       }
     },
+    "^[%lld page](inflect: true)" : {
+
+    },
     "=BESACE.limite" : {
 
     },
@@ -127,10 +140,19 @@
     "à préciser" : {
 
     },
+    "À reporter à la main sur la fiche et dans la Besace." : {
+
+    },
     "Abréviation" : {
 
     },
     "Affichage" : {
+
+    },
+    "Aides de jeu, cartes, lettres du MJ : PDF et images, depuis Fichiers, Photos ou par glisser-déposer." : {
+
+    },
+    "Ajouté le" : {
 
     },
     "Ajouter" : {
@@ -149,6 +171,9 @@
 
     },
     "Ajouter un %@" : {
+
+    },
+    "Ajouter un document" : {
 
     },
     "Ajouter un emplacement" : {
@@ -205,6 +230,9 @@
     "Aperçu" : {
 
     },
+    "Apparaissent" : {
+
+    },
     "Apparence, effets, histoire…" : {
 
     },
@@ -247,7 +275,16 @@
     "Aucun type d'objet choisi." : {
 
     },
+    "Aucune" : {
+
+    },
     "Augmenter %@" : {
+
+    },
+    "Autre" : {
+
+    },
+    "Autres" : {
 
     },
     "Avec plusieurs colonnes d'affichage, les groupes se répartissent côte à côte quand la largeur le permet." : {
@@ -286,6 +323,9 @@
     "Capacité" : {
 
     },
+    "Carnet" : {
+
+    },
     "Case à cocher" : {
 
     },
@@ -296,6 +336,9 @@
 
     },
     "Ce qui est sur soi compte dans la charge ; une monture, un bateau ou une planque, non. La capacité est facultative." : {
+
+    },
+    "Certains fichiers n'ont pas pu être lus." : {
 
     },
     "Champ" : {
@@ -320,6 +363,9 @@
 
     },
     "Choisir une image" : {
+
+    },
+    "Choisir…" : {
 
     },
     "Choisissez les types montrés dans l'inspecteur." : {
@@ -424,6 +470,9 @@
     "Date" : {
 
     },
+    "Date en jeu" : {
+
+    },
     "degats" : {
 
     },
@@ -437,6 +486,12 @@
 
     },
     "Déplacer vers une autre section…" : {
+
+    },
+    "Depuis Fichiers…" : {
+
+    },
+    "Depuis Photos…" : {
 
     },
     "Descendre" : {
@@ -460,6 +515,18 @@
     "Disposition" : {
 
     },
+    "Document" : {
+
+    },
+    "Document illisible" : {
+
+    },
+    "Document sans titre" : {
+
+    },
+    "Documents" : {
+
+    },
     "Dupliquer" : {
 
     },
@@ -469,7 +536,13 @@
     "Édition" : {
 
     },
+    "Effacer la recherche" : {
+
+    },
     "Effet" : {
+
+    },
+    "Elle disparaît des sessions où elle apparaît ; ses documents restent dans le journal." : {
 
     },
     "Emplacement" : {
@@ -479,6 +552,9 @@
 
     },
     "En pièces de la plus petite monnaie." : {
+
+    },
+    "En une ou deux phrases" : {
 
     },
     "Enregistrer comme template" : {
@@ -496,7 +572,13 @@
     "Équiper" : {
 
     },
+    "État" : {
+
+    },
     "ex. +1d4" : {
+
+    },
+    "ex. 3 Thermidor 1792" : {
 
     },
     "ex. 25 po" : {
@@ -508,13 +590,25 @@
     "ex. Mouvement −2" : {
 
     },
+    "Expérience, objets, argent…" : {
+
+    },
     "Exporter" : {
 
     },
     "Exporter…" : {
 
     },
+    "Faction" : {
+
+    },
+    "Factions" : {
+
+    },
     "Fermer la fiche de l'objet" : {
+
+    },
+    "Fermer le journal" : {
 
     },
     "Fiche" : {
@@ -538,10 +632,16 @@
     "Fortune : %@" : {
 
     },
+    "Gains" : {
+
+    },
     "Genre" : {
 
     },
     "Graphite" : {
+
+    },
+    "Gras, italique, taille du texte : sélectionnez du texte pour le mettre en forme." : {
 
     },
     "Grille" : {
@@ -586,6 +686,12 @@
     "Indication" : {
 
     },
+    "Indice" : {
+
+    },
+    "Indices" : {
+
+    },
     "Indigo" : {
 
     },
@@ -593,6 +699,9 @@
 
     },
     "Jouer" : {
+
+    },
+    "Journal" : {
 
     },
     "Jusqu'à" : {
@@ -635,6 +744,9 @@
     "Le code sert dans les formules de ligne (ex. =valeur/2). La formule s'applique à chaque ligne : calculée pour une colonne « Calcul », valeur par défaut sinon. « groupe » désigne la valeur du groupe (ex. =base+groupe)." : {
 
     },
+    "Le journal accepte les PDF et les images." : {
+
+    },
     "Le modèle de l'app a changé et l'ancienne base d'essai ne s'ouvrait plus. Elle est gardée sous le nom « %@ » ; tes fiches ont été recopiées depuis la base d'avant la V2. Réimporte tes exports récents pour retrouver les dernières modifications." : {
 
     },
@@ -651,6 +763,9 @@
 
     },
     "Les compteurs de cette monnaie restent dans la Besace, comme des objets ordinaires." : {
+
+    },
+    "Les fiches et les documents de la session restent dans le journal." : {
 
     },
     "Les objets de ce type restent dans la Besace, sans type." : {
@@ -675,6 +790,12 @@
 
     },
     "Libellé puis une valeur par colonne saisissable, séparées par « ; » ou une tabulation. Exemple : Marchander;5. « # Communication » crée un groupe (« # Communication;5 » avec sa valeur). « Langue (…) » : spécialisation à préciser ; « Monter (Navire) » : déjà précisée." : {
+
+    },
+    "Lieu" : {
+
+    },
+    "Lieux" : {
 
     },
     "Ligne" : {
@@ -737,6 +858,9 @@
     "Monter" : {
 
     },
+    "N'apparaît dans aucune session." : {
+
+    },
     "Natif" : {
 
     },
@@ -744,6 +868,9 @@
 
     },
     "Nom" : {
+
+    },
+    "Nom d'une nouvelle fiche" : {
 
     },
     "Nom de l'objet" : {
@@ -791,7 +918,13 @@
     "Nouvel emplacement" : {
 
     },
+    "Nouvelle fiche" : {
+
+    },
     "Nouvelle monnaie" : {
+
+    },
+    "Numéro" : {
 
     },
     "Objet" : {
@@ -818,7 +951,13 @@
     "Ouvrir" : {
 
     },
+    "Ouvrir %@" : {
+
+    },
     "Ouvrir la fiche de l'objet" : {
+
+    },
+    "Ouvrir la session du jour" : {
 
     },
     "Page" : {
@@ -836,7 +975,13 @@
     "Paliers d'encombrement" : {
 
     },
+    "Panneau" : {
+
+    },
     "Passez en mode Structure pour construire la fiche." : {
+
+    },
+    "PDF" : {
 
     },
     "Personnages" : {
@@ -857,6 +1002,12 @@
     "Plus" : {
 
     },
+    "PNJ" : {
+
+    },
+    "PNJ, lieux, indices, factions : des fiches courtes, reliées aux sessions où ils apparaissent." : {
+
+    },
     "po" : {
 
     },
@@ -870,6 +1021,9 @@
 
     },
     "Poids unitaire" : {
+
+    },
+    "Position dans la liste" : {
 
     },
     "Pourcentage" : {
@@ -891,6 +1045,9 @@
 
     },
     "Quantité" : {
+
+    },
+    "Qui, quoi, où ; ce qu'on en sait" : {
 
     },
     "Rangée" : {
@@ -918,10 +1075,19 @@
     "Ranger dans…" : {
 
     },
+    "Rattachement" : {
+
+    },
+    "Rechercher dans le journal" : {
+
+    },
     "Rechercher un personnage" : {
 
     },
     "Rechercher un template" : {
+
+    },
+    "Récit" : {
 
     },
     "Réglages de la Besace" : {
@@ -957,6 +1123,9 @@
     "Résultat de la ligne %lld" : {
 
     },
+    "Résumé" : {
+
+    },
     "Rétablir" : {
 
     },
@@ -966,7 +1135,13 @@
     "Retirer de la sélection" : {
 
     },
+    "Retirer de la session" : {
+
+    },
     "Retirer un %@" : {
+
+    },
+    "Retour" : {
 
     },
     "rien" : {
@@ -976,6 +1151,9 @@
 
     },
     "Rouge" : {
+
+    },
+    "Rubrique" : {
 
     },
     "Sans libellé" : {
@@ -1003,6 +1181,18 @@
 
     },
     "Section sans titre" : {
+
+    },
+    "Session" : {
+
+    },
+    "Session %lld" : {
+
+    },
+    "Session du jour" : {
+
+    },
+    "Sessions" : {
 
     },
     "Seuil" : {
@@ -1035,6 +1225,9 @@
     "Supprimer l'objet" : {
 
     },
+    "Supprimer la fiche" : {
+
+    },
     "Supprimer la ligne" : {
 
     },
@@ -1042,6 +1235,15 @@
 
     },
     "Supprimer la propriété" : {
+
+    },
+    "Supprimer la session" : {
+
+    },
+    "Supprimer la session %lld ?" : {
+
+    },
+    "Supprimer le document" : {
 
     },
     "Supprimer le palier" : {
@@ -1098,6 +1300,12 @@
     "Titre" : {
 
     },
+    "Titre de la session" : {
+
+    },
+    "Titre du document" : {
+
+    },
     "Touchez un élément de la fiche pour le modifier : page, rangée, section, champ, colonne, groupe ou ligne." : {
 
     },
@@ -1136,6 +1344,9 @@
       }
     },
     "Un template décrit la fiche d'un système de jeu. Il sert ensuite à créer des personnages." : {
+
+    },
+    "Une entrée par partie : date, récit, gains, et les PNJ ou lieux rencontrés." : {
 
     },
     "Une erreur est survenue" : {
@@ -1211,6 +1422,9 @@
 
     },
     "Violet" : {
+
+    },
+    "vivant, disparu, résolu…" : {
 
     },
     "Vue de la Besace" : {

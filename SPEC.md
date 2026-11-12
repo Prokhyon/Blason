@@ -214,7 +214,7 @@ Un nouveau type de section, **Besace**, à côté de « Champs » et « Tableau 
 **Template et personnage**
 - Le template définit les types et leurs propriétés, les monnaies, les emplacements de départ, l'option de poids (unité, limite, paliers, malus) ; ses objets sont l'**équipement de départ**, copié dans chaque nouveau personnage.
 
-### 5.14 Journal du personnage (V2.3) — conception
+### 5.14 Journal du personnage (V2.3)
 Chaque personnage a sa fiche, ses statistiques, sa Besace **et son journal**. Pas de campagne : elle pourra revenir avec un éventuel volet MJ.
 
 - **Toujours disponible**, sans rien à définir dans le template : il appartient au personnage (pas à sa fiche) et s'ouvre par un bouton **Journal** de la fiche, à côté d'elle (§5.15). Une fiche libre en a un aussi ; un template n'en a pas.
@@ -223,11 +223,21 @@ Chaque personnage a sa fiche, ses statistiques, sa Besace **et son journal**. Pa
 - **Documents** : PDF et images (aides de jeu, cartes, lettres du MJ) importés depuis Fichiers, Photos ou par glisser-déposer ; titre, rattachement optionnel à une session ou à une fiche PNJ / lieu. Consultation dans l'app (PDF paginé, image zoomable).
 - **Copie et export** : dupliquer un personnage ne copie pas son journal ; « Enregistrer comme template » ne l'emporte pas. L'export JSON du personnage inclut le journal et ses documents.
 
+**Réalisation (12 novembre 2026, interface provisoire)**
+- Le journal est créé à sa première ouverture (pas d'entrée d'annulation). Il se modifie dans **tous les modes** de la fiche : on l'écrit pendant la partie.
+- Trois rubriques : **Sessions**, **Carnet** (les fiches PNJ, lieux, indices, factions, autres) et **Documents** ; une recherche au-dessus couvre les trois (sans majuscules ni accents, mot par mot).
+- « Session du jour » rouvre la session datée d'aujourd'hui si elle existe, sinon la crée avec le numéro suivant.
+- Récit : `TextEditor` du système sur un `AttributedString` (gras, italique, souligné, tailles du menu Format), enregistré en JSON avec les attributs SwiftUI, plus une copie en texte brut pour la recherche. Les listes dépendent de ce que l'éditeur du système propose.
+- Apparitions : « Choisir… » dans la session (avec création d'une fiche au passage) ; la fiche liste ses sessions.
+- Documents : PDF tels quels, images réduites à 3072 px (JPEG) ; depuis Fichiers, Photos ou par glisser-déposer sur la liste. Consultation plein écran (feuille sur Mac) avec PDFKit, qui affiche aussi les images (zoom et défilement du système).
+- Supprimer une session ou une fiche laisse ses documents dans le journal ; supprimer le personnage efface son journal.
+- Débogage : `-demoJournal YES` (journal d'exemple, panneau ouvert), `-demoJournalTab documents`, `-demoSession 2`, `-demoDocument YES`, `-demoViewer YES`.
+
 ### 5.15 Panneau latéral de la fiche (V2) — provisoire
 Trois choses veulent la place à droite de la fiche : l'inspecteur, la fiche d'objet et le journal. Règle commune, en attendant la refonte de l'interface :
 - **Un seul panneau** à droite (iPad, Mac), une **feuille** sur iPhone.
 - En **Structure** : l'inspecteur. En **Remplir** et **Jouer** : la fiche d'objet quand on touche un objet, sinon le journal.
-- Un sélecteur en haut du panneau passe de l'un à l'autre (Objet / Journal) ; le bouton Journal de la barre ouvre ou ferme le panneau.
+- Un sélecteur en haut du panneau passe de l'un à l'autre (Objet / Journal) ; le bouton Journal de la barre ouvre ou ferme le panneau (menu Fiche › Journal, ⌘J). Absent en Structure et sur un template.
 
 ### 5.16 Modèle V2 et pause d'iCloud
 - **iCloud en pause** pendant la mise au point de la Besace et du journal : la synchronisation est coupée dans toutes les versions ; chaque appareil garde sa base locale telle quelle (rien n'est perdu, ni sur l'appareil ni dans iCloud). On joue sur un appareil principal ; une fiche passe d'un appareil à l'autre par l'export / import JSON.
@@ -244,8 +254,8 @@ Trois choses veulent la place à droite de la fiche : l'inspecteur, la fiche d'o
 | V1.2 | **Synchronisation iCloud** (voir §5.10) : **terminée** le 11 novembre 2026 ; prérequis pour iPhone et Mac |
 | V2.0 | **iPhone** (voir §5.11) : à valider en vraie partie |
 | V2.1 | **Mac** : app macOS native dans la même cible SwiftUI (voir §5.12) ; synchronisation vérifiée |
-| V2.2 (prochaine) | **Besace** : inventaire, vues de Besace pour l'équipement (§5.13), panneau latéral (§5.15) ; iCloud en pause, modèle V2 en brouillon (§5.16) |
-| V2.3 | **Journal du personnage** : sessions, PNJ / lieux / indices, documents (§5.14) |
+| V2.2 | **Besace** : inventaire, vues de Besace pour l'équipement (§5.13), panneau latéral (§5.15) ; iCloud en pause, modèle V2 en brouillon (§5.16) |
+| V2.3 (en cours) | **Journal du personnage** : sessions, PNJ / lieux / indices, documents (§5.14) ; réalisé, à valider en vraie partie |
 | fin de V2 | Modèle V2 final, migration V1 → V2 testée, réactivation d'iCloud (§5.16) |
 | après la V2 | **Refonte de la navigation et de l'interface**, réfléchie en profondeur une fois les fonctions en place : position et style des boutons, barres d'outils, sélecteur Structure / Remplir / Jouer, et un **langage visuel propre** à Blason (voir §10.1) |
 | plus tard | D'autres thèmes de fiche (parchemin, dossier années 20, terminal…), un fichier chacun |
@@ -367,6 +377,7 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-11 | **iCloud en pause** pendant la mise au point du modèle V2 : synchronisation coupée, bases locales conservées, modèle V2 en brouillon (export / réimport plutôt que migrations), une seule migration V1 → V2 à la fin puis réactivation (§5.16). |
 | 2026-11-11 | Besace : l'équipement s'affiche ailleurs sur la fiche par une **vue de la Besace** (objets équipés d'un type, propriétés en colonnes), seule source de vérité ; remplace le tableau alimenté par la Besace. Propriétés d'objet typées comme les colonnes. Emplacements créés par le joueur, avec capacité optionnelle ; un seul niveau de contenant. Paliers d'encombrement à seuil par formule. |
 | 2026-11-11 | Le journal appartient au **personnage**, toujours disponible, sans campagne (remplace la décision précédente) : sessions, PNJ / lieux / indices, documents, gains en texte. Un seul panneau à droite de la fiche pour l'inspecteur, la fiche d'objet et le journal (§5.15). |
+| 2026-11-12 | V2.3 : journal ajouté au brouillon V2 (`Journal`, `JournalSession`, `CodexEntry`, `JournalDocument` ; apparitions en relation plusieurs-à-plusieurs) et à l'export (format 2, `journal` facultatif). Modifiable dans tous les modes. Texte riche : `AttributedString` encodé avec les attributs SwiftUI, doublé d'un texte brut. Les fiches PNJ / lieux / indices forment le **Carnet**. |
 
 ## 10. Questions ouvertes
 

@@ -110,12 +110,27 @@ struct DraftStoreTests {
         try FileManager.default.attributesOfItem(atPath: url.path)[.modificationDate] as? Date
     }
 
+    /// Attend que la date de modification ne change plus pendant 0,3 s (3 s au plus).
+    private func waitUntilUnchanged(_ url: URL) throws {
+        var last = try modificationDate(url)
+        var stableSteps = 0
+        for _ in 0..<30 where stableSteps < 3 {
+            Thread.sleep(forTimeInterval: 0.1)
+            let current = try modificationDate(url)
+            stableSteps = current == last ? stableSteps + 1 : 0
+            last = current
+        }
+    }
+
     @Test("La base d'essai est une copie migrée de la base V1, qui reste intacte")
     func draftIsCopiedFromV1() throws {
         let directory = try makeDirectory()
         defer { try? FileManager.default.removeItem(at: directory) }
         try writeV1Store(in: directory)
         let v1 = directory.appending(path: "Blason.store")
+        // Le conteneur qui a écrit la base V1 se referme en arrière-plan et touche encore le fichier
+        // (même contenu, nouvelle date) : on attend qu'il soit stable avant de mesurer.
+        try waitUntilUnchanged(v1)
         let v1Date = try modificationDate(v1)
         let v1Data = try Data(contentsOf: v1)
 

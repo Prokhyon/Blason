@@ -78,7 +78,7 @@ enum DrawnImage {
 
 // MARK: - Images importées
 
-enum ImageData {
+nonisolated enum ImageData {
     /// Réduit une image (côté le plus long : `maxSide` pixels, JPEG) pour garder la base légère.
     /// Tient compte de l'orientation des photos. Renvoie les données d'origine si elles ne se lisent pas.
     static func downscaled(_ data: Data, maxSide: Int = 1024) -> Data {

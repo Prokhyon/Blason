@@ -8,7 +8,8 @@ import SwiftData
 //     "template": { "name": …, "sheet": { "pages": [ { "rows": [ { "sections": [ … ] } ] } ] } } }
 // ou "character" à la place de "template".
 // Version 2 (modèle V2, brouillon) : sections Besace (`inventory`) et vues de la Besace
-// (`viewTypeCodes`, `viewPropertyCodes`). Un fichier version 1 se lit toujours.
+// (`viewTypeCodes`, `viewPropertyCodes`), journal d'un personnage (`journal`, documents compris).
+// Un fichier version 1 se lit toujours.
 //
 // L'ordre des éléments est celui des tableaux JSON (pas de champ `order`). Les cellules d'une ligne
 // suivent l'ordre des colonnes de son tableau. Les types sont écrits comme dans le modèle
@@ -46,6 +47,8 @@ public struct SheetDocument: Codable, Equatable, Sendable {
         public var createdAt: Date
         public var updatedAt: Date
         public var sheet: SheetRecord
+        /// Journal du personnage (version 2) ; absent s'il n'a jamais été ouvert.
+        public var journal: JournalRecord?
     }
 
     public struct SheetRecord: Codable, Equatable, Sendable {
@@ -278,7 +281,8 @@ extension SheetDocument {
                 uid: character.uid, name: character.displayName,
                 sourceTemplateUID: character.sourceTemplateUID, sourceTemplateName: character.sourceTemplateName,
                 createdAt: character.createdAt, updatedAt: character.updatedAt,
-                sheet: SheetRecord(character.sheet)
+                sheet: SheetRecord(character.sheet),
+                journal: character.journal.map(JournalRecord.init)
             )
         )
     }
@@ -580,6 +584,7 @@ extension SheetDocument {
             character.createdAt = record.createdAt
             character.updatedAt = record.updatedAt
             character.sheet = record.sheet.makeSheet(in: context)
+            character.journal = record.journal?.makeJournal(in: context)
             return .character(character)
         }
         throw SheetImportError.empty

@@ -40,6 +40,10 @@ struct EntityCounts: Equatable, CustomStringConvertible {
             "Currency": try context.fetchCount(FetchDescriptor<Currency>()),
             "InventorySlot": try context.fetchCount(FetchDescriptor<InventorySlot>()),
             "EncumbranceLevel": try context.fetchCount(FetchDescriptor<EncumbranceLevel>()),
+            "Journal": try context.fetchCount(FetchDescriptor<Journal>()),
+            "JournalSession": try context.fetchCount(FetchDescriptor<JournalSession>()),
+            "CodexEntry": try context.fetchCount(FetchDescriptor<CodexEntry>()),
+            "JournalDocument": try context.fetchCount(FetchDescriptor<JournalDocument>()),
         ]
     }
 

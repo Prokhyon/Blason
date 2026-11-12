@@ -7,6 +7,12 @@ enum LibraryRequest: Equatable {
     case importFiles
 }
 
+/// Journal de la fiche ouverte (menu Fiche › Journal).
+struct JournalActions {
+    let isOpen: Bool
+    let toggle: () -> Void
+}
+
 /// Actions de la bibliothèque, publiées par la fenêtre active pour les menus.
 struct LibraryActions {
     let perform: (LibraryRequest) -> Void
@@ -16,12 +22,15 @@ extension FocusedValues {
     @Entry var libraryActions: LibraryActions?
     /// Mode de la fiche ouverte (menu Fiche).
     @Entry var sheetModeBinding: Binding<SheetMode>?
+    /// Journal du personnage ouvert (menu Fiche).
+    @Entry var journalActions: JournalActions?
 }
 
-/// Menus de l'app : Fichier (nouveau, importer) et Fiche (mode, ⌘1 à ⌘3).
+/// Menus de l'app : Fichier (nouveau, importer) et Fiche (mode, ⌘1 à ⌘3 ; journal, ⌘J).
 struct BlasonCommands: Commands {
     @FocusedValue(\.libraryActions) private var library
     @FocusedValue(\.sheetModeBinding) private var mode
+    @FocusedValue(\.journalActions) private var journal
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
@@ -45,6 +54,10 @@ struct BlasonCommands: Commands {
                 .keyboardShortcut(KeyEquivalent(Character(String(index + 1))))
             }
             .disabled(mode == nil)
+            Divider()
+            Button(journal?.isOpen == true ? "Fermer le journal" : "Journal") { journal?.toggle() }
+                .keyboardShortcut("j")
+                .disabled(journal == nil)
         }
     }
 }
