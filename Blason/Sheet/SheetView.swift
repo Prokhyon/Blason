@@ -3,22 +3,23 @@ import Combine
 import SwiftData
 import SheetKit
 
-/// Fiche complète : onglets de pages, sélecteur de mode, contenu de la page ;
-/// en mode Structure, inspecteur à droite et commandes d'édition.
+/// Un onglet de la fiche : les pages (Fiche) ou la Besace (Inventaire), avec son mode et sa barre.
+/// En Remplir et Jouer, la fiche de l'objet touché s'ouvre à droite ; en Structure, l'inspecteur.
 struct SheetView: View {
     let title: String
     let sheet: Sheet?
-    /// Appelé après chaque enregistrement d'une modification faite pendant que la fiche est ouverte
-    /// (sert à mettre à jour la date de modification du personnage ou du template).
-    var onEdit: () -> Void = {}
+    /// `.sheet` ou `.inventory` (le journal a son propre écran).
+    let tab: CharacterTab
+    let editor: StructureEditor
+    /// Onglet affiché : lui seul publie son mode pour les menus et ses raccourcis.
+    var isActive = true
 
     @State private var mode: SheetMode
-    @State private var editor: StructureEditor
+    /// Mode quitté en ouvrant la Structure, retrouvé par « Terminé ».
+    @State private var modeBeforeStructure: SheetMode?
     @State private var showsInspector = true
     /// Objet de la Besace ouvert (Remplir, Jouer) : panneau latéral, ou feuille sur iPhone.
     @State private var openedItem: InventoryItem?
-    /// Onglet affiché : fiche, inventaire (Besace) ou journal (personnage seulement).
-    @State private var tab: CharacterTab = .sheet
     /// Hauteur de la feuille de l'inspecteur (iPhone) : la fiche garde cette marge en bas
     /// pour que tout élément puisse remonter au-dessus d'elle.
     @State private var inspectorSheetHeight: CGFloat = 0
@@ -26,48 +27,28 @@ struct SheetView: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.modelContext) private var context
 
-    init(title: String, sheet: Sheet?, initialMode: SheetMode, onEdit: @escaping () -> Void = {}) {
+    init(title: String, sheet: Sheet?, tab: CharacterTab, editor: StructureEditor, isActive: Bool = true) {
         self.title = title
         self.sheet = sheet
-        self.onEdit = onEdit
-        var mode = initialMode
-        let editor = StructureEditor(sheet: sheet)
+        self.tab = tab
+        self.editor = editor
+        self.isActive = isActive
+        // Un personnage s'ouvre en Jouer ; un template, en Structure (on le construit).
+        var mode = sheet?.template != nil ? SheetMode.structure : .play
         #if DEBUG
-        // Arguments de lancement pour les captures : -demoMode structure -demoPage 1 -demoSelect FOR
+        // Arguments de lancement pour les captures : -demoMode structure -demoItem Corde
         let defaults = UserDefaults.standard
         if let raw = defaults.string(forKey: "demoMode"), let value = SheetMode(rawValue: raw) {
             mode = value
         }
-        editor.pageIndex = defaults.integer(forKey: "demoPage")
-        // -demoTheme paper -demoColor teal : apparence de la fiche ouverte (modifie la base de développement).
-        if let theme = defaults.string(forKey: "demoTheme") {
-            sheet?.ownAppearance = SheetAppearance(themeID: theme, colorID: defaults.string(forKey: "demoColor") ?? "blue")
-        }
-        if defaults.bool(forKey: "demoBesace"), let sheet, let context = sheet.modelContext {
-            DemoData.addDemoInventory(to: sheet, in: context)
-        }
         if let name = defaults.string(forKey: "demoItem") {
             _openedItem = State(initialValue: sheet?.inventories.flatMap(\.allItems).first { $0.name == name })
         }
-        // -demoTab inventory | journal ; -demoJournal YES : journal d'exemple, onglet Journal.
-        if let raw = defaults.string(forKey: "demoTab"), let value = CharacterTab(rawValue: raw) {
-            _tab = State(initialValue: value)
-        }
-        if defaults.bool(forKey: "demoJournal"), let character = sheet?.character, let context = sheet?.modelContext {
-            DemoData.addDemoJournal(to: character, in: context)
-            _tab = State(initialValue: .journal)
-        }
-        if let code = defaults.string(forKey: "demoSelect") {
-            if let field = sheet?.field(code: code) {
-                editor.select(.field(field))
-            } else if let section = sheet?.section(titled: code) {
-                editor.select(.section(section))
-            }
-        }
         #endif
         _mode = State(initialValue: mode)
-        _editor = State(initialValue: editor)
     }
+
+    private var isTemplate: Bool { sheet?.template != nil }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -76,7 +57,7 @@ struct SheetView: View {
                 Divider().ignoresSafeArea(edges: .bottom)
                 Group {
                     if mode == .structure {
-                        StructureInspector(editor: editor, isTemplate: sheet?.template != nil) {
+                        StructureInspector(editor: editor, isTemplate: isTemplate) {
                             showsInspector = false
                         }
                     } else if let openedItem {
@@ -93,7 +74,7 @@ struct SheetView: View {
         .inlineNavigationTitle()
         .toolbar { toolbar }
         .sheet(isPresented: compactInspectorShown) {
-            StructureInspector(editor: editor, isTemplate: sheet?.template != nil) {
+            StructureInspector(editor: editor, isTemplate: isTemplate) {
                 editor.clearSelection()
             }
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { inspectorSheetHeight = $0 }
@@ -108,47 +89,43 @@ struct SheetView: View {
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))
                 .environment(\.sheetMode, mode)
         }
-        .sheet(item: $editor.pasteList) { request in
+        .sheet(item: pasteList) { request in
             PasteListView(request: request, editor: editor)
         }
-        .background { if mode == .structure { shortcuts } }
+        .background { if mode == .structure && isActive { shortcuts } }
         .environment(\.sheetMode, mode)
-        .focusedSceneValue(\.sheetModeBinding, $mode)
+        .focusedSceneValue(\.sheetModeBinding, isActive ? $mode : nil)
         .environment(\.structureEditor, editor)
         .environment(\.inventoryItemOpener, InventoryItemOpener { openedItem = $0 })
-        .focusedSceneValue(\.characterTabBinding, $tab)
-        .focusedSceneValue(\.availableCharacterTabs, availableTabs)
-        .onChange(of: mode) { _, newMode in
-            if newMode != .structure { editor.clearSelection() }
+        .onChange(of: mode) { old, new in
+            if new == .structure, old != .structure { modeBeforeStructure = old }
+            if new != .structure { editor.clearSelection() }
         }
-        .onChange(of: tab) { _, newTab in
-            // La sélection de la fiche ne suit pas dans un autre onglet (et inversement).
-            if mode == .structure { editor.clearSelection() }
-            if newTab == .journal { openedItem = nil }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { notification in
-            if Self.containsSheetEdit(notification, owner: sheet?.character?.persistentModelID ?? sheet?.template?.persistentModelID) {
-                onEdit()
-            }
+        .onChange(of: editor.primary) { _, selection in
+            // L'inspecteur fermé se rouvre en sélectionnant un élément.
+            if selection != nil, isActive { showsInspector = true }
         }
     }
 
-    /// Onglets proposés : le journal appartient au personnage, un template n'en a pas.
-    private var availableTabs: [CharacterTab] {
-        sheet?.character != nil ? CharacterTab.allCases : [.sheet, .inventory]
+    /// Coller une liste : demandé depuis l'onglet affiché seulement.
+    private var pasteList: Binding<PasteListRequest?> {
+        Binding(
+            get: { isActive ? editor.pasteList : nil },
+            set: { editor.pasteList = $0 }
+        )
     }
 
     /// Panneau latéral sur grand écran (feuille sur écran étroit) : l'inspecteur en Structure,
-    /// la fiche de l'objet ouvert en Remplir et Jouer (SPEC §5.15). Le journal a ses propres panneaux.
+    /// la fiche de l'objet ouvert en Remplir et Jouer (SPEC §5.15).
     private var showsSidePanel: Bool {
-        guard sizeClass != .compact, tab != .journal else { return false }
+        guard sizeClass != .compact else { return false }
         return mode == .structure ? showsInspector : openedItem != nil
     }
 
     /// iPhone : fiche de l'objet en feuille.
     private var compactOpenedItem: Binding<InventoryItem?> {
         Binding(
-            get: { mode != .structure && sizeClass == .compact && tab != .journal ? openedItem : nil },
+            get: { mode != .structure && sizeClass == .compact && isActive ? openedItem : nil },
             set: { openedItem = $0 }
         )
     }
@@ -157,21 +134,16 @@ struct SheetView: View {
     @ViewBuilder
     private var tabContent: some View {
         switch tab {
-        case .sheet:
-            sheetContent
         case .inventory:
             InventoryTabView(sheet: sheet)
                 .safeAreaPadding(.bottom, showsCompactInspector || compactOpenedItem.wrappedValue != nil ? inspectorSheetHeight : 0)
                 .sheetTheme(SheetThemes.theme(for: sheet?.appearance(in: context) ?? .standard))
-        case .journal:
-            if let character = sheet?.character {
-                JournalScreen(character: character)
-            }
+        default:
+            sheetContent
         }
     }
 
-    /// iPhone : la feuille n'apparaît qu'avec une sélection (sinon elle couvrirait la barre du bas
-    /// et le choix du mode) ; la fermer désélectionne.
+    /// iPhone : la feuille n'apparaît qu'avec une sélection ; la fermer désélectionne.
     private var compactInspectorShown: Binding<Bool> {
         Binding(
             get: { showsCompactInspector },
@@ -180,7 +152,7 @@ struct SheetView: View {
     }
 
     private var showsCompactInspector: Bool {
-        mode == .structure && sizeClass == .compact && editor.primary != nil
+        mode == .structure && sizeClass == .compact && editor.primary != nil && isActive
     }
 
     /// Pages, en onglets ou à la suite.
@@ -196,7 +168,7 @@ struct SheetView: View {
             }
         }
         .overlay(alignment: .bottom) {
-            if let notice = editor.notice {
+            if let notice = editor.notice, isActive {
                 Text(notice)
                     .font(.callout)
                     .padding(.horizontal, 14)
@@ -218,160 +190,94 @@ struct SheetView: View {
         } description: {
             Text(mode == .structure
                  ? "Ajoutez une première page pour construire la fiche."
-                 : "Passez en mode Structure pour construire la fiche.")
+                 : "Ouvrez la structure (menu …) pour construire la fiche.")
         } actions: {
             if mode == .structure {
                 Button("Ajouter une page") { editor.addPage() }
                     .buttonStyle(.borderedProminent)
+            } else {
+                Button("Éditer la structure") { mode = .structure }
             }
         }
     }
 
+    // MARK: Barre
+
+    /// À droite : annuler / rétablir hors Jouer, le menu « … »,
+    /// puis le bouton du mode (Éditer, OK, Terminé), toujours en dernier, au même endroit.
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
-        #if os(iOS)
-        if sizeClass == .compact {
-            compactToolbar
-        } else {
-            regularToolbar
-        }
-        #else
-        regularToolbar
-        #endif
-    }
-
-    /// iPad et Mac : l'onglet au centre ; le reste à droite. Le journal n'a ni mode ni disposition,
-    /// et l'annulation y est celle de l'éditeur de texte.
-    @ToolbarContentBuilder
-    private var regularToolbar: some ToolbarContent {
-        ToolbarItem(placement: .principal) {
-            tabPicker
-        }
-        if tab != .journal {
+        if mode != .play {
             ToolbarItemGroup(placement: .primaryAction) {
-                if mode != .play {
-                    UndoRedoButtons()
-                }
-                if mode == .structure {
-                    Menu {
-                        EditCommands(editor: editor)
-                    } label: {
-                        Label("Édition", systemImage: "ellipsis.circle")
-                    }
-                    inspectorButton
-                }
+                UndoRedoButtons()
             }
-            ToolbarItem(placement: .primaryAction) {
-                Menu {
-                    displayCommands
-                } label: {
-                    Label("Affichage", systemImage: layout.symbol)
-                }
-            }
+            ToolbarSpacer(.fixed, placement: .primaryAction)
         }
         ToolbarItem(placement: .primaryAction) {
-            exportLink
+            moreMenu
         }
-        if tab != .journal {
-            ToolbarItem(placement: .primaryAction) {
-                modePicker
-            }
+        ToolbarSpacer(.fixed, placement: .primaryAction)
+        ToolbarItem(placement: .primaryAction) {
+            modeButton
         }
     }
 
-    #if os(iOS)
-    /// iPhone : l'onglet au centre, le mode en bas, sous le pouce ; en haut, annuler et un menu
-    /// qui regroupe édition, affichage et export. L'inspecteur s'ouvre en touchant un élément.
-    @ToolbarContentBuilder
-    private var compactToolbar: some ToolbarContent {
-        ToolbarItem(placement: .principal) {
-            tabPicker
+    /// Éditer → mode d'édition ; OK / Terminé → retour au mode de départ (SPEC §4).
+    @ViewBuilder
+    private var modeButton: some View {
+        let rest = SheetMode.rest(isTemplate: isTemplate)
+        if mode == rest {
+            Button("Éditer") {
+                mode = SheetMode.edit(isTemplate: isTemplate)
+            }
+        } else {
+            Button(mode == .structure ? "Terminé" : "OK") {
+                mode = mode == .structure ? (modeBeforeStructure ?? rest) : rest
+            }
+            .buttonStyle(.glassProminent)
+            .keyboardShortcut(.return, modifiers: .command)
         }
-        if tab != .journal {
-            ToolbarItemGroup(placement: .primaryAction) {
-                if mode != .play {
-                    UndoRedoButtons()
+    }
+
+    /// Structure (personnage), édition de la sélection (Structure), disposition des pages et thème.
+    private var moreMenu: some View {
+        Menu {
+            if mode == .structure {
+                Section {
+                    EditCommands(editor: editor)
                 }
-                Menu {
-                    if mode == .structure {
-                        Section {
-                            EditCommands(editor: editor)
-                        }
+                if sizeClass != .compact && !showsInspector {
+                    Button("Afficher l'inspecteur", systemImage: "sidebar.trailing") {
+                        showsInspector = true
                     }
-                    displayCommands
-                    Section {
-                        exportLink
-                    }
-                } label: {
-                    Label("Plus", systemImage: "ellipsis")
+                }
+            } else if !isTemplate {
+                Button("Éditer la structure", systemImage: "square.stack.3d.up") {
+                    mode = .structure
                 }
             }
-            ToolbarItem(placement: .bottomBar) {
-                modePicker
-            }
-        }
-    }
-    #endif
-
-    /// Fiche, Inventaire, Journal.
-    private var tabPicker: some View {
-        Picker("Onglet", selection: $tab) {
-            ForEach(availableTabs) { tab in
-                Text(tab.title).tag(tab)
-            }
-        }
-        .pickerStyle(.segmented)
-        .fixedSize()
-    }
-
-    private var inspectorButton: some View {
-        Button {
-            showsInspector.toggle()
+            displayCommands
         } label: {
-            Label("Inspecteur", systemImage: "sidebar.trailing")
+            Label("Plus", systemImage: "ellipsis")
         }
     }
 
-    /// Disposition des pages et thème.
+    /// Disposition des pages (onglet Fiche) et thème.
     @ViewBuilder
     private var displayCommands: some View {
-        Picker("Pages", selection: $layout) {
-            ForEach(SheetLayout.allCases) { layout in
-                Label(layout.title, systemImage: layout.symbol).tag(layout)
+        if tab == .sheet {
+            Picker("Pages", selection: $layout) {
+                ForEach(SheetLayout.allCases) { layout in
+                    Label(layout.title, systemImage: layout.symbol).tag(layout)
+                }
             }
+            .pickerStyle(.inline)
         }
-        .pickerStyle(.inline)
         if let sheet {
             Section {
                 ThemeMenu(sheet: sheet)
             }
         }
-    }
-
-    @ViewBuilder
-    private var exportLink: some View {
-        if let file = exportFile {
-            ShareLink(item: file, preview: SharePreview(file.document.title)) {
-                Label("Exporter", systemImage: "square.and.arrow.up")
-            }
-        }
-    }
-
-    private var modePicker: some View {
-        Picker("Mode", selection: $mode) {
-            ForEach(SheetMode.allCases) { mode in
-                Text(mode.title).tag(mode)
-            }
-        }
-        .pickerStyle(.segmented)
-        .fixedSize()
-    }
-
-    /// Fichier d'export du personnage ou du template ouvert.
-    private var exportFile: SheetExportFile? {
-        if let character = sheet?.character { return SheetExportFile(character: character) }
-        if let template = sheet?.template { return SheetExportFile(template: template) }
-        return nil
     }
 
     /// Raccourcis clavier du mode Structure (inactifs pendant la saisie dans l'inspecteur,
@@ -393,12 +299,6 @@ struct SheetView: View {
         .opacity(0)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
-    }
-
-    /// Un enregistrement contient une modification de la fiche s'il touche autre chose que
-    /// le propriétaire lui-même (dont seule la date change en réponse : pas de boucle).
-    private static func containsSheetEdit(_ notification: Notification, owner: PersistentIdentifier?) -> Bool {
-        SheetStore.savedIdentifiers(in: notification).contains { $0 != owner }
     }
 }
 
@@ -445,14 +345,8 @@ struct UndoRedoButtons: View {
 
 #Preview("Leo — Jouer") {
     NavigationStack {
-        SheetView(title: "Leo", sheet: PreviewData.leo?.sheet, initialMode: .play)
-    }
-    .modelContainer(PreviewData.container)
-}
-
-#Preview("Leo — Structure") {
-    NavigationStack {
-        SheetView(title: "Leo", sheet: PreviewData.leo?.sheet, initialMode: .structure)
+        SheetView(title: "Leo", sheet: PreviewData.leo?.sheet, tab: .sheet,
+                  editor: StructureEditor(sheet: PreviewData.leo?.sheet))
     }
     .modelContainer(PreviewData.container)
 }

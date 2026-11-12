@@ -115,10 +115,19 @@ extension View {
         #endif
     }
 
-    /// Masque la barre d'onglets (fiche ouverte sur iPhone).
-    func hidesTabBar() -> some View {
+    /// Carte d'où part la transition « zoom » vers la fiche ouverte en plein écran (iOS).
+    func zoomTransitionSource(id: some Hashable, in namespace: Namespace.ID) -> some View {
         #if os(iOS)
-        toolbar(.hidden, for: .tabBar)
+        matchedTransitionSource(id: id, in: namespace)
+        #else
+        self
+        #endif
+    }
+
+    /// Fiche ouverte en plein écran : elle grandit depuis sa carte et y retourne en se fermant (iOS).
+    func zoomTransition(sourceID: some Hashable, in namespace: Namespace.ID) -> some View {
+        #if os(iOS)
+        navigationTransition(.zoom(sourceID: sourceID, in: namespace))
         #else
         self
         #endif

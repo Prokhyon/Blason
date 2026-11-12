@@ -13,9 +13,17 @@ enum DeviceKind {
     }
 }
 
+/// Fiche ouverte depuis la bibliothèque.
+enum LibraryRoute: Hashable, Identifiable {
+    case character(PlayerCharacter)
+    case template(SheetTemplate)
+
+    var id: Self { self }
+}
+
 /// Bibliothèque : barre latérale (Personnages / Templates) et grille de cartes sur iPad,
-/// un onglet par catégorie sur iPhone. Ouvrir une fiche masque la barre latérale (ou les onglets)
-/// pour lui laisser toute la place.
+/// un onglet par catégorie sur iPhone. Une fiche s'ouvre en plein écran par-dessus, comme un
+/// document (iPhone, iPad) ; sur Mac, elle est poussée dans la pile et masque la barre latérale.
 struct LibraryView: View {
     enum Category: String, Hashable {
         case characters
@@ -27,23 +35,22 @@ struct LibraryView: View {
     @Environment(SyncMonitor.self) private var syncMonitor
 
     @State private var category: Category? = .characters
-    /// Un chemin de navigation par catégorie : sur iPhone, chaque onglet garde sa pile.
-    @State private var paths: [Category: NavigationPath] = [:]
+    /// Fiche ouverte.
+    @State private var opened: LibraryRoute?
+    @Namespace private var transition
     @State private var columnVisibility: NavigationSplitViewVisibility = .automatic
     /// Demande venue d'un menu (nouveau, importer), traitée par la grille concernée.
     @State private var request: LibraryRequest?
 
     private var currentCategory: Category { category ?? .characters }
 
-    private func path(for category: Category) -> Binding<NavigationPath> {
+    /// Mac : la fiche ouverte, seul élément de la pile.
+    private var openedPath: Binding<[LibraryRoute]> {
         Binding(
-            get: { paths[category] ?? NavigationPath() },
-            set: { paths[category] = $0 }
+            get: { opened.map { [$0] } ?? [] },
+            set: { opened = $0.last }
         )
     }
-
-    /// Chemin de la catégorie affichée.
-    private var path: Binding<NavigationPath> { path(for: currentCategory) }
 
     var body: some View {
         Group {
@@ -63,6 +70,12 @@ struct LibraryView: View {
                 splitView
             }
         }
+        #if os(iOS)
+        .fullScreenCover(item: $opened) { route in
+            screen(for: route)
+                .zoomTransition(sourceID: route, in: transition)
+        }
+        #endif
         .focusedSceneValue(\.libraryActions, LibraryActions(perform: perform))
         #if DEBUG
         .task { await openDemoTarget() }
@@ -76,7 +89,7 @@ struct LibraryView: View {
         case .newTemplate: .templates
         case .importFiles: currentCategory
         }
-        paths[target] = nil
+        opened = nil
         category = target
         request = newRequest
     }
@@ -97,52 +110,62 @@ struct LibraryView: View {
             stack(for: currentCategory)
                 .id(currentCategory)
         }
-        .onChange(of: category) { old, _ in
-            // Changer de catégorie dans la barre latérale revient à sa grille.
-            if let old { paths[old] = nil }
+        #if os(macOS)
+        .onChange(of: category) {
+            // Changer de catégorie dans la barre latérale revient à sa grille (sur iPad, la fiche
+            // ouverte couvre la barre latérale).
+            opened = nil
         }
-        .onChange(of: path.wrappedValue.count) { _, count in
+        .onChange(of: opened == nil) { _, closed in
             withAnimation {
-                columnVisibility = count == 0 ? .automatic : .detailOnly
+                columnVisibility = closed ? .automatic : .detailOnly
             }
+        }
+        #endif
+    }
+
+    /// Pile de navigation d'une catégorie : sa grille ; sur Mac, la fiche ouverte y est poussée.
+    private func stack(for category: Category) -> some View {
+        // Seule la grille affichée reçoit les demandes des menus.
+        let request = category == currentCategory ? $request : .constant(nil)
+        let grid = Group {
+            switch category {
+            case .characters: CharacterGrid(open: open, transition: transition, request: request)
+            case .templates: TemplateGrid(open: open, transition: transition, request: request)
+            }
+        }
+        // Sous les cartes (la barre latérale est souvent masquée en portrait) ; pas dans les fiches.
+        .safeAreaInset(edge: .bottom) {
+            if let problem = syncMonitor.problem { SyncNotice(problem: problem) }
+        }
+        #if os(iOS)
+        return NavigationStack { grid }
+        #else
+        return NavigationStack(path: openedPath) {
+            grid.navigationDestination(for: LibraryRoute.self) { screen(for: $0) }
+        }
+        #endif
+    }
+
+    private func open(_ route: LibraryRoute) {
+        opened = route
+    }
+
+    /// Écran d'une fiche : onglets, modes ; il se referme en revenant à la bibliothèque.
+    @ViewBuilder
+    private func screen(for route: LibraryRoute) -> some View {
+        switch route {
+        case .character(let character):
+            SheetScreen(title: character.displayName, sheet: character.sheet,
+                        onEdit: { character.touch() }, onClose: close)
+        case .template(let template):
+            SheetScreen(title: template.name, sheet: template.sheet,
+                        onEdit: { template.updatedAt = Date() }, onClose: close)
         }
     }
 
-    /// Pile de navigation d'une catégorie : sa grille, puis les fiches ouvertes.
-    private func stack(for category: Category) -> some View {
-        let path = path(for: category)
-        // Seule la grille affichée reçoit les demandes des menus.
-        let request = category == currentCategory ? $request : .constant(nil)
-        return NavigationStack(path: path) {
-            Group {
-                switch category {
-                case .characters: CharacterGrid(path: path, request: request)
-                case .templates: TemplateGrid(path: path, request: request)
-                }
-            }
-            // Sous les cartes (la barre latérale est souvent masquée en portrait) ; pas dans les fiches.
-            .safeAreaInset(edge: .bottom) {
-                if let problem = syncMonitor.problem { SyncNotice(problem: problem) }
-            }
-            .navigationDestination(for: PlayerCharacter.self) { character in
-                SheetView(
-                    title: character.displayName,
-                    sheet: character.sheet,
-                    initialMode: .play,
-                    onEdit: { character.touch() }
-                )
-                .hidesTabBar()
-            }
-            .navigationDestination(for: SheetTemplate.self) { template in
-                SheetView(
-                    title: template.name,
-                    sheet: template.sheet,
-                    initialMode: .structure,
-                    onEdit: { template.updatedAt = Date() }
-                )
-                .hidesTabBar()
-            }
-        }
+    private func close() {
+        opened = nil
     }
 
     #if DEBUG
@@ -158,8 +181,8 @@ struct LibraryView: View {
         if let path = defaults.string(forKey: "demoImport"), let context = characters.first?.modelContext {
             do {
                 switch try SheetDocument.decode(Data(contentsOf: URL(filePath: path))).insert(into: context) {
-                case .character(let character): self.path.wrappedValue.append(character)
-                case .template(let template): self.path.wrappedValue.append(template)
+                case .character(let character): opened = .character(character)
+                case .template(let template): opened = .template(template)
                 }
                 return
             } catch {
@@ -171,14 +194,14 @@ struct LibraryView: View {
             // Le changement de catégorie vide le chemin précédent : on attend qu'il soit passé.
             try? await Task.sleep(for: .milliseconds(300))
         }
-        guard path.wrappedValue.isEmpty, let name = defaults.string(forKey: "demoOpen") else { return }
+        guard opened == nil, let name = defaults.string(forKey: "demoOpen") else { return }
         // Début du nom suffisant (« -demoOpen Basic ») : les arguments sont lus comme des plists,
         // les parenthèses et accents y passent mal.
         func same(_ candidate: String) -> Bool { candidate.hasPrefix(name) }
         if let character = characters.first(where: { same($0.displayName) }) {
-            path.wrappedValue.append(character)
+            opened = .character(character)
         } else if let template = templates.first(where: { same($0.name) }) {
-            path.wrappedValue.append(template)
+            opened = .template(template)
         }
     }
     #endif

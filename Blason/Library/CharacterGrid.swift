@@ -4,7 +4,10 @@ import SheetKit
 
 /// Grille des personnages, du plus récemment modifié au plus ancien.
 struct CharacterGrid: View {
-    @Binding var path: NavigationPath
+    /// Ouvre une fiche (plein écran sur iPhone et iPad, poussée sur Mac).
+    let open: (LibraryRoute) -> Void
+    /// Source de la transition « zoom » d'une carte vers sa fiche.
+    let transition: Namespace.ID
     /// Demande venue d'un menu (Nouveau, Importer) : traitée puis effacée.
     @Binding var request: LibraryRequest?
 
@@ -33,10 +36,13 @@ struct CharacterGrid: View {
         ScrollView {
             LazyVGrid(columns: LibraryGridLayout.columns(for: sizeClass), spacing: 16) {
                 ForEach(filtered) { character in
-                    NavigationLink(value: character) {
+                    Button {
+                        open(.character(character))
+                    } label: {
                         CharacterCard(character: character)
                     }
                     .buttonStyle(.plain)
+                    .zoomTransitionSource(id: LibraryRoute.character(character), in: transition)
                     .contextMenu { menu(for: character) }
                 }
             }
@@ -67,13 +73,13 @@ struct CharacterGrid: View {
         }
         .sheetImporter(isPresented: $importing) { item in
             switch item {
-            case .template(let template): path.append(template)
-            case .character(let character): path.append(character)
+            case .template(let template): open(.template(template))
+            case .character(let character): open(.character(character))
             }
         }
         .sheet(isPresented: $showingNew) {
             NewCharacterView(templates: templates) { character in
-                path.append(character)
+                open(.character(character))
             }
         }
         .alert("Renommer le personnage", isPresented: isPresented($renaming)) {

@@ -4,7 +4,10 @@ import SheetKit
 
 /// Grille des templates, par ordre alphabétique.
 struct TemplateGrid: View {
-    @Binding var path: NavigationPath
+    /// Ouvre une fiche (plein écran sur iPhone et iPad, poussée sur Mac).
+    let open: (LibraryRoute) -> Void
+    /// Source de la transition « zoom » d'une carte vers sa fiche.
+    let transition: Namespace.ID
     /// Demande venue d'un menu (Nouveau, Importer) : traitée puis effacée.
     @Binding var request: LibraryRequest?
 
@@ -39,10 +42,13 @@ struct TemplateGrid: View {
         ScrollView {
             LazyVGrid(columns: LibraryGridLayout.columns(for: sizeClass), spacing: 16) {
                 ForEach(filtered) { template in
-                    NavigationLink(value: template) {
+                    Button {
+                        open(.template(template))
+                    } label: {
                         TemplateCard(template: template, characterCount: usage[template.uid] ?? 0)
                     }
                     .buttonStyle(.plain)
+                    .zoomTransitionSource(id: LibraryRoute.template(template), in: transition)
                     .contextMenu { menu(for: template) }
                 }
             }
@@ -73,13 +79,13 @@ struct TemplateGrid: View {
         }
         .sheetImporter(isPresented: $importing) { item in
             switch item {
-            case .template(let template): path.append(template)
-            case .character(let character): path.append(character)
+            case .template(let template): open(.template(template))
+            case .character(let character): open(.character(character))
             }
         }
         .sheet(isPresented: $showingNew) {
             NewTemplateView { template in
-                path.append(template)
+                open(.template(template))
             }
         }
         .alert("Renommer le template", isPresented: isPresented($renaming)) {
@@ -115,7 +121,7 @@ struct TemplateGrid: View {
     private func menu(for template: SheetTemplate) -> some View {
         Button("Nouveau personnage", systemImage: "person.badge.plus") {
             let character = template.makeCharacter(named: "Nouveau personnage", in: context)
-            path.append(character)
+            open(.character(character))
         }
         Button("Renommer", systemImage: "pencil") {
             newName = template.name

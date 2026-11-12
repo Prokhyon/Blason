@@ -156,6 +156,9 @@
     "Affichage" : {
 
     },
+    "Afficher l'inspecteur" : {
+
+    },
     "Affichés" : {
 
     },
@@ -591,7 +594,10 @@
     "Écriture manuscrite" : {
 
     },
-    "Édition" : {
+    "Éditer" : {
+
+    },
+    "Éditer la structure" : {
 
     },
     "Effacer la recherche" : {
@@ -649,9 +655,6 @@
 
     },
     "Expérience, objets, argent… (à reporter sur la fiche)" : {
-
-    },
-    "Exporter" : {
 
     },
     "Exporter…" : {
@@ -910,9 +913,6 @@
     "Mise en forme" : {
 
     },
-    "Mode" : {
-
-    },
     "Modifiable en Jouer" : {
 
     },
@@ -1033,9 +1033,6 @@
     "OK" : {
 
     },
-    "Onglet" : {
-
-    },
     "Options" : {
 
     },
@@ -1043,6 +1040,9 @@
 
     },
     "Ouvre Réglages pour revalider ton compte Apple. La synchronisation reprendra ensuite." : {
+
+    },
+    "Ouvrez la structure (menu …) pour construire la fiche." : {
 
     },
     "Ouvrir" : {
@@ -1073,9 +1073,6 @@
 
     },
     "Pas de Besace" : {
-
-    },
-    "Passez en mode Structure pour construire la fiche." : {
 
     },
     "PDF" : {
@@ -1398,6 +1395,9 @@
 
     },
     "Templates" : {
+
+    },
+    "Terminé" : {
 
     },
     "Tes fiches restent sur cet appareil. Pour les retrouver sur tes autres appareils, active iCloud pour Blason dans Réglages." : {

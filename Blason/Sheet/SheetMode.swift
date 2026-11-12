@@ -20,6 +20,18 @@ enum SheetMode: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Mode à l'ouverture et après « OK » : Jouer pour un personnage, Remplir (valeurs par défaut)
+    /// pour un template.
+    static func rest(isTemplate: Bool) -> SheetMode {
+        isTemplate ? .fill : .play
+    }
+
+    /// Mode ouvert par « Éditer » : Remplir pour un personnage, Structure pour un template.
+    /// La Structure d'un personnage s'ouvre depuis le menu « … ».
+    static func edit(isTemplate: Bool) -> SheetMode {
+        isTemplate ? .structure : .fill
+    }
+
     /// Une valeur est modifiable en Remplir, ou en Jouer si elle est vivante ; jamais en Structure.
     func canEdit(live: Bool) -> Bool {
         self == .fill || (self == .play && live)

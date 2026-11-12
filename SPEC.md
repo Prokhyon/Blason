@@ -56,7 +56,7 @@ La priorité est de rendre **rapide et pratique** la construction de la structur
 
 ## 4. Les trois modes de la fiche
 
-Une seule vue, trois modes, un sélecteur dans la barre d'outils :
+Une seule vue, trois modes. Depuis la V2.4, plus de sélecteur à trois segments (§5.17) : **Éditer / OK** alterne entre Jouer et Remplir, la Structure s'ouvre depuis le menu « … ».
 
 | Mode | Pour qui, quand | Ce qui est modifiable |
 |---|---|---|
@@ -65,7 +65,7 @@ Une seule vue, trois modes, un sélecteur dans la barre d'outils :
 | **Jouer** | En partie | Seules les **valeurs vivantes** (PV, PM, SAN, cases « compétence utilisée »…), en un tap. |
 
 - Un template s'ouvre par défaut en **Structure**. Un personnage s'ouvre par défaut en **Jouer**.
-- Sur un template, le mode **Remplir** sert à saisir les valeurs par défaut.
+- Sur un template, le mode **Remplir** sert à saisir les valeurs par défaut ; « Éditer » y mène à la Structure, « Terminé » revient à Remplir.
 
 ### 4.1 Mode Structure (détail)
 - **Sélection** : un tap sélectionne une section ou un champ. L'inspecteur à droite affiche ses propriétés : libellé, code, type, min/max, unité, valeur par défaut ou formule, valeur vivante, disposition.
@@ -162,7 +162,7 @@ Interface en français, avec un String Catalog prêt pour l'anglais.
 ### 5.11 iPhone (V2.0)
 - Même app, même base iCloud : la cible accepte l'iPhone (portrait et paysage). Pas de changement du modèle.
 - **Bibliothèque** : un onglet par catégorie (Personnages, Templates), chacun avec sa pile ; deux cartes par ligne. Sur iPad, la barre latérale reste. La disposition suit l'appareil, pas la largeur : tourner un grand iPhone ne recrée pas la fiche ouverte. Les onglets se masquent quand une fiche est ouverte.
-- **Fiche** : le mode (Structure / Remplir / Jouer) passe dans la barre du bas, sous le pouce ; en haut, annuler / rétablir, l'inspecteur (Structure) et un menu « Plus » (édition, disposition des pages, thème, export). Les pages sont des pastilles qui défilent horizontalement. L'inspecteur s'ouvre en feuille à mi-hauteur **quand on touche un élément** et se ferme en désélectionnant (sinon il couvrait la barre du bas et le choix du mode) ; la fiche défile pour garder l'élément sélectionné visible au-dessus de la feuille, et garde en bas une marge de la hauteur de la feuille.
+- **Fiche** (remplacé en V2.4 : onglets en bas, Éditer / OK en haut, §5.17) : le mode (Structure / Remplir / Jouer) passe dans la barre du bas, sous le pouce ; en haut, annuler / rétablir, l'inspecteur (Structure) et un menu « Plus » (édition, disposition des pages, thème, export). Les pages sont des pastilles qui défilent horizontalement. L'inspecteur s'ouvre en feuille à mi-hauteur **quand on touche un élément** et se ferme en désélectionnant (sinon il couvrait la barre du bas et le choix du mode) ; la fiche défile pour garder l'élément sélectionné visible au-dessus de la feuille, et garde en bas une marge de la hauteur de la feuille.
 - **Cartes de la bibliothèque** : hauteur fixe, quel que soit le texte : deux lignes réservées au nom (coupé au-delà), une au système ou au template d'origine, même vide.
 - **Tableaux** : un tableau trop large pour l'écran défile horizontalement, quel que soit son nombre de colonnes (avant : au-delà de 4 colonnes seulement).
 - Critère de fin : jouer et tenir à jour la fiche de Leo sur iPhone en vraie partie.
@@ -245,8 +245,8 @@ Chaque personnage a sa fiche, ses statistiques, sa Besace **et son journal**. Pa
 - Débogage : `-demoJournal YES` (journal d'exemple, onglet Journal), `-demoSession 2`, `-demoDetails YES`, `-demoCite YES`, `-demoSketch YES`, `-demoHandwriting YES`, `-demoLibrary codex|documents`, `-demoEntry Nom`, `-demoDocument YES`, `-demoViewer YES` ; `-journalSelfTest YES` vérifie l'éditeur sans interface (iOS, résultat dans la console).
 
 ### 5.15 Onglets du personnage (V2)
-- Un personnage s'ouvre sur trois **onglets**, au centre de la barre : **Fiche**, **Inventaire** (la Besace, §5.13) et **Journal** (§5.14). Un template n'a que Fiche et Inventaire. Menu Fiche › onglets, ⌥⌘1 à ⌥⌘3. Afficher deux onglets côte à côte viendra plus tard.
-- Fiche et Inventaire suivent le mode (Structure, Remplir, Jouer) ; le Journal n'en a pas.
+- Un personnage s'ouvre sur trois **onglets** (barre d'onglets du système depuis la V2.4, §5.17) : **Fiche**, **Inventaire** (la Besace, §5.13) et **Journal** (§5.14). Un template n'a que Fiche et Inventaire. Menu Fiche › onglets, ⌥⌘1 à ⌥⌘3. Afficher deux onglets côte à côte viendra plus tard.
+- Fiche et Inventaire ont **chacun leur mode** (Structure, Remplir, Jouer) ; le Journal n'en a pas.
 - **Panneau latéral** (Fiche, Inventaire) : en **Structure**, l'inspecteur ; en **Remplir** et **Jouer**, la fiche de l'objet touché (§5.13). À droite sur iPad et Mac, en feuille sur iPhone. Le journal a ses propres panneaux.
 
 ### 5.16 Modèle V2 et pause d'iCloud
@@ -256,6 +256,16 @@ Chaque personnage a sa fiche, ses statistiques, sa Besace **et son journal**. Pa
 - **À la fin** : le V2 final (`SheetSchemaV2`, ajouts seulement) ; choisir quelle base garder sur l'appareil de référence (la base d'essai, ou une nouvelle migration de la base V1 plus réimport des exports).
 - **Réactivation d'iCloud**, une fois l'ensemble validé : choisir un appareil de référence, initialiser et déployer le schéma V2 (`-initCloudKitSchema YES`, puis CloudKit Console), puis faire repartir les autres appareils de cette base. À préparer le moment venu.
 - Entités prévues : `InventoryItem` (objet ; emplacement, contenant), `ItemType` et ses propriétés typées, `Currency` et les compteurs d'argent, `InventorySlot`, `EncumbranceLevel`, les vues de Besace (`SectionKind.inventory` et `.inventoryView`) ; `Journal` (lié à `PlayerCharacter`), `JournalSession`, `CodexEntry`, `JournalDocument` (stockage externe). Elles respectent les contraintes CloudKit (§7) pour que la réactivation soit possible.
+
+### 5.17 Écran de la fiche (V2.4)
+Propositions et maquettes : artefact « Blason, nouvelle fiche » (12 novembre 2026).
+- **Plein écran** : sur iPhone et iPad, une fiche s'ouvre par-dessus la bibliothèque, comme un document, avec la transition « zoom » depuis sa carte. En haut à gauche, le retour à la bibliothèque, puis le nom (grand écran ; sur iPhone, le titre reste au centre). Sur Mac, la fiche reste poussée dans la pile de la bibliothèque.
+- **Onglets** Fiche, Inventaire, Journal : la `TabView` du système, au centre du haut sur iPad, en bas sur iPhone. Chaque onglet a sa pile, sa barre et, pour Fiche et Inventaire, son mode.
+- **Menu des pages** (onglet Fiche) : les titres des pages côte à côte sous les onglets, alignés sur le bord gauche du contenu, la page affichée soulignée ; il défile en largeur. Posé par `safeAreaBar` : le contenu défile dessous avec le fondu du système. Le réglage « Une page à la fois / Toutes à la suite » reste (menu « … ») ; à la suite, le menu suit la page visible.
+- **Barre, à droite** : annuler / rétablir (hors Jouer), le menu « … », puis le bouton du mode, toujours en dernier : **Éditer** (Jouer → Remplir ; template : Remplir → Structure), **OK** (Remplir → Jouer), **Terminé** (Structure → mode précédent). « … » : Éditer la structure (personnage), commandes d'édition et « Afficher l'inspecteur » (Structure), disposition des pages, thème.
+- L'inspecteur se ferme par sa croix et se rouvre en sélectionnant un élément (plus de bouton dans la barre, qui débordait en portrait).
+- **Partager** quitte la fiche : l'export reste dans le menu contextuel des cartes de la bibliothèque.
+- À venir : fond blanc et cartes (thème Natif), libellé au-dessus et largeur des champs (Auto, Pleine, ½, ⅓), présentations Paires et Tuiles, deux onglets côte à côte (un mode par panneau), retouche d'une valeur en Jouer (option).
 
 ## 6. Hors V1 (feuille de route)
 
@@ -390,6 +400,7 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-12 | V2.3 : journal ajouté au brouillon V2 (`Journal`, `JournalSession`, `CodexEntry`, `JournalDocument` ; apparitions en relation plusieurs-à-plusieurs) et à l'export (format 2, `journal` facultatif). Modifiable dans tous les modes. Texte riche : `AttributedString` encodé avec les attributs SwiftUI, doublé d'un texte brut. Les fiches PNJ / lieux / indices forment le **Carnet**. |
 | 2026-11-12 | Personnage en **onglets** Fiche / Inventaire / Journal (remplace le panneau partagé de §5.15). La Besace quitte les pages de la fiche pour l'onglet Inventaire ; les vues de la Besace restent sur la fiche. |
 | 2026-11-12 | Journal refait façon Notes : la session prend toute la place ; **citations** de fiches et **pièces jointes** posées dans le texte depuis une boîte à outils (plutôt que des `@`), d'où se déduisent apparitions et documents ; carnet et documents dans un panneau. Croquis et zones manuscrites (PaperKit) ; l'écriture d'une zone reste de l'encre. Récit enregistré dans un format propre (`JournalText`) plutôt qu'en `AttributedString` SwiftUI (pas de pièces jointes ni de listes fiables, liés à la plateforme). |
+| 2026-11-12 | V2.4 : fiche en **plein écran** avec les onglets du système (Fiche, Inventaire, Journal), menu des pages sous les onglets, **Éditer / OK** à la place du sélecteur de mode (Structure dans « … »), un mode par onglet, Partager retiré de la fiche (§5.17). |
 
 ## 10. Questions ouvertes
 

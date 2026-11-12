@@ -48,7 +48,7 @@ struct TabbedPages: View {
             }
         }
         .sheetScrollStyle()
-        .safeAreaInset(edge: .top, spacing: 0) {
+        .safeAreaBar(edge: .top, spacing: 0) {
             if editor.pages.count > 1 || mode == .structure {
                 PageBar(editor: editor)
             }
@@ -84,7 +84,7 @@ struct ContinuousPages: View {
             }
             .scrollPosition(id: $visiblePage, anchor: .top)
             .sheetScrollStyle()
-            .safeAreaInset(edge: .top, spacing: 0) {
+            .safeAreaBar(edge: .top, spacing: 0) {
                 PageBar(editor: editor) { section in
                     withAnimation { proxy.scrollTo(section.persistentModelID, anchor: .top) }
                 }
@@ -120,7 +120,9 @@ private struct PageTitle: View {
     }
 }
 
-/// Barre des pages : choix de la page, sommaire (défilement continu),
+/// Menu des pages, sous les onglets, aligné sur le bord gauche du contenu (SPEC §5.17) : les titres
+/// côte à côte, la page affichée soulignée ; il défile en largeur s'il y a trop de pages. Posé sur le
+/// contenu, qui défile dessous avec le fondu du système. À droite : sommaire (défilement continu),
 /// et en Structure réglages de la page et ajout de page.
 struct PageBar: View {
     @Bindable var editor: StructureEditor
@@ -128,21 +130,12 @@ struct PageBar: View {
     var showSection: ((SheetSection) -> Void)? = nil
 
     @Environment(\.sheetMode) private var mode
-    @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
         let pages = editor.pages
         HStack(spacing: 16) {
-            if pages.count > 1 && sizeClass == .compact {
-                // iPhone : les titres ne tiennent pas dans un contrôle segmenté.
-                PageChips(editor: editor)
-            } else if pages.count > 1 {
-                Picker("Page", selection: $editor.pageIndex) {
-                    ForEach(pages.indices, id: \.self) { index in
-                        Text(pages[index].title.isEmpty ? "Sans titre" : pages[index].title).tag(index)
-                    }
-                }
-                .pickerStyle(.segmented)
+            if pages.count > 1 {
+                PageRow(editor: editor)
             } else {
                 Spacer(minLength: 0)
             }
@@ -176,45 +169,50 @@ struct PageBar: View {
             }
         }
         .labelStyle(.iconOnly)
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-        .background(.bar)
+        .padding(.trailing)
+        .padding(.vertical, 4)
     }
 }
 
-/// Pages en pastilles qui défilent horizontalement (écran étroit) ; la page choisie reste visible.
-private struct PageChips: View {
+/// Titres des pages côte à côte ; la page choisie est soulignée et reste visible.
+private struct PageRow: View {
     @Bindable var editor: StructureEditor
 
     var body: some View {
         let pages = editor.pages
         ScrollViewReader { proxy in
             ScrollView(.horizontal) {
-                HStack(spacing: 6) {
+                HStack(spacing: 22) {
                     ForEach(pages.indices, id: \.self) { index in
                         let selected = index == editor.pageIndex
                         Button {
-                            editor.pageIndex = index
+                            withAnimation(.snappy) { editor.pageIndex = index }
                         } label: {
                             Text(pages[index].title.isEmpty ? "Sans titre" : pages[index].title)
-                                .font(.subheadline.weight(selected ? .semibold : .regular))
+                                .font(.body.weight(.semibold))
                                 .lineLimit(1)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(selected ? Color.accentColor.opacity(0.15) : Color.tertiaryFill,
-                                            in: Capsule())
-                                .foregroundStyle(selected ? Color.accentColor : .primary)
+                                .foregroundStyle(selected ? .primary : .secondary)
+                                .padding(.vertical, 8)
+                                .overlay(alignment: .bottom) {
+                                    if selected {
+                                        Capsule()
+                                            .fill(.tint)
+                                            .frame(height: 3)
+                                    }
+                                }
+                                .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                         .accessibilityAddTraits(selected ? .isSelected : [])
                         .id(index)
                     }
                 }
+                .padding(.horizontal)
             }
             .scrollIndicators(.hidden)
-            .onAppear { proxy.scrollTo(editor.pageIndex, anchor: .center) }
+            .onAppear { proxy.scrollTo(editor.pageIndex) }
             .onChange(of: editor.pageIndex) { _, index in
-                withAnimation { proxy.scrollTo(index, anchor: .center) }
+                withAnimation { proxy.scrollTo(index) }
             }
         }
     }
