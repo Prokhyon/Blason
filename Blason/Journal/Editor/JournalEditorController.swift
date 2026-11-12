@@ -370,6 +370,14 @@ final class JournalEditorController {
             var typing = JournalTypography.typingAttributes(from: base)
             typing[.journalReference] = entry.uid.uuidString
             let inserted = NSMutableAttributedString(string: label, attributes: typing)
+            // Une espace avant, si le texte précédent n'en a pas (sauf début de ligne, apostrophe, parenthèse…).
+            if selection.location > 0 {
+                let previous = (storage.string as NSString).character(at: selection.location - 1)
+                let noSpaceAfter: Set<unichar> = [0x0A, 0x20, 0x09, 0xA0, 0x202F, 0x27, 0x2019, 0x28, 0x5B, 0x2F, 0x2D]
+                if !noSpaceAfter.contains(previous) {
+                    inserted.insert(NSAttributedString(string: " ", attributes: JournalTypography.typingAttributes(from: base)), at: 0)
+                }
+            }
             let end = NSMaxRange(selection)
             let next = end < storage.length ? (storage.string as NSString).character(at: end) : 0x0A
             let nextIsSeparator = next == 0x0A || next == 0x20 || next == 0x2C || next == 0x2E

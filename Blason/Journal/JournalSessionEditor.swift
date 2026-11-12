@@ -488,8 +488,8 @@ struct ReferencePicker: View {
                 }
             }
         }
-        .frame(minWidth: 360, idealWidth: 380, minHeight: 440, idealHeight: 520)
-        .onAppear { focused = true }
+        // Petite hauteur minimale : en paysage, le clavier réduit la bulle ; la liste défile.
+        .frame(minWidth: 360, idealWidth: 380, minHeight: 240, idealHeight: 480)
     }
 
     private var trimmed: String { query.trimmingCharacters(in: .whitespacesAndNewlines) }

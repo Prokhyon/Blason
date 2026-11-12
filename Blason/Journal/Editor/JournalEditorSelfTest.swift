@@ -76,6 +76,11 @@ enum JournalEditorSelfTest {
         step { controller.insertReference(to: entry) }
         check("citation", controller.text.referencedEntries == [entry.uid]
               && controller.text.paragraphs[2].plainText == "Rencontre avec Aldo ")
+        type("puis")
+        step { controller.insertReference(to: entry) }
+        check("espace ajoutée avant la citation", controller.text.paragraphs[2].plainText == "Rencontre avec Aldo puis Aldo ")
+        for _ in 0..<7 { backspace() }  // « puis Aldo » : espace, citation d'un bloc, espace, « puis »
+        check("retour à l'état précédent", controller.text.paragraphs[2].plainText == "Rencontre avec Aldo ")
         type("au port.")
         backspace()  // « . »
         let afterDot = controller.text.paragraphs[2].plainText
