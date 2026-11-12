@@ -214,30 +214,40 @@ Un nouveau type de section, **Besace**, à côté de « Champs » et « Tableau 
 **Template et personnage**
 - Le template définit les types et leurs propriétés, les monnaies, les emplacements de départ, l'option de poids (unité, limite, paliers, malus) ; ses objets sont l'**équipement de départ**, copié dans chaque nouveau personnage.
 
+**Onglet Inventaire (12 novembre 2026)**
+- La Besace ne s'affiche plus parmi les sections de la fiche (elle s'y perdait, en fin de page) : elle a son **onglet Inventaire** (§5.15). Dans le modèle, elle reste une section de la fiche (codes `BESACE.*`, vues de la Besace inchangées) ; seul l'affichage change.
+- Les **vues de la Besace** (armes équipées…) restent sur la fiche et marchent comme avant.
+- Dans l'onglet : un bloc d'en-tête (fortune, charge, réglages), puis **un bloc par emplacement**, sur deux colonnes quand la place le permet (iPad, Mac) ; chaque emplacement va dans la colonne la moins remplie.
+- Une fiche sans Besace propose « Créer la Besace » dans l'onglet ; la section est ajoutée à la fin de la première page. En Structure, l'onglet sélectionne la Besace : l'inspecteur montre ses réglages. Le menu « Ajouter une section » ne propose plus la Besace (une seule par fiche), seulement la vue.
+
 ### 5.14 Journal du personnage (V2.3)
 Chaque personnage a sa fiche, ses statistiques, sa Besace **et son journal**. Pas de campagne : elle pourra revenir avec un éventuel volet MJ.
 
-- **Toujours disponible**, sans rien à définir dans le template : il appartient au personnage (pas à sa fiche) et s'ouvre par un bouton **Journal** de la fiche, à côté d'elle (§5.15). Une fiche libre en a un aussi ; un template n'en a pas.
-- **Sessions** : une entrée par session, avec numéro (proposé automatiquement), date réelle, date en jeu (texte libre : « 3 Thermidor 1792 »), titre, résumé court, **texte mis en forme** (titres, gras, italique, listes : l'éditeur de texte riche du système) et une rubrique **Gains** en texte libre (expérience, objets, argent : reportés à la main). Liste de la plus récente à la plus ancienne, recherche dans tout le journal. « Session du jour » se crée d'un toucher pendant la partie.
-- **PNJ, lieux, indices** : des fiches courtes, rangées par genre (PNJ, Lieu, Indice, Faction, Autre) : nom, image, description, état libre (« vivant », « résolu »). Une session liste les fiches qui y **apparaissent** (choisies dans une liste, pas de mention dans le texte) ; chaque fiche montre ses sessions.
-- **Documents** : PDF et images (aides de jeu, cartes, lettres du MJ) importés depuis Fichiers, Photos ou par glisser-déposer ; titre, rattachement optionnel à une session ou à une fiche PNJ / lieu. Consultation dans l'app (PDF paginé, image zoomable).
+- **Toujours disponible**, sans rien à définir dans le template : il appartient au personnage (pas à sa fiche) et a son **onglet Journal** (§5.15). Une fiche libre en a un aussi ; un template n'en a pas.
+- **Sessions** : la page principale du journal. Une session a un numéro (proposé automatiquement), une date réelle, une date en jeu (texte libre : « 3 Thermidor 1792 »), un titre, et surtout son **récit**, qui prend toute la place, comme une note dans Notes. Résumé et **Gains** (texte libre : expérience, objets, argent, reportés à la main) sont dans des **Détails** repliables. Liste de la plus récente à la plus ancienne (résumé, ou à défaut les premières lignes du récit), recherche dans tout le journal. « Session du jour » se crée d'un toucher pendant la partie.
+- **Récit mis en forme**, comme dans Notes : titre, en-tête, sous-en-tête, corps, monospace ; gras, italique, souligné, barré ; listes à puces et **listes de tâches** (cases à cocher).
+- **Boîte à outils d'écriture** : **citer une fiche** du carnet (PNJ, lieu, indice, faction, autre ; existante ou créée au passage, d'après le texte sélectionné) ; **joindre** un document (Fichiers, Photos), un **croquis** ou une **zone manuscrite**. Les apparitions d'une session et ses documents se déduisent du texte : pas de liste à tenir à part.
+- **Carnet et documents** : un panneau à côté de la session (feuille sur iPhone), ouvert depuis la barre. Le **carnet** réunit les fiches courtes (nom, genre, image, description, état libre : « vivant », « résolu ») ; chaque fiche montre les sessions qui la citent. Les **documents** : PDF et images (aides de jeu, cartes, lettres du MJ) et croquis. Tout ce qui est cité ou joint dans les sessions y figure ; on peut aussi y ajouter une fiche ou un document à la main. Consultation dans l'app (PDF paginé, image zoomable).
+- **Croquis** : un dessin rapide (crayon, formes, texte) inséré dans le récit. À la création, un titre et « Classer dans les documents » (oui par défaut).
+- **Écriture manuscrite** : une zone dessinée dans le récit où l'écriture au crayon **reste de l'encre** (pas de conversion en texte, pas dans les documents). Ailleurs dans le récit, l'écriture au crayon (Scribble, iPad) devient du texte, réglage désactivable.
 - **Copie et export** : dupliquer un personnage ne copie pas son journal ; « Enregistrer comme template » ne l'emporte pas. L'export JSON du personnage inclut le journal et ses documents.
 
-**Réalisation (12 novembre 2026, interface provisoire)**
-- Le journal est créé à sa première ouverture (pas d'entrée d'annulation). Il se modifie dans **tous les modes** de la fiche : on l'écrit pendant la partie.
-- Trois rubriques : **Sessions**, **Carnet** (les fiches PNJ, lieux, indices, factions, autres) et **Documents** ; une recherche au-dessus couvre les trois (sans majuscules ni accents, mot par mot).
-- « Session du jour » rouvre la session datée d'aujourd'hui si elle existe, sinon la crée avec le numéro suivant.
-- Récit : `TextEditor` du système sur un `AttributedString` (gras, italique, souligné, tailles du menu Format), enregistré en JSON avec les attributs SwiftUI, plus une copie en texte brut pour la recherche. Les listes dépendent de ce que l'éditeur du système propose.
-- Apparitions : « Choisir… » dans la session (avec création d'une fiche au passage) ; la fiche liste ses sessions.
-- Documents : PDF tels quels, images réduites à 3072 px (JPEG) ; depuis Fichiers, Photos ou par glisser-déposer sur la liste. Consultation plein écran (feuille sur Mac) avec PDFKit, qui affiche aussi les images (zoom et défilement du système).
-- Supprimer une session ou une fiche laisse ses documents dans le journal ; supprimer le personnage efface son journal.
-- Débogage : `-demoJournal YES` (journal d'exemple, panneau ouvert), `-demoJournalTab documents`, `-demoSession 2`, `-demoDocument YES`, `-demoViewer YES`.
+**Réalisation (12 novembre 2026)**
+- Le journal est créé à sa première ouverture. Il se modifie toujours (pas de mode) : on l'écrit pendant la partie.
+- Grand écran : la session occupe toute la largeur ; la liste des sessions (à gauche) et le panneau Carnet et documents (à droite, ⇧⌘J) **flottent par-dessus**. Choisir une session range la liste ; elle s'affiche d'emblée seulement s'il n'y a aucune session. iPhone : la liste, puis la session en plein écran ; la boîte à outils en bas, au-dessus du clavier.
+- Récit : format propre à l'app (`JournalText` : paragraphes avec style, liste et case ; suites de caractères avec gras, italique, souligné, barré, citation d'une fiche ou pièce jointe), en JSON, plus une copie en texte brut pour la recherche. L'éditeur est la vue de texte du système (UIKit, AppKit) : retour dans une liste = nouvel élément, sur un élément vide = fin de liste ; effacer après la puce arrête la liste ; une citation s'efface d'un bloc et ne se coupe pas ; le texte collé perd sa mise en forme. ⌘B, ⌘I, ⌘U, ⇧⌘L (liste de tâches), ⇧⌘K (citer). Le récit a sa propre annulation, séparée de celle de la fiche.
+- Une citation garde le texte écrit (« sa capitaine ») et pointe vers la fiche ; la toucher ouvre la fiche dans le panneau. Une pièce jointe touchée s'ouvre : un document dans la visionneuse, un dessin dans son éditeur.
+- Enregistrement environ une demi-seconde après la dernière frappe, et en quittant la session. Apparitions et rattachement des documents suivent le texte. Une pièce jointe retirée du texte quitte la session : un document classé reste dans la liste ; une zone manuscrite ou un croquis non classé est supprimé en quittant la session (d'ici là, Annuler la ramène).
+- Dessins : PaperKit (iOS, iPadOS et macOS 26), enregistrés tels quels avec un rendu PNG recadré sur le dessin, affiché sur un fond papier (l'encre reste lisible en mode sombre).
+- Documents : PDF tels quels, images réduites à 3072 px (JPEG) ; depuis Fichiers, Photos ou par glisser-déposer sur la liste. Consultation plein écran (feuille sur Mac) avec PDFKit, qui affiche aussi les images.
+- Supprimer une session ou une fiche laisse les documents classés dans le journal ; supprimer le personnage efface son journal.
+- Pas encore : insérer dans une session un document déjà présent dans la liste (un document n'est joint qu'à une session).
+- Débogage : `-demoJournal YES` (journal d'exemple, onglet Journal), `-demoSession 2`, `-demoDetails YES`, `-demoCite YES`, `-demoSketch YES`, `-demoHandwriting YES`, `-demoLibrary codex|documents`, `-demoEntry Nom`, `-demoDocument YES`, `-demoViewer YES` ; `-journalSelfTest YES` vérifie l'éditeur sans interface (iOS, résultat dans la console).
 
-### 5.15 Panneau latéral de la fiche (V2) — provisoire
-Trois choses veulent la place à droite de la fiche : l'inspecteur, la fiche d'objet et le journal. Règle commune, en attendant la refonte de l'interface :
-- **Un seul panneau** à droite (iPad, Mac), une **feuille** sur iPhone.
-- En **Structure** : l'inspecteur. En **Remplir** et **Jouer** : la fiche d'objet quand on touche un objet, sinon le journal.
-- Un sélecteur en haut du panneau passe de l'un à l'autre (Objet / Journal) ; le bouton Journal de la barre ouvre ou ferme le panneau (menu Fiche › Journal, ⌘J). Absent en Structure et sur un template.
+### 5.15 Onglets du personnage (V2)
+- Un personnage s'ouvre sur trois **onglets**, au centre de la barre : **Fiche**, **Inventaire** (la Besace, §5.13) et **Journal** (§5.14). Un template n'a que Fiche et Inventaire. Menu Fiche › onglets, ⌥⌘1 à ⌥⌘3. Afficher deux onglets côte à côte viendra plus tard.
+- Fiche et Inventaire suivent le mode (Structure, Remplir, Jouer) ; le Journal n'en a pas.
+- **Panneau latéral** (Fiche, Inventaire) : en **Structure**, l'inspecteur ; en **Remplir** et **Jouer**, la fiche de l'objet touché (§5.13). À droite sur iPad et Mac, en feuille sur iPhone. Le journal a ses propres panneaux.
 
 ### 5.16 Modèle V2 et pause d'iCloud
 - **iCloud en pause** pendant la mise au point de la Besace et du journal : la synchronisation est coupée dans toutes les versions ; chaque appareil garde sa base locale telle quelle (rien n'est perdu, ni sur l'appareil ni dans iCloud). On joue sur un appareil principal ; une fiche passe d'un appareil à l'autre par l'export / import JSON.
@@ -378,6 +388,8 @@ TableCell  { columnCode, value typée, formula? }
 | 2026-11-11 | Besace : l'équipement s'affiche ailleurs sur la fiche par une **vue de la Besace** (objets équipés d'un type, propriétés en colonnes), seule source de vérité ; remplace le tableau alimenté par la Besace. Propriétés d'objet typées comme les colonnes. Emplacements créés par le joueur, avec capacité optionnelle ; un seul niveau de contenant. Paliers d'encombrement à seuil par formule. |
 | 2026-11-11 | Le journal appartient au **personnage**, toujours disponible, sans campagne (remplace la décision précédente) : sessions, PNJ / lieux / indices, documents, gains en texte. Un seul panneau à droite de la fiche pour l'inspecteur, la fiche d'objet et le journal (§5.15). |
 | 2026-11-12 | V2.3 : journal ajouté au brouillon V2 (`Journal`, `JournalSession`, `CodexEntry`, `JournalDocument` ; apparitions en relation plusieurs-à-plusieurs) et à l'export (format 2, `journal` facultatif). Modifiable dans tous les modes. Texte riche : `AttributedString` encodé avec les attributs SwiftUI, doublé d'un texte brut. Les fiches PNJ / lieux / indices forment le **Carnet**. |
+| 2026-11-12 | Personnage en **onglets** Fiche / Inventaire / Journal (remplace le panneau partagé de §5.15). La Besace quitte les pages de la fiche pour l'onglet Inventaire ; les vues de la Besace restent sur la fiche. |
+| 2026-11-12 | Journal refait façon Notes : la session prend toute la place ; **citations** de fiches et **pièces jointes** posées dans le texte depuis une boîte à outils (plutôt que des `@`), d'où se déduisent apparitions et documents ; carnet et documents dans un panneau. Croquis et zones manuscrites (PaperKit) ; l'écriture d'une zone reste de l'encre. Récit enregistré dans un format propre (`JournalText`) plutôt qu'en `AttributedString` SwiftUI (pas de pièces jointes ni de listes fiables, liés à la plateforme). |
 
 ## 10. Questions ouvertes
 

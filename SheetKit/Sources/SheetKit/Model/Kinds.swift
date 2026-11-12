@@ -7,6 +7,9 @@ public enum SectionKind: String, Codable, CaseIterable, Sendable {
     case table
     case inventory
     case inventoryView
+
+    /// La Besace s'affiche dans l'onglet Inventaire, pas sur les pages de la fiche.
+    public var isShownOnSheet: Bool { self != .inventory }
 }
 
 /// Disposition des champs dans une section « Champs ».

@@ -291,7 +291,7 @@ struct RowView: View {
         ColumnsLayout(weights: row.columnWeights, spacing: 16, minColumnWidth: 300) {
             ForEach(0..<row.columnCount, id: \.self) { column in
                 VStack(spacing: 16) {
-                    ForEach(row.sections(inColumn: column)) { section in
+                    ForEach(row.displayedSections(inColumn: column)) { section in
                         SectionCard(section: section)
                             .id(section.persistentModelID)
                     }
@@ -323,9 +323,6 @@ private struct ColumnAddZone: View {
                         editor.addSection(.table, to: row, column: column)
                     }
                     Divider()
-                    Button("Besace", systemImage: "backpack") {
-                        editor.addSection(.inventory, to: row, column: column)
-                    }
                     Button("Vue de la Besace (objets équipés)", systemImage: "checklist") {
                         editor.addSection(.inventoryView, to: row, column: column)
                     }
@@ -347,7 +344,7 @@ extension Page {
     /// Sections dans l'ordre de lecture : rangée par rangée, colonne par colonne.
     var sectionsInReadingOrder: [SheetSection] {
         sortedRows.flatMap { row in
-            (0..<row.columnCount).flatMap { row.sections(inColumn: $0) }
+            (0..<row.columnCount).flatMap { row.displayedSections(inColumn: $0) }
         }
     }
 }

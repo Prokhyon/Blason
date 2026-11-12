@@ -22,6 +22,16 @@
     "%" : {
 
     },
+    "%@  %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@  %2$@"
+          }
+        }
+      }
+    },
     "%@ : %lld" : {
       "localizations" : {
         "fr" : {
@@ -140,16 +150,16 @@
     "à préciser" : {
 
     },
-    "À reporter à la main sur la fiche et dans la Besace." : {
-
-    },
     "Abréviation" : {
 
     },
     "Affichage" : {
 
     },
-    "Aides de jeu, cartes, lettres du MJ : PDF et images, depuis Fichiers, Photos ou par glisser-déposer." : {
+    "Affichés" : {
+
+    },
+    "Aides de jeu, cartes, lettres du MJ, croquis : ceux joints aux sessions, et ceux ajoutés ici (Fichiers, Photos, glisser-déposer)." : {
 
     },
     "Ajouté le" : {
@@ -230,9 +240,6 @@
     "Aperçu" : {
 
     },
-    "Apparaissent" : {
-
-    },
     "Apparence, effets, histoire…" : {
 
     },
@@ -278,6 +285,9 @@
     "Aucune" : {
 
     },
+    "Aucune session" : {
+
+    },
     "Augmenter %@" : {
 
     },
@@ -288,6 +298,9 @@
 
     },
     "Avec plusieurs colonnes d'affichage, les groupes se répartissent côte à côte quand la largeur le permet." : {
+
+    },
+    "Barré" : {
 
     },
     "Base d'essai recréée" : {
@@ -324,6 +337,12 @@
 
     },
     "Carnet" : {
+
+    },
+    "Carnet et documents" : {
+
+    },
+    "Carnet vide" : {
 
     },
     "Case à cocher" : {
@@ -365,19 +384,28 @@
     "Choisir une image" : {
 
     },
-    "Choisir…" : {
-
-    },
     "Choisissez les types montrés dans l'inspecteur." : {
 
     },
     "Choix dans une liste" : {
 
     },
+    "Citer" : {
+
+    },
+    "Citer une fiche" : {
+
+    },
+    "Classer dans les documents" : {
+
+    },
     "coché" : {
 
     },
     "Cochée par défaut" : {
+
+    },
+    "Cocher" : {
 
     },
     "Code" : {
@@ -443,6 +471,9 @@
     "Copier, dupliquer ou supprimer agit sur toute la sélection." : {
 
     },
+    "Corps" : {
+
+    },
     "Correspondances" : {
 
     },
@@ -458,6 +489,15 @@
     "Créer" : {
 
     },
+    "Créer la Besace" : {
+
+    },
+    "Croquis" : {
+
+    },
+    "Croquis…" : {
+
+    },
     "Dans" : {
 
     },
@@ -471,6 +511,9 @@
 
     },
     "Date en jeu" : {
+
+    },
+    "Décocher" : {
 
     },
     "degats" : {
@@ -506,6 +549,12 @@
     "Déséquiper" : {
 
     },
+    "Dessiner" : {
+
+    },
+    "Détails" : {
+
+    },
     "Diminuer %@" : {
 
     },
@@ -516,6 +565,9 @@
 
     },
     "Document" : {
+
+    },
+    "Document depuis Fichiers…" : {
 
     },
     "Document illisible" : {
@@ -531,6 +583,12 @@
 
     },
     "Dupliquer la ligne" : {
+
+    },
+    "Écriture au crayon en texte" : {
+
+    },
+    "Écriture manuscrite" : {
 
     },
     "Édition" : {
@@ -557,6 +615,9 @@
     "En une ou deux phrases" : {
 
     },
+    "En-tête" : {
+
+    },
     "Enregistrer comme template" : {
 
     },
@@ -578,9 +639,6 @@
     "ex. +1d4" : {
 
     },
-    "ex. 3 Thermidor 1792" : {
-
-    },
     "ex. 25 po" : {
 
     },
@@ -590,7 +648,7 @@
     "ex. Mouvement −2" : {
 
     },
-    "Expérience, objets, argent…" : {
+    "Expérience, objets, argent… (à reporter sur la fiche)" : {
 
     },
     "Exporter" : {
@@ -605,10 +663,10 @@
     "Factions" : {
 
     },
-    "Fermer la fiche de l'objet" : {
+    "Fermer" : {
 
     },
-    "Fermer le journal" : {
+    "Fermer la fiche de l'objet" : {
 
     },
     "Fiche" : {
@@ -641,7 +699,7 @@
     "Graphite" : {
 
     },
-    "Gras, italique, taille du texte : sélectionnez du texte pour le mettre en forme." : {
+    "Gras" : {
 
     },
     "Grille" : {
@@ -695,7 +753,19 @@
     "Indigo" : {
 
     },
+    "Insérer" : {
+
+    },
     "Inspecteur" : {
+
+    },
+    "Inventaire" : {
+
+    },
+    "Italique" : {
+
+    },
+    "Joindre" : {
 
     },
     "Jouer" : {
@@ -765,7 +835,7 @@
     "Les compteurs de cette monnaie restent dans la Besace, comme des objets ordinaires." : {
 
     },
-    "Les fiches et les documents de la session restent dans le journal." : {
+    "Les fiches du carnet et les documents classés restent dans le journal." : {
 
     },
     "Les objets de ce type restent dans la Besace, sans type." : {
@@ -807,6 +877,12 @@
     "Liste %lld" : {
 
     },
+    "Liste à puces" : {
+
+    },
+    "Liste de tâches" : {
+
+    },
     "Listes côte à côte" : {
 
     },
@@ -822,10 +898,16 @@
     "Masquer l'inspecteur" : {
 
     },
+    "Masqués" : {
+
+    },
     "Maximum" : {
 
     },
     "Minimum" : {
+
+    },
+    "Mise en forme" : {
 
     },
     "Mode" : {
@@ -846,6 +928,9 @@
     "Modifier la table…" : {
 
     },
+    "Modifier le croquis" : {
+
+    },
     "Moins" : {
 
     },
@@ -853,6 +938,9 @@
 
     },
     "Monnaies" : {
+
+    },
+    "Monospace" : {
 
     },
     "Monter" : {
@@ -870,7 +958,7 @@
     "Nom" : {
 
     },
-    "Nom d'une nouvelle fiche" : {
+    "Nom d'une fiche" : {
 
     },
     "Nom de l'objet" : {
@@ -906,6 +994,9 @@
     "Notes de partie" : {
 
     },
+    "Nouveau croquis" : {
+
+    },
     "Nouveau personnage" : {
 
     },
@@ -924,7 +1015,7 @@
     "Nouvelle monnaie" : {
 
     },
-    "Numéro" : {
+    "Numéro %lld" : {
 
     },
     "Objet" : {
@@ -936,7 +1027,13 @@
     "Objets équipés de type" : {
 
     },
+    "Objets, argent, emplacements et contenants ; poids et encombrement en option." : {
+
+    },
     "OK" : {
+
+    },
+    "Onglet" : {
 
     },
     "Options" : {
@@ -975,7 +1072,7 @@
     "Paliers d'encombrement" : {
 
     },
-    "Panneau" : {
+    "Pas de Besace" : {
 
     },
     "Passez en mode Structure pour construire la fiche." : {
@@ -985,6 +1082,12 @@
 
     },
     "Personnages" : {
+
+    },
+    "Photo" : {
+
+    },
+    "Photo…" : {
 
     },
     "Pièce d'or" : {
@@ -999,13 +1102,16 @@
     "Placement" : {
 
     },
+    "Plan de l'auberge, carte du port…" : {
+
+    },
     "Plus" : {
 
     },
     "PNJ" : {
 
     },
-    "PNJ, lieux, indices, factions : des fiches courtes, reliées aux sessions où ils apparaissent." : {
+    "PNJ, lieux, indices, factions : les fiches citées dans les sessions, et celles ajoutées ici." : {
 
     },
     "po" : {
@@ -1078,6 +1184,9 @@
     "Rattachement" : {
 
     },
+    "Rechercher dans le carnet" : {
+
+    },
     "Rechercher dans le journal" : {
 
     },
@@ -1087,7 +1196,7 @@
     "Rechercher un template" : {
 
     },
-    "Récit" : {
+    "Récit de la session" : {
 
     },
     "Réglages de la Besace" : {
@@ -1135,9 +1244,6 @@
     "Retirer de la sélection" : {
 
     },
-    "Retirer de la session" : {
-
-    },
     "Retirer un %@" : {
 
     },
@@ -1154,6 +1260,9 @@
 
     },
     "Rubrique" : {
+
+    },
+    "Saisie" : {
 
     },
     "Sans libellé" : {
@@ -1204,6 +1313,12 @@
     "Sommaire" : {
 
     },
+    "Souligné" : {
+
+    },
+    "Sous-en-tête" : {
+
+    },
     "Spécialisation" : {
 
     },
@@ -1211,6 +1326,9 @@
 
     },
     "Structure" : {
+
+    },
+    "Style" : {
 
     },
     "Supprimer" : {
@@ -1273,6 +1391,9 @@
     "Tableau : `Marchander;5`, `# Communication` pour un groupe, `Langue (…)` pour une spécialisation à préciser" : {
 
     },
+    "Tapez un nom pour créer une fiche (PNJ, lieu, indice…)." : {
+
+    },
     "Template" : {
 
     },
@@ -1303,6 +1424,9 @@
     "Titre de la session" : {
 
     },
+    "Titre du croquis" : {
+
+    },
     "Titre du document" : {
 
     },
@@ -1327,6 +1451,9 @@
     "Un contenant reçoit d'autres objets (« Ranger dans… »), mais pas d'autre contenant." : {
 
     },
+    "Un document joint dans le récit d'une session y est rattaché." : {
+
+    },
     "Un objet s'équipe depuis la Besace. Déséquipé, il quitte la vue et garde ses valeurs." : {
 
     },
@@ -1346,9 +1473,6 @@
     "Un template décrit la fiche d'un système de jeu. Il sert ensuite à créer des personnages." : {
 
     },
-    "Une entrée par partie : date, récit, gains, et les PNJ ou lieux rencontrés." : {
-
-    },
     "Une erreur est survenue" : {
 
     },
@@ -1365,6 +1489,12 @@
 
     },
     "Une page à la fois" : {
+
+    },
+    "Une page par partie : le récit, les PNJ et lieux rencontrés, croquis et documents." : {
+
+    },
+    "Une page par partie : récit, rencontres, croquis." : {
 
     },
     "Une spécialisation se précise sur la fiche : « Langue (Latin) », « Monter (Navire) »." : {

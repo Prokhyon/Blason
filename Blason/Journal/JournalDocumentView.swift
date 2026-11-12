@@ -4,13 +4,15 @@ import SwiftData
 import UniformTypeIdentifiers
 import SheetKit
 
-/// Document du journal : aperçu, titre, rattachement à une session ou à une fiche, consultation.
+/// Document du journal : aperçu, titre, session où il est joint, fiche liée, consultation.
+/// Un croquis se modifie ici aussi.
 struct JournalDocumentView: View {
     @Bindable var document: JournalDocument
     let journal: Journal
     let onDelete: () -> Void
 
     @State private var viewing: JournalDocument?
+    @State private var drawing: DrawingRequest?
     @State private var confirmingDelete = false
     @Environment(\.modelContext) private var context
 
@@ -27,18 +29,30 @@ struct JournalDocumentView: View {
                 Button("Ouvrir", systemImage: "arrow.up.left.and.arrow.down.right") {
                     viewing = document
                 }
+                if document.isDrawing {
+                    Button("Modifier le croquis", systemImage: "pencil.tip.crop.circle") {
+                        drawing = DrawingRequest(kind: document.kind, title: document.title,
+                                                 isListed: document.isListed, document: document)
+                    }
+                }
             }
             Section {
                 TextField("Titre", text: $document.title, prompt: Text("Titre du document"))
                     .font(.title3.weight(.semibold))
+                LabeledContent("Genre", value: document.kindTitle)
                 LabeledContent("Ajouté le", value: document.createdAt.formatted(date: .abbreviated, time: .omitted))
+                if document.kind == .sketch {
+                    Toggle("Classer dans les documents", isOn: $document.isListed)
+                }
             }
             Section {
-                Picker("Session", selection: $document.session) {
-                    Text("Aucune").tag(JournalSession?.none)
-                    ForEach(journal.sortedSessions) { session in
-                        Text("\(session.numberTitle) · \(session.title)").tag(Optional(session))
+                if let session = document.session {
+                    JournalLink(route: .session(session)) {
+                        LabeledContent("Session", value: session.displayTitle)
                     }
+                } else {
+                    LabeledContent("Session", value: String(localized: "Aucune"))
+                        .foregroundStyle(.secondary)
                 }
                 Picker("Fiche", selection: $document.entry) {
                     Text("Aucune").tag(CodexEntry?.none)
@@ -48,6 +62,8 @@ struct JournalDocumentView: View {
                 }
             } header: {
                 Text("Rattachement")
+            } footer: {
+                Text("Un document joint dans le récit d'une session y est rattaché.")
             }
             Section {
                 Button("Supprimer le document", systemImage: "trash", role: .destructive) {
@@ -57,6 +73,11 @@ struct JournalDocumentView: View {
         }
         .formStyle(.grouped)
         .documentViewer(item: $viewing)
+        .drawingEditor(item: $drawing) { _, result in
+            document.data = result.data
+            document.previewData = result.preview
+            if document.kind == .sketch, !result.title.isEmpty { document.title = result.title }
+        }
         #if DEBUG
         .task {
             if UserDefaults.standard.bool(forKey: "demoViewer") { viewing = document }
@@ -93,7 +114,7 @@ struct DocumentRow: View {
     }
 
     private var detail: String {
-        var parts = [document.isPDF ? String(localized: "PDF") : String(localized: "Image")]
+        var parts = [document.kindTitle]
         if showsAttachment {
             if let session = document.session { parts.append(session.numberTitle) }
             if let entry = document.entry { parts.append(entry.displayName) }
@@ -116,7 +137,7 @@ struct DocumentThumbnail: View {
                     .resizable()
                     .scaledToFill()
             } else {
-                Image(systemName: document.isPDF ? "doc.richtext" : "photo")
+                Image(systemName: document.kindSymbol)
                     .font(.system(size: side * 0.42))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -127,9 +148,8 @@ struct DocumentThumbnail: View {
         .clipShape(RoundedRectangle(cornerRadius: 6))
         .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(.quaternary))
         .accessibilityHidden(true)
-        .task(id: document.persistentModelID) {
-            guard let data = document.data else { return }
-            image = PDFContent.thumbnail(data: data, isPDF: document.isPDF, side: side * 3)
+        .task(id: [document.persistentModelID.hashValue, document.previewData?.count ?? 0]) {
+            image = document.previewImage(side: side * 3)
         }
     }
 }
@@ -149,13 +169,14 @@ struct DocumentPreview: View {
                         .resizable()
                         .scaledToFit()
                 } else {
-                    Image(systemName: document.isPDF ? "doc.richtext" : "photo")
+                    Image(systemName: document.kindSymbol)
                         .font(.largeTitle)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, minHeight: 140)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: 260)
+            .background(document.isDrawing ? Color(cgColor: JournalTypography.paperColor) : .clear)
             .clipShape(RoundedRectangle(cornerRadius: 8))
             if document.isPDF, pages > 0 {
                 Text("^[\(pages) page](inflect: true)")
@@ -163,19 +184,17 @@ struct DocumentPreview: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .task(id: document.persistentModelID) {
-            guard let data = document.data else { return }
-            image = PDFContent.thumbnail(data: data, isPDF: document.isPDF, side: 900)
-            pages = PDFContent.pageCount(data: data, isPDF: document.isPDF)
+        .task(id: [document.persistentModelID.hashValue, document.previewData?.count ?? 0]) {
+            image = document.previewImage(side: 900)
+            if document.isPDF, let data = document.data { pages = PDFContent.pageCount(data: data, isPDF: true) }
         }
     }
 }
 
-/// Ajouter un document au journal (rattaché à la session ou à la fiche, s'il y en a une) :
-/// depuis Fichiers ou Photos.
+/// Ajouter un document au journal (lié à la fiche, s'il y en a une) : depuis Fichiers ou Photos.
+/// Dans une session, les documents se joignent depuis le récit.
 struct DocumentAddMenu: View {
     let journal: Journal
-    var session: JournalSession?
     var entry: CodexEntry?
 
     @State private var importingFiles = false
@@ -222,11 +241,10 @@ struct DocumentAddMenu: View {
 
     private func add(_ documents: [ImportedDocument]) {
         let added = documents.map {
-            journal.addDocument(title: $0.title, contentType: $0.type, data: $0.data, session: session, entry: entry,
-                                in: context)
+            journal.addDocument(title: $0.title, contentType: $0.type, data: $0.data, entry: entry, in: context)
         }
         // Un seul document, depuis la liste des documents : on l'ouvre pour lui donner un titre.
-        if added.count == 1, session == nil, entry == nil, let document = added.first {
+        if added.count == 1, entry == nil, let document = added.first {
             navigator?.open(.document(document))
         }
     }
@@ -243,7 +261,7 @@ struct DocumentViewer: View {
     var body: some View {
         NavigationStack {
             Group {
-                if let data = document.data, let content = PDFContent.document(data: data, isPDF: document.isPDF) {
+                if let data = document.viewerData, let content = PDFContent.document(data: data, isPDF: document.isPDF) {
                     PDFDocumentView(document: content)
                         .ignoresSafeArea(edges: .bottom)
                 } else {

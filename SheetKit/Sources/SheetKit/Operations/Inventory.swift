@@ -65,6 +65,20 @@ extension Sheet {
     public var inventories: [Inventory] {
         sortedPages.flatMap(\.sortedRows).flatMap(\.sortedSections).compactMap(\.inventory)
     }
+
+    /// Besace de la fiche (onglet Inventaire) : la première.
+    public var inventory: Inventory? { inventories.first }
+
+    /// Besace de la fiche, créée si besoin. Sa section se range à la fin de la première page :
+    /// elle n'y est pas dessinée (onglet Inventaire), mais garde son code pour les formules.
+    @discardableResult
+    public func ensureInventory(in context: ModelContext) -> Inventory {
+        if let inventory { return inventory }
+        let page = sortedPages.first ?? addPage(title: "Fiche", in: context)
+        let row = page.sortedRows.last ?? page.addRow(in: context)
+        let section = row.addInventorySection(in: context)
+        return section.inventory ?? Inventory()
+    }
 }
 
 extension SheetSection {

@@ -2,9 +2,9 @@ import Foundation
 import SwiftData
 import UniformTypeIdentifiers
 
-// Journal du personnage (SPEC §5.14) : sessions, fiches (PNJ, lieux, indices…), documents, recherche.
-// Le texte riche des sessions est encodé par l'app (attributs SwiftUI) : SheetKit le garde tel quel,
-// avec sa version en texte brut pour la recherche.
+// Journal du personnage (SPEC §5.14) : sessions, carnet (PNJ, lieux, indices…), documents, recherche.
+// Le récit d'une session (`JournalText`) cite des fiches et contient des pièces jointes : les apparitions
+// de la session et le rattachement des documents s'en déduisent à chaque enregistrement.
 
 // MARK: - Création
 
@@ -59,13 +59,47 @@ extension Journal {
     public func addDocument(title: String, contentType: UTType, data: Data,
                             session: JournalSession? = nil, entry: CodexEntry? = nil,
                             in context: ModelContext) -> JournalDocument {
-        let document = JournalDocument(title: title, contentType: contentType.identifier)
+        addDocument(title: title, contentTypeIdentifier: contentType.identifier, data: data,
+                    session: session, entry: entry, in: context)
+    }
+
+    /// Ajoute un croquis ou une zone manuscrite (données PaperKit, rendu PNG).
+    @discardableResult
+    public func addDrawing(_ kind: JournalDocument.Kind, title: String, data: Data?, preview: Data?,
+                           isListed: Bool, session: JournalSession? = nil, in context: ModelContext) -> JournalDocument {
+        let document = addDocument(title: title, contentTypeIdentifier: kind.contentType, data: data,
+                                   session: session, entry: nil, in: context)
+        document.previewData = preview
+        document.isListed = kind == .handwriting ? false : isListed
+        return document
+    }
+
+    private func addDocument(title: String, contentTypeIdentifier: String, data: Data?,
+                             session: JournalSession?, entry: CodexEntry?, in context: ModelContext) -> JournalDocument {
+        let document = JournalDocument(title: title, contentType: contentTypeIdentifier)
         context.insert(document)
         document.data = data
         document.journal = self
         document.session = session
         document.entry = entry
         return document
+    }
+
+    public func entry(uid: UUID) -> CodexEntry? {
+        (entries ?? []).first { $0.uid == uid }
+    }
+
+    public func document(uid: UUID) -> JournalDocument? {
+        (documents ?? []).first { $0.uid == uid }
+    }
+
+    /// Supprime les pièces jointes qui ne figurent plus dans aucun récit et pas dans la liste des
+    /// documents (zone manuscrite effacée, croquis non classé). À appeler en quittant l'éditeur :
+    /// tant qu'il est ouvert, « annuler » peut les remettre dans le texte.
+    public func removeUnusedAttachments(in context: ModelContext) {
+        for document in documents ?? [] where !document.isListed && document.session == nil && document.entry == nil {
+            context.delete(document)
+        }
     }
 }
 
@@ -87,9 +121,14 @@ extension Journal {
         CodexKind.allCases.flatMap(entries(of:))
     }
 
-    /// Documents, du plus récent au plus ancien.
+    /// Documents, du plus récent au plus ancien (pièces jointes non classées comprises).
     public var sortedDocuments: [JournalDocument] {
         (documents ?? []).sorted(by: JournalDocument.newestFirst)
+    }
+
+    /// Liste des documents : sans les croquis non classés ni les zones manuscrites.
+    public var listedDocuments: [JournalDocument] {
+        sortedDocuments.filter(\.isListed)
     }
 
     public var isEmpty: Bool {
@@ -110,7 +149,7 @@ extension JournalSession {
     }
 
     public var sortedDocuments: [JournalDocument] {
-        (documents ?? []).sorted(by: JournalDocument.newestFirst)
+        (documents ?? []).filter(\.isListed).sorted(by: JournalDocument.newestFirst)
     }
 
     /// La fiche apparaît dans la session.
@@ -128,10 +167,35 @@ extension JournalSession {
         }
     }
 
-    /// Enregistre le récit : texte riche encodé par l'app et sa version brute.
-    public func setText(richText: Data?, plainText: String) {
-        self.richText = richText
-        self.plainText = plainText
+    /// Récit de la session (un ancien récit en texte brut devient des paragraphes simples).
+    public var text: JournalText {
+        JournalText.decode(richText) ?? JournalText(plainText: plainText)
+    }
+
+    /// Enregistre le récit et en déduit les apparitions (fiches citées) et les documents rattachés
+    /// (pièces jointes). Une pièce jointe retirée du texte quitte la session : un document classé
+    /// reste dans la liste des documents ; les autres sont supprimés en quittant l'éditeur
+    /// (`Journal.removeUnusedAttachments`).
+    public func apply(_ text: JournalText) {
+        let text = text.normalized()
+        let data = text.encoded()
+        if data != richText { richText = data }
+        let plain = text.plainText
+        if plain != plainText { plainText = plain }
+        guard let journal else { return }
+
+        let cited = text.referencedEntries.compactMap(journal.entry(uid:))
+        if Set(cited.map(\.persistentModelID)) != Set((entries ?? []).map(\.persistentModelID)) {
+            entries = cited
+        }
+        let attached = Set(text.attachments)
+        for document in journal.documents ?? [] {
+            if attached.contains(document.uid) {
+                if document.session !== self { document.session = self }
+            } else if document.session === self {
+                document.session = nil
+            }
+        }
     }
 }
 
@@ -162,14 +226,48 @@ extension CodexEntry {
 }
 
 extension JournalDocument {
+    /// Nature d'un document du journal.
+    public enum Kind: String, Sendable {
+        case pdf
+        case image
+        /// Croquis (PaperKit).
+        case sketch
+        /// Zone manuscrite (PaperKit) : l'écriture reste de l'encre.
+        case handwriting
+
+        /// Types de contenu propres à l'app.
+        public static let sketchType = "ch.loristhomas.blason.sketch"
+        public static let handwritingType = "ch.loristhomas.blason.handwriting"
+
+        public var contentType: String {
+            switch self {
+            case .pdf: UTType.pdf.identifier
+            case .image: UTType.jpeg.identifier
+            case .sketch: Self.sketchType
+            case .handwriting: Self.handwritingType
+            }
+        }
+    }
+
     static func newestFirst(_ a: JournalDocument, _ b: JournalDocument) -> Bool {
         a.createdAt > b.createdAt
     }
 
     public var type: UTType? { UTType(contentType) }
 
-    /// PDF (sinon : image).
-    public var isPDF: Bool { type?.conforms(to: .pdf) == true }
+    public var kind: Kind {
+        switch contentType {
+        case Kind.sketchType: .sketch
+        case Kind.handwritingType: .handwriting
+        default: type?.conforms(to: .pdf) == true ? .pdf : .image
+        }
+    }
+
+    /// PDF (sinon : image, croquis ou zone manuscrite).
+    public var isPDF: Bool { kind == .pdf }
+
+    /// Croquis ou zone manuscrite.
+    public var isDrawing: Bool { kind == .sketch || kind == .handwriting }
 }
 
 // MARK: - Recherche
@@ -200,7 +298,7 @@ extension Journal {
                 matches([$0.title, $0.summary, $0.plainText, $0.gains, $0.gameDate, "\($0.number)"])
             },
             entries: sortedEntries.filter { matches([$0.name, $0.status, $0.summary]) },
-            documents: sortedDocuments.filter { matches([$0.title]) }
+            documents: listedDocuments.filter { matches([$0.title]) }
         )
     }
 }

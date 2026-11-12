@@ -557,7 +557,7 @@ extension SheetSchemaV2 {
         public var title: String = ""
         /// Résumé court, affiché dans la liste.
         public var summary: String = ""
-        /// Récit mis en forme : texte riche encodé par l'app (JSON d'un `AttributedString`).
+        /// Récit mis en forme : `JournalText` encodé en JSON (paragraphes, styles, références, pièces jointes).
         public var richText: Data?
         /// Le même récit en texte brut : recherche, export lisible, secours si `richText` ne se lit pas.
         public var plainText: String = ""
@@ -565,7 +565,7 @@ extension SheetSchemaV2 {
         public var gains: String = ""
         public var createdAt: Date = Date()
 
-        /// Fiches (PNJ, lieux…) qui apparaissent dans la session.
+        /// Fiches (PNJ, lieux…) qui apparaissent dans la session : celles que le récit cite.
         @Relationship(deleteRule: .nullify, inverse: \CodexEntry.sessions)
         public var entries: [CodexEntry]? = []
         /// Documents rattachés ; la session supprimée, ils restent dans le journal.
@@ -583,6 +583,8 @@ extension SheetSchemaV2 {
     /// Fiche courte du journal : PNJ, lieu, indice, faction…
     @Model
     public final class CodexEntry {
+        /// Identifiant cité par le récit des sessions.
+        public var uid: UUID = UUID()
         public var name: String = ""
         public var kindRaw: String = CodexKind.npc.rawValue
         public var summary: String = ""
@@ -609,11 +611,19 @@ extension SheetSchemaV2 {
     /// Document du journal : PDF ou image (aide de jeu, carte, lettre du MJ).
     @Model
     public final class JournalDocument {
+        /// Identifiant cité par le récit des sessions (pièce jointe).
+        public var uid: UUID = UUID()
         public var title: String = ""
-        /// Type de contenu (identifiant UTType : `com.adobe.pdf`, `public.jpeg`…).
+        /// Type de contenu (identifiant UTType : `com.adobe.pdf`, `public.jpeg`, ou croquis et
+        /// zone manuscrite de l'app, voir `JournalDocument.Kind`).
         public var contentType: String = ""
         @Attribute(.externalStorage)
         public var data: Data?
+        /// Rendu d'un croquis ou d'une zone manuscrite (PNG), pour l'afficher sans le recalculer.
+        @Attribute(.externalStorage)
+        public var previewData: Data?
+        /// Figure dans la liste des documents (un croquis peut ne pas y figurer ; une zone manuscrite n'y figure pas).
+        public var isListed: Bool = true
         public var createdAt: Date = Date()
 
         /// Rattachement optionnel à une session ou à une fiche.

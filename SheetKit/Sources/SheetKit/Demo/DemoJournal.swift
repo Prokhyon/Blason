@@ -27,47 +27,56 @@ extension DemoData {
         let guilde = journal.addEntry(named: "Guilde des haleurs", kind: .faction, in: context)
         guilde.summary = "Tient les quais. Neutre pour l'instant."
 
+        typealias Run = JournalText.Run
+        typealias Paragraph = JournalText.Paragraph
+        func ref(_ entry: CodexEntry, _ text: String? = nil) -> Run { Run(text: text ?? entry.name, reference: entry.uid) }
+
         let first = journal.addSession(date: now.addingTimeInterval(-15 * day), in: context)
         first.title = "Arrivée à Port-Lune"
         first.gameDate = "3 Thermidor 1792"
         first.summary = "Leo débarque, rencontre Aldo et accepte de retrouver la Mouette grise."
-        first.plainText = """
-        Arrivée au port à la tombée du jour. Aldo Brisetout nous attend sur le quai, nerveux.
-        La Mouette grise n'est pas rentrée depuis neuf jours ; sa capitaine non plus.
-        Nous acceptons de mener l'enquête contre 50 po et un passage gratuit vers le sud.
-        """
         first.gains = "50 po d'avance. Lettre de recommandation d'Aldo."
-        first.setAppears(marchand, true)
-        first.setAppears(capitaine, true)
-        first.setAppears(guilde, true)
+        first.apply(JournalText(paragraphs: [
+            Paragraph(runs: [Run(text: "Arrivée au port à la tombée du jour. "), ref(marchand),
+                             Run(text: " nous attend sur le quai, nerveux.")]),
+            Paragraph(runs: [Run(text: "La Mouette grise n'est pas rentrée depuis neuf jours ; "), ref(capitaine, "sa capitaine"),
+                             Run(text: " non plus. Les hommes de la "), ref(guilde), Run(text: " ne disent rien.")]),
+            Paragraph(style: .heading, runs: [Run(text: "Le marché")]),
+            Paragraph(list: .bullet, runs: [Run(text: "50 po d'avance, 100 au retour")]),
+            Paragraph(list: .bullet, runs: [Run(text: "Passage gratuit vers le sud")]),
+        ]))
 
         let second = journal.addSession(date: now.addingTimeInterval(-8 * day), in: context)
         second.title = "La lettre scellée"
         second.gameDate = "5 Thermidor 1792"
         second.summary = "Fouille de la cabine du capitaine : une lettre au sceau étrange."
-        second.plainText = """
-        La cabine a été fouillée avant nous. Dans le double fond du coffre : une lettre au sceau \
-        à l'étoile brisée, qui donne rendez-vous « là où la lumière ne guide plus personne ».
-        Le phare de Kerlaz ?
-        """
         second.gains = "Expérience : Fouiller, Discrétion."
-        second.setAppears(capitaine, true)
-        second.setAppears(sceau, true)
-        second.setAppears(phare, true)
+        var secondText = JournalText(paragraphs: [
+            Paragraph(runs: [Run(text: "La cabine de "), ref(capitaine), Run(text: " a été fouillée avant nous.")]),
+            Paragraph(runs: [Run(text: "Dans le double fond du coffre : une lettre au "), ref(sceau, "sceau à l'étoile brisée"),
+                             Run(text: ", qui donne rendez-vous "), Run(text: "« là où la lumière ne guide plus personne »", italic: true),
+                             Run(text: ".")]),
+            Paragraph(runs: [ref(phare), Run(text: " ?", bold: true)]),
+            Paragraph(list: .checklist, checked: true, runs: [Run(text: "Fouiller la cabine")]),
+            Paragraph(list: .checklist, checked: false, runs: [Run(text: "Interroger le gardien du port")]),
+        ])
+        if let map = demoMapPDF() {
+            let document = journal.addDocument(title: "Carte de la baie", contentType: .pdf, data: map, entry: phare,
+                                               in: context)
+            secondText.paragraphs.append(Paragraph(runs: [.attachment(document.uid)]))
+        }
+        second.apply(secondText)
 
         let third = journal.addSession(date: now.addingTimeInterval(-1 * day), in: context)
         third.title = "Nuit au phare"
         third.gameDate = "6 Thermidor 1792"
         third.summary = "Le phare est occupé. Combat dans l'escalier, fuite par la grève."
-        third.plainText = "Des silhouettes en robe grise. Le même sceau sur la porte. Leo est blessé (PV −4)."
         third.gains = "Expérience : Épée courte, Esquive. Une clé de bronze."
-        third.setAppears(phare, true)
-        third.setAppears(sceau, true)
-
-        if let map = demoMapPDF() {
-            journal.addDocument(title: "Carte de la baie", contentType: .pdf, data: map, session: second, entry: phare,
-                                in: context)
-        }
+        third.apply(JournalText(paragraphs: [
+            Paragraph(runs: [Run(text: "Des silhouettes en robe grise dans "), ref(phare, "le phare"),
+                             Run(text: ". Le même "), ref(sceau, "sceau"), Run(text: " sur la porte.")]),
+            Paragraph(runs: [Run(text: "Leo est blessé (PV −4).", bold: true)]),
+        ]))
         return journal
     }
 

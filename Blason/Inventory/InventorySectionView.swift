@@ -14,7 +14,106 @@ extension EnvironmentValues {
     @Entry var inventoryItemOpener: InventoryItemOpener?
 }
 
-/// Section « Besace ».
+/// Onglet Inventaire : la Besace en blocs (SPEC §5.13). En tête, la fortune, la charge et les
+/// réglages ; puis un bloc par emplacement, sur deux colonnes quand la place le permet.
+struct InventoryBoard: View {
+    let section: SheetSection
+
+    @Environment(\.sheetMode) private var mode
+    @Environment(\.sheetTheme) private var theme
+    @Environment(\.modelContext) private var context
+    @State private var showsSettings = false
+    @State private var width: CGFloat = 0
+
+    var body: some View {
+        if let inventory = section.inventory {
+            VStack(alignment: .leading, spacing: 16) {
+                theme.sectionFrame(SectionFrameConfiguration(title: title, content: AnyView(header(inventory))))
+                    .structureItem(.section(section))
+                let slots = inventory.sortedSlots
+                if width >= 640, slots.count > 1 {
+                    let columns = Self.balanced(slots)
+                    HStack(alignment: .top, spacing: 16) {
+                        column(columns.0, inventory: inventory)
+                        column(columns.1, inventory: inventory)
+                    }
+                } else {
+                    column(slots, inventory: inventory)
+                }
+            }
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
+            // En Structure, toucher la Besace sélectionne la section.
+            .allowsHitTesting(mode != .structure)
+            .sheet(isPresented: $showsSettings) {
+                InventorySettingsView(inventory: inventory)
+            }
+        }
+    }
+
+    private var title: AnyView? {
+        let text = section.title.isEmpty ? String(localized: "Besace") : section.title
+        return AnyView(Text(text)
+            .font(theme.sectionTitleFont)
+            .textCase(theme.sectionTitleCase)
+            .tracking(theme.sectionTitleTracking)
+            .sheetHeading(theme)
+            .accessibilityAddTraits(.isHeader))
+    }
+
+    private func header(_ inventory: Inventory) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            InventorySummary(inventory: inventory)
+            if inventory.sortedSlots.isEmpty {
+                Text("Aucun emplacement").font(.callout).foregroundStyle(.secondary)
+            }
+            if mode == .fill {
+                HStack(spacing: 16) {
+                    Button {
+                        inventory.addSlot(name: String(localized: "Nouvel emplacement"), in: context)
+                    } label: {
+                        Label("Emplacement", systemImage: "plus")
+                    }
+                    Button {
+                        showsSettings = true
+                    } label: {
+                        Label("Réglages de la Besace", systemImage: "slider.horizontal.3")
+                    }
+                    Spacer(minLength: 0)
+                }
+                .font(.callout)
+                .buttonStyle(.borderless)
+            }
+        }
+    }
+
+    private func column(_ slots: [InventorySlot], inventory: Inventory) -> some View {
+        VStack(spacing: 16) {
+            ForEach(slots) { slot in
+                theme.sectionFrame(SectionFrameConfiguration(
+                    title: nil, content: AnyView(SlotView(slot: slot, inventory: inventory))))
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .top)
+    }
+
+    /// Deux colonnes de hauteur voisine, dans l'ordre des emplacements : chacun va dans la colonne
+    /// la moins remplie (estimée au nombre de lignes).
+    static func balanced(_ slots: [InventorySlot]) -> ([InventorySlot], [InventorySlot]) {
+        var left: [InventorySlot] = [], right: [InventorySlot] = []
+        var leftHeight = 0, rightHeight = 0
+        for slot in slots {
+            let height = 2 + slot.looseItems.reduce(0) { $0 + 1 + ($1.isContainer ? $1.sortedContents.count : 0) }
+            if leftHeight <= rightHeight {
+                left.append(slot); leftHeight += height
+            } else {
+                right.append(slot); rightHeight += height
+            }
+        }
+        return (left, right)
+    }
+}
+
+/// Section « Besace » (d'un bloc, si elle est dessinée ailleurs que dans l'onglet Inventaire).
 struct InventorySectionView: View {
     let section: SheetSection
 

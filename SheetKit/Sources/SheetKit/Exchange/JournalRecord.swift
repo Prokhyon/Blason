@@ -19,7 +19,7 @@ extension SheetDocument {
         public var gameDate: String
         public var title: String
         public var summary: String
-        /// Récit mis en forme (JSON d'un `AttributedString`, en base64).
+        /// Récit mis en forme (JSON d'un `JournalText`, en base64) : il cite fiches et documents par leur `uid`.
         public var richText: Data?
         public var plainText: String
         public var gains: String
@@ -29,6 +29,7 @@ extension SheetDocument {
     }
 
     public struct EntryRecord: Codable, Equatable, Sendable {
+        public var uid: UUID
         public var name: String
         public var kind: String
         public var summary: String
@@ -39,10 +40,14 @@ extension SheetDocument {
     }
 
     public struct DocumentRecord: Codable, Equatable, Sendable {
+        public var uid: UUID
         public var title: String
         public var contentType: String
-        /// Contenu (PDF, image) encodé en base64.
+        /// Contenu (PDF, image, croquis) encodé en base64.
         public var data: Data?
+        /// Rendu d'un croquis ou d'une zone manuscrite (PNG, base64).
+        public var previewData: Data?
+        public var isListed: Bool
         public var createdAt: Date
         /// Position de la session ou de la fiche de rattachement.
         public var session: Int?
@@ -68,11 +73,12 @@ extension SheetDocument.JournalRecord {
                 )
             },
             entries: entries.map {
-                SheetDocument.EntryRecord(name: $0.name, kind: $0.kindRaw, summary: $0.summary, status: $0.status,
+                SheetDocument.EntryRecord(uid: $0.uid, name: $0.name, kind: $0.kindRaw, summary: $0.summary, status: $0.status,
                                           imageData: $0.imageData, createdAt: $0.createdAt)
             },
             documents: documents.map {
-                SheetDocument.DocumentRecord(title: $0.title, contentType: $0.contentType, data: $0.data,
+                SheetDocument.DocumentRecord(uid: $0.uid, title: $0.title, contentType: $0.contentType, data: $0.data,
+                                             previewData: $0.previewData, isListed: $0.isListed,
                                              createdAt: $0.createdAt, session: position($0.session, in: sessions),
                                              entry: position($0.entry, in: entries))
             }
@@ -85,6 +91,7 @@ extension SheetDocument.JournalRecord {
         let entryModels = entries.map { record in
             let entry = CodexEntry(name: record.name)
             context.insert(entry)
+            entry.uid = record.uid
             entry.journal = journal
             entry.kindRaw = record.kind
             entry.summary = record.summary
@@ -113,8 +120,11 @@ extension SheetDocument.JournalRecord {
         for record in documents {
             let document = JournalDocument(title: record.title, contentType: record.contentType)
             context.insert(document)
+            document.uid = record.uid
             document.journal = journal
             document.data = record.data
+            document.previewData = record.previewData
+            document.isListed = record.isListed
             document.createdAt = record.createdAt
             document.session = record.session.flatMap { sessionModels.indices.contains($0) ? sessionModels[$0] : nil }
             document.entry = entry(at: record.entry)

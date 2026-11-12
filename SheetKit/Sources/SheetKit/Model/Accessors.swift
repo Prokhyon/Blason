@@ -26,6 +26,11 @@ extension SheetRow {
             .sorted { $0.order < $1.order }
     }
 
+    /// Sections dessinées sur la fiche : la Besace a son propre onglet (SPEC §5.13).
+    public func displayedSections(inColumn column: Int) -> [SheetSection] {
+        sections(inColumn: column).filter { $0.kind.isShownOnSheet }
+    }
+
     /// Toutes les sections, colonne par colonne.
     public var sortedSections: [SheetSection] {
         (0..<columnCount).flatMap { sections(inColumn: $0) }

@@ -39,7 +39,7 @@ struct JournalTests {
         #expect(journal.sortedSessions.map(\.number) == [8, 7])
     }
 
-    @Test("Apparitions : une fiche liste ses sessions, une session ses fiches")
+    @Test("Apparitions : les fiches citées par le récit ; une fiche liste ses sessions")
     func appearances() throws {
         let context = try makeContext()
         let journal = leo(context).ensureJournal(in: context)
@@ -47,17 +47,81 @@ struct JournalTests {
         let two = journal.addSession(date: Date(timeIntervalSince1970: 2000), in: context)
         let aldo = journal.addEntry(named: "Aldo", kind: .npc, in: context)
         let phare = journal.addEntry(named: "Phare", kind: .place, in: context)
-        one.setAppears(phare, true)
-        one.setAppears(aldo, true)
-        one.setAppears(aldo, true)
-        two.setAppears(aldo, true)
+        typealias Run = JournalText.Run
+        one.apply(JournalText(paragraphs: [.init(runs: [
+            Run(text: "Phare", reference: phare.uid), Run(text: " puis "), Run(text: "Aldo", reference: aldo.uid),
+            Run(text: " et encore "), Run(text: "lui", reference: aldo.uid),
+        ])]))
+        two.apply(JournalText(paragraphs: [.init(runs: [Run(text: "Aldo", reference: aldo.uid)])]))
         try context.save()
         #expect(one.sortedEntries.map(\.name) == ["Aldo", "Phare"])
         #expect(aldo.sortedSessions.map(\.number) == [2, 1])
-        one.setAppears(aldo, false)
+        #expect(one.plainText == "Phare puis Aldo et encore lui")
+        // Citation effacée : l'apparition disparaît, la fiche reste dans le carnet.
+        one.apply(JournalText(plainText: "Phare puis personne"))
         #expect(aldo.sortedSessions.map(\.number) == [2])
+        #expect(one.sortedEntries.isEmpty)
         #expect(journal.sortedEntries.map(\.name) == ["Aldo", "Phare"])
         #expect(journal.entries(of: .place).map(\.name) == ["Phare"])
+    }
+
+    @Test("Pièces jointes : rattachées à la session du texte ; retirées, un document classé reste, le reste part")
+    func attachments() throws {
+        let context = try makeContext()
+        let journal = leo(context).ensureJournal(in: context)
+        let session = journal.addSession(in: context)
+        let map = journal.addDocument(title: "Carte", contentType: .pdf, data: Data([1]), in: context)
+        let sketch = journal.addDrawing(.sketch, title: "Le phare", data: Data([2]), preview: Data([3]), isListed: false, in: context)
+        let notes = journal.addDrawing(.handwriting, title: "", data: Data([4]), preview: nil, isListed: true, in: context)
+        #expect(!notes.isListed && notes.kind == .handwriting && sketch.kind == .sketch && map.kind == .pdf)
+        session.apply(JournalText(paragraphs: [
+            .init(runs: [.attachment(map.uid)]), .init(runs: [.attachment(sketch.uid), .attachment(notes.uid)]),
+        ]))
+        #expect(map.session === session && sketch.session === session && notes.session === session)
+        #expect(session.sortedDocuments.map(\.title) == ["Carte"])
+        #expect(journal.listedDocuments.map(\.title) == ["Carte"])
+        #expect(session.plainText == "\n")
+
+        session.apply(JournalText(plainText: "Plus rien"))
+        #expect(map.session == nil && sketch.session == nil)
+        journal.removeUnusedAttachments(in: context)
+        try context.save()
+        #expect(journal.sortedDocuments.map(\.title) == ["Carte"])
+    }
+
+    @Test("Récit : texte brut, citations et pièces jointes sans doublon, fusion des suites, JSON compact")
+    func journalText() throws {
+        typealias Run = JournalText.Run
+        let (a, b, doc) = (UUID(), UUID(), UUID())
+        let text = JournalText(paragraphs: [
+            .init(style: .title, runs: [Run(text: "Nuit "), Run(text: "au phare"), Run(text: "", bold: true)]),
+            .init(list: .checklist, checked: true, runs: [Run(text: "Aldo", reference: a), Run(text: " et "),
+                                                          Run(text: "Mereth", reference: b), Run(text: "Aldo", reference: a)]),
+            .init(runs: [.attachment(doc), .attachment(doc)]),
+        ])
+        #expect(text.plainText == "Nuit au phare\nAldo et MerethAldo\n")
+        #expect(text.referencedEntries == [a, b])
+        #expect(text.attachments == [doc])
+        let normalized = text.normalized()
+        #expect(normalized.paragraphs[0].runs == [Run(text: "Nuit au phare")])
+        #expect(normalized.paragraphs[1].runs.count == 4)
+        #expect(normalized.paragraphs[2].runs.count == 2)  // deux pièces jointes ne fusionnent pas
+        let data = try #require(normalized.encoded())
+        #expect(JournalText.decode(data) == normalized)
+        let json = String(decoding: data, as: UTF8.self)
+        #expect(!json.contains("\"bold\"") && !json.contains("\"body\""))
+        #expect(JournalText.decode(Data("{\"texte\":1}".utf8)) == nil)
+        #expect(JournalText(plainText: "a\n\nb").paragraphs.map(\.plainText) == ["a", "", "b"])
+        #expect(JournalText(plainText: "").isEmpty)
+    }
+
+    @Test("Ancien récit en texte brut : relu comme des paragraphes")
+    func legacyText() throws {
+        let context = try makeContext()
+        let session = leo(context).ensureJournal(in: context).addSession(in: context)
+        session.plainText = "Ligne 1\nLigne 2"
+        session.richText = Data("pas du JSON de récit".utf8)
+        #expect(session.text.paragraphs.map(\.plainText) == ["Ligne 1", "Ligne 2"])
     }
 
     @Test("Supprimer une session garde ses fiches et ses documents ; supprimer le personnage efface le journal")
@@ -119,7 +183,6 @@ struct JournalTests {
         let leo = leo(context)
         let journal = try #require(DemoData.addDemoJournal(to: leo, in: context))
         let first = try #require(journal.sortedSessions.last)
-        first.richText = Data("{\"texte\":1}".utf8)
         journal.sortedEntries.first?.imageData = Data([1, 2, 3])
         let data = try SheetDocument(character: leo, exportedAt: Date(timeIntervalSince1970: 0)).jsonData()
 
@@ -136,6 +199,11 @@ struct JournalTests {
         let document = try #require(copy.sortedDocuments.first)
         #expect(document.isPDF && document.data == journal.sortedDocuments.first?.data)
         #expect(document.session?.title == "La lettre scellée" && document.entry?.name == "Le phare de Kerlaz")
+        // Les citations du récit retrouvent leurs fiches, les pièces jointes leurs documents.
+        let second = try #require(copy.sortedSessions.first { $0.number == 2 })
+        #expect(second.text.referencedEntries.compactMap(copy.entry(uid:)).map(\.name)
+                == ["Capitaine Mereth", "Sceau à l'étoile brisée", "Le phare de Kerlaz"])
+        #expect(second.text.attachments.compactMap(copy.document(uid:)).map(\.title) == ["Carte de la baie"])
         #expect(try SheetDocument(character: imported, exportedAt: Date(timeIntervalSince1970: 0)).jsonData() == data)
     }
 

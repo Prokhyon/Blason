@@ -3,13 +3,12 @@ import SwiftData
 
 extension DemoData {
     /// Besace d'exemple ajoutée à une fiche BRP (captures, essais : `-demoBesace YES`) :
-    /// page « Équipement » : armes avec propriétés, sac à dos, argent, monture, poids et paliers ; vue « Armes équipées »
+    /// armes avec propriétés, sac à dos, argent, monture, poids et paliers (onglet Inventaire) ; vue « Armes équipées »
     /// sur la page Combat. Ne fait rien si la fiche a déjà une Besace.
     @discardableResult
     public static func addDemoInventory(to sheet: Sheet, in context: ModelContext) -> Inventory? {
         guard sheet.inventories.isEmpty else { return nil }
-        let row = sheet.addPage(title: "Équipement", in: context).addRow(in: context)
-        guard let inventory = row.addInventorySection(title: "Besace", in: context).inventory else { return nil }
+        let inventory = sheet.ensureInventory(in: context)
         inventory.tracksWeight = true
         inventory.weightUnit = "kg"
         inventory.weightLimitFormula = "=FOR*2"

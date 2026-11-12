@@ -2,38 +2,17 @@ import SwiftUI
 import SwiftData
 import SheetKit
 
-/// Écran du journal dans le panneau latéral (feuille sur iPhone) : sessions, carnet (PNJ, lieux,
-/// indices…), documents, recherche. Toujours modifiable, quel que soit le mode de la fiche : on écrit
-/// le journal pendant la partie. La navigation est propre au panneau (pas de `NavigationStack`, dont
-/// la barre se mélangerait à celle de la fenêtre sur Mac).
-struct JournalPanel: View {
+/// Carnet (PNJ, lieux, indices…) et documents du journal, à côté de la session (feuille sur iPhone).
+/// Tout ce qui est cité ou joint dans les sessions s'y retrouve ; on peut aussi y ajouter une fiche ou
+/// un document à la main. La navigation est propre au panneau (pas de `NavigationStack`, dont la barre
+/// se mélangerait à celle de la fenêtre sur Mac).
+struct JournalLibrary: View {
     let journal: Journal
+    @Binding var path: [JournalRoute]
+    @Binding var tab: JournalTab
     let onClose: () -> Void
 
-    @State private var path: [JournalRoute] = []
-    @State private var tab: JournalTab = .sessions
     @State private var query = ""
-    @Environment(\.modelContext) private var context
-
-    init(journal: Journal, onClose: @escaping () -> Void) {
-        self.journal = journal
-        self.onClose = onClose
-        #if DEBUG
-        // Captures : -demoJournalTab documents, -demoSession 2, -demoDocument YES (premier document ;
-        // -demoViewer YES l'ouvre en plus dans la visionneuse).
-        let defaults = UserDefaults.standard
-        if let raw = defaults.string(forKey: "demoJournalTab"), let value = JournalTab(rawValue: raw) {
-            _tab = State(initialValue: value)
-        }
-        let number = defaults.integer(forKey: "demoSession")
-        if number > 0, let session = journal.sortedSessions.first(where: { $0.number == number }) {
-            _path = State(initialValue: [.session(session)])
-        }
-        if defaults.bool(forKey: "demoDocument"), let document = journal.sortedDocuments.first {
-            _path = State(initialValue: [.document(document)])
-        }
-        #endif
-    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -54,7 +33,10 @@ struct JournalPanel: View {
         }
         .background(Color.groupedBackground)
         .animation(.snappy(duration: 0.25), value: path)
-        .environment(\.journalNavigator, JournalNavigator { route in path.append(route) })
+        .onChange(of: path) { _, _ in
+            // Un élément supprimé peut encore figurer dans le chemin.
+            if path.contains(where: \.isDeleted) { path.removeAll { $0.isDeleted } }
+        }
     }
 
     // MARK: En-tête
@@ -80,7 +62,7 @@ struct JournalPanel: View {
             Button {
                 onClose()
             } label: {
-                Label("Fermer le journal", systemImage: "xmark")
+                Label("Fermer", systemImage: "xmark")
                     .labelStyle(.iconOnly)
             }
             .buttonStyle(.borderless)
@@ -92,10 +74,9 @@ struct JournalPanel: View {
 
     private var headerTitle: String {
         switch path.last {
-        case nil: String(localized: "Journal")
-        case .session(let session): session.numberTitle
+        case nil, .session: String(localized: "Carnet et documents")
         case .entry(let entry): String(localized: entry.kind.singularText)
-        case .document: String(localized: "Document")
+        case .document(let document): document.isDrawing ? String(localized: "Croquis") : String(localized: "Document")
         }
     }
 
@@ -104,8 +85,8 @@ struct JournalPanel: View {
     @ViewBuilder
     private func destination(_ route: JournalRoute) -> some View {
         switch route {
-        case .session(let session):
-            JournalSessionView(session: session, journal: journal, onDelete: pop)
+        case .session:
+            EmptyView()
         case .entry(let entry):
             CodexEntryView(entry: entry, journal: journal, onDelete: pop)
         case .document(let document):
@@ -115,14 +96,19 @@ struct JournalPanel: View {
 
     private func pop() {
         if !path.isEmpty { path.removeLast() }
-        // Un élément supprimé peut encore figurer plus haut dans le chemin.
-        path.removeAll { $0.isDeleted }
+    }
+
+    /// Recherche dans le carnet et les documents (les sessions sont dans la liste de gauche).
+    private var searchResults: JournalSearchResults {
+        var results = journal.search(query)
+        results.sessions = []
+        return results
     }
 
     private var home: some View {
         VStack(spacing: 0) {
             VStack(spacing: 10) {
-                JournalSearchField(text: $query)
+                JournalSearchField(text: $query, prompt: "Rechercher dans le carnet")
                 if query.isEmpty {
                     Picker("Rubrique", selection: $tab) {
                         ForEach(JournalTab.allCases) { tab in
@@ -138,12 +124,11 @@ struct JournalPanel: View {
             .padding(.bottom, 4)
             if query.isEmpty {
                 switch tab {
-                case .sessions: SessionList(journal: journal)
                 case .codex: CodexList(journal: journal)
                 case .documents: DocumentList(journal: journal)
                 }
             } else {
-                JournalSearchResultsView(results: journal.search(query), query: query)
+                JournalSearchResultsView(results: searchResults, query: query)
             }
         }
     }
@@ -174,8 +159,8 @@ extension EnvironmentValues {
     @Entry var journalNavigator: JournalNavigator?
 }
 
+/// Rubrique du panneau : carnet ou documents.
 enum JournalTab: String, CaseIterable, Identifiable {
-    case sessions
     case codex
     case documents
 
@@ -183,7 +168,6 @@ enum JournalTab: String, CaseIterable, Identifiable {
 
     var title: LocalizedStringKey {
         switch self {
-        case .sessions: "Sessions"
         case .codex: "Carnet"
         case .documents: "Documents"
         }
@@ -231,12 +215,14 @@ struct JournalLink<Label: View>: View {
 
 struct JournalSearchField: View {
     @Binding var text: String
+    var prompt: LocalizedStringKey = "Rechercher dans le journal"
+    var focus: FocusState<Bool>.Binding?
 
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
-            TextField("Rechercher dans le journal", text: $text)
+            field
                 .textFieldStyle(.plain)
                 .autocorrectionDisabled()
             if !text.isEmpty {
@@ -253,6 +239,15 @@ struct JournalSearchField: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 7)
         .background(Color.tertiaryFill, in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    @ViewBuilder
+    private var field: some View {
+        if let focus {
+            TextField(prompt, text: $text).focused(focus)
+        } else {
+            TextField(prompt, text: $text)
+        }
     }
 }
 
@@ -291,77 +286,6 @@ struct JournalSearchResultsView: View {
     }
 }
 
-// MARK: - Sessions
-
-struct SessionList: View {
-    let journal: Journal
-
-    @Environment(\.modelContext) private var context
-    @Environment(\.journalNavigator) private var navigator
-
-    var body: some View {
-        let sessions = journal.sortedSessions
-        let today = journal.session(on: Date())
-        List {
-            Section {
-                Button {
-                    let (session, _) = journal.todaysSession(in: context)
-                    navigator?.open(.session(session))
-                } label: {
-                    Label(today == nil ? "Session du jour" : "Ouvrir la session du jour",
-                          systemImage: today == nil ? "plus.circle.fill" : "book.pages")
-                        .font(.body.weight(.semibold))
-                }
-            } footer: {
-                if sessions.isEmpty {
-                    Text("Une entrée par partie : date, récit, gains, et les PNJ ou lieux rencontrés.")
-                }
-            }
-            if !sessions.isEmpty {
-                Section {
-                    ForEach(sessions) { session in
-                        JournalLink(route: .session(session)) { SessionRow(session: session) }
-                    }
-                }
-            }
-        }
-    }
-}
-
-struct SessionRow: View {
-    let session: JournalSession
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(session.numberTitle)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                Spacer(minLength: 8)
-                Text(session.date, format: .dateTime.day().month(.abbreviated).year())
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Text(session.title.isEmpty ? String(localized: "Sans titre") : session.title)
-                .font(.body.weight(.semibold))
-                .foregroundStyle(session.title.isEmpty ? .secondary : .primary)
-            if !session.gameDate.isEmpty {
-                Text(session.gameDate)
-                    .font(.caption)
-                    .italic()
-                    .foregroundStyle(.secondary)
-            }
-            if !session.summary.isEmpty {
-                Text(session.summary)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-            }
-        }
-        .padding(.vertical, 2)
-    }
-}
-
 // MARK: - Carnet
 
 struct CodexList: View {
@@ -387,7 +311,7 @@ struct CodexList: View {
                 }
             } footer: {
                 if (journal.entries ?? []).isEmpty {
-                    Text("PNJ, lieux, indices, factions : des fiches courtes, reliées aux sessions où ils apparaissent.")
+                    Text("PNJ, lieux, indices, factions : les fiches citées dans les sessions, et celles ajoutées ici.")
                 }
             }
             ForEach(CodexKind.allCases, id: \.self) { kind in
@@ -462,13 +386,13 @@ struct DocumentList: View {
     @Environment(\.modelContext) private var context
 
     var body: some View {
-        let documents = journal.sortedDocuments
+        let documents = journal.listedDocuments
         List {
             Section {
                 DocumentAddMenu(journal: journal)
             } footer: {
                 if documents.isEmpty {
-                    Text("Aides de jeu, cartes, lettres du MJ : PDF et images, depuis Fichiers, Photos ou par glisser-déposer.")
+                    Text("Aides de jeu, cartes, lettres du MJ, croquis : ceux joints aux sessions, et ceux ajoutés ici (Fichiers, Photos, glisser-déposer).")
                 }
             }
             if !documents.isEmpty {

@@ -116,9 +116,10 @@ struct ExchangeTests {
             "JournalSession": properties(SheetDocument.SessionRecord(
                 number: 0, date: .now, gameDate: "", title: "", summary: "", richText: nil, plainText: "", gains: "",
                 createdAt: .now, entries: [])),
-            "CodexEntry": properties(SheetDocument.EntryRecord(name: "", kind: "", summary: "", status: "", imageData: nil,
+            "CodexEntry": properties(SheetDocument.EntryRecord(uid: UUID(), name: "", kind: "", summary: "", status: "", imageData: nil,
                                                                createdAt: .now)),
-            "JournalDocument": properties(SheetDocument.DocumentRecord(title: "", contentType: "", data: nil,
+            "JournalDocument": properties(SheetDocument.DocumentRecord(uid: UUID(), title: "", contentType: "", data: nil,
+                                                                       previewData: nil, isListed: true,
                                                                        createdAt: .now, session: nil, entry: nil)),
         ]
         var checked = 0

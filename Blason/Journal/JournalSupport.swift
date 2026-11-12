@@ -2,8 +2,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 import SheetKit
 
-// Journal du personnage (SPEC §5.14) : libellés, texte riche, import des documents.
-// Interface provisoire, en attendant la refonte de l'interface (après la V2).
+// Journal du personnage (SPEC §5.14) : libellés, aperçus, import des documents.
 
 extension CodexKind {
     var title: LocalizedStringKey {
@@ -51,21 +50,37 @@ extension JournalDocument {
     var displayTitle: String { title.isEmpty ? String(localized: "Document sans titre") : title }
 }
 
-// MARK: - Texte riche
+// MARK: - Aperçus
 
-/// Récit d'une session : `AttributedString` (attributs SwiftUI : polices, gras, italique…) encodé en JSON.
-enum RichText {
-    static func decode(_ data: Data?, fallback: String) -> AttributedString {
-        if let data, let text = try? JSONDecoder().decode(
-            AttributedString.self, from: data, configuration: AttributeScopes.SwiftUIAttributes.self) {
-            return text
+extension JournalDocument {
+    /// Image d'aperçu : première page d'un PDF, l'image, ou le rendu d'un dessin.
+    func previewImage(side: CGFloat) -> PlatformImage? {
+        switch kind {
+        case .pdf: data.flatMap { PDFContent.thumbnail(data: $0, isPDF: true, side: side) }
+        case .image: data.flatMap(PlatformImage.init(data:))
+        case .sketch, .handwriting: previewData.flatMap(PlatformImage.init(data:))
         }
-        return AttributedString(fallback)
     }
 
-    static func encode(_ text: AttributedString) -> Data? {
-        guard !text.characters.isEmpty else { return nil }
-        return try? JSONEncoder().encode(text, configuration: AttributeScopes.SwiftUIAttributes.self)
+    /// Contenu à consulter : le PDF, l'image, ou le rendu d'un dessin.
+    var viewerData: Data? { isDrawing ? previewData : data }
+
+    var kindTitle: String {
+        switch kind {
+        case .pdf: String(localized: "PDF")
+        case .image: String(localized: "Image")
+        case .sketch: String(localized: "Croquis")
+        case .handwriting: String(localized: "Écriture manuscrite")
+        }
+    }
+
+    var kindSymbol: String {
+        switch kind {
+        case .pdf: "doc.richtext"
+        case .image: "photo"
+        case .sketch: "scribble"
+        case .handwriting: "pencil.and.scribble"
+        }
     }
 }
 

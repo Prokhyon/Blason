@@ -30,6 +30,25 @@ struct InventoryTests {
         #expect(!inventory.tracksWeight)
     }
 
+    @Test("Besace de la fiche : créée à la demande, une seule, absente des pages dessinées")
+    func sheetInventory() throws {
+        let context = try makeContext()
+        let template = SheetTemplate.create(name: "Pirates", firstPage: "Fiche", in: context)
+        let sheet = try #require(template.sheet)
+        #expect(sheet.inventory == nil)
+        let inventory = sheet.ensureInventory(in: context)
+        #expect(sheet.ensureInventory(in: context) === inventory)
+        #expect(sheet.inventories.count == 1)
+        let row = try #require(inventory.section?.row)
+        #expect(row.page === sheet.sortedPages.first)
+        #expect(row.sections(inColumn: 0).map(\.kind) == [.inventory])
+        #expect(row.displayedSections(inColumn: 0).isEmpty)
+        // Une fiche sans page en reçoit une.
+        let blank = PlayerCharacter.createBlank(named: "Mira", in: context)
+        blank.sheet?.pages = []
+        #expect(blank.sheet?.ensureInventory(in: context).section?.row?.page?.title == "Fiche")
+    }
+
     @Test("Poids : quantité × poids, contenants, emplacements hors encombrement, capacité ; l'argent ne pèse rien")
     func weights() throws {
         let context = try makeContext()

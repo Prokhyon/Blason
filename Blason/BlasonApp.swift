@@ -38,6 +38,9 @@ struct BlasonApp: App {
         if UserDefaults.standard.bool(forKey: "seedDemo") {
             try? DemoData.seedIfEmpty(in: container.mainContext)
         }
+        #if canImport(UIKit)
+        if UserDefaults.standard.bool(forKey: "journalSelfTest") { JournalEditorSelfTest.run() }
+        #endif
         #endif
         // Annuler / Rétablir (⌘Z / ⇧⌘Z) sur toutes les modifications, après le remplissage de démo.
         container.mainContext.undoManager = UndoManager()
