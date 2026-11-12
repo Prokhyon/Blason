@@ -12,6 +12,9 @@ import Foundation
 //   d'abord une colonne de la même ligne (`=valeur/2`), puis `groupe` (valeur du groupe, 0 si non
 //   saisie), puis un
 //   code de champ de la fiche (`=DEX*2`).
+// - Besace : `BESACE.poids`, `BESACE.limite`, `BESACE.malus`, `BESACE.argent` (BESACE : code de
+//   la Besace). Propriété d'objet : comme une cellule ; une référence désigne d'abord une autre
+//   propriété du même objet, puis `quantite`, puis la fiche.
 // - Une valeur non saisie rend le calcul vide (pas d'erreur) ; codes inconnus, cycles et
 //   divisions par zéro sont des erreurs affichées dans le champ.
 // - Une formule peut donner du texte (table de correspondance : « +1d4 ») ; `content` le garde
@@ -33,8 +36,21 @@ public final class FormulaEngine {
         return index
     }()
 
+    private lazy var inventoriesByCode: [String: Inventory] = {
+        var index: [String: Inventory] = [:]
+        for inventory in sheet?.inventories ?? [] where !inventory.code.isEmpty {
+            let key = Self.normalize(inventory.code)
+            if index[key] == nil { index[key] = inventory }
+        }
+        return index
+    }()
+
     private struct Key: Hashable {
-        enum Slot { case value, maximum, formula }
+        enum Slot: Hashable {
+            case value, maximum, formula
+            /// Propriété d'un objet (valeur effective, ou résultat de sa formule).
+            case property(ObjectIdentifier), propertyFormula(ObjectIdentifier)
+        }
         let object: ObjectIdentifier
         let slot: Slot
     }
@@ -136,9 +152,12 @@ public final class FormulaEngine {
         }
     }
 
-    /// Référence par code de champ (`FOR`, `PV.max`).
+    /// Référence par code de champ (`FOR`, `PV.max`) ou de Besace (`BESACE.poids`).
     private func resolve(_ name: String, member: String?) -> FormulaValueResult {
         let fullName = member.map { "\(name).\($0)" } ?? name
+        if let member, let inventory = inventoriesByCode[Self.normalize(name)] {
+            return resolve(inventory, member: member, fullName: fullName)
+        }
         guard let field = fieldsByCode[Self.normalize(name)] else { return .failure(.unknownReference(fullName)) }
         switch member.map(Self.normalize) {
         case nil:
@@ -201,6 +220,101 @@ public final class FormulaEngine {
             if key == "GROUPE" {
                 // Bonus de groupe non saisi : 0.
                 return .success(.number(row.group.flatMap { $0.hasValue ? $0.numberValue : nil } ?? 0))
+            }
+        }
+        return resolve(name, member: member)
+    }
+
+    // MARK: Besace
+
+    private func resolve(_ inventory: Inventory, member: String, fullName: String) -> FormulaValueResult {
+        switch Self.normalize(member) {
+        case "POIDS": .success(.number(inventory.carriedWeight))
+        case "LIMITE": limit(of: inventory).asValue
+        case "MALUS": .success(.number(malus(of: inventory)))
+        case "ARGENT": .success(.number(inventory.totalMoney))
+        default: .failure(.unknownReference(fullName))
+        }
+    }
+
+    /// Charge maximale (`BESACE.limite`) : résultat de la formule de limite.
+    public func limit(of inventory: Inventory) -> FormulaResult {
+        evaluate(inventory.weightLimitFormula, key: Key(object: ObjectIdentifier(inventory), slot: .formula)) {
+            self.resolve($0, member: $1)
+        }?.numeric ?? .success(nil)
+    }
+
+    /// Seuil d'un palier (formule).
+    public func threshold(of level: EncumbranceLevel) -> FormulaResult {
+        evaluate(level.thresholdFormula, key: Key(object: ObjectIdentifier(level), slot: .formula)) {
+            self.resolve($0, member: $1)
+        }?.numeric ?? .success(nil)
+    }
+
+    /// Palier atteint : le plus haut dont le seuil est dépassé par le poids porté (nil : aucun,
+    /// ou poids non suivi).
+    public func level(of inventory: Inventory) -> EncumbranceLevel? {
+        guard inventory.tracksWeight else { return nil }
+        let weight = inventory.carriedWeight
+        var reached: (level: EncumbranceLevel, threshold: Double)?
+        for level in inventory.sortedLevels {
+            guard case .success(let threshold?) = threshold(of: level), weight > threshold else { continue }
+            if reached == nil || threshold >= reached!.threshold { reached = (level, threshold) }
+        }
+        return reached?.level
+    }
+
+    /// Malus du palier atteint (`BESACE.malus`) : 0 sans palier, ou si la Besace n'applique pas de malus.
+    public func malus(of inventory: Inventory) -> Double {
+        guard inventory.appliesMalus else { return 0 }
+        return level(of: inventory)?.malus ?? 0
+    }
+
+    // MARK: Propriétés des objets
+
+    /// Valeur numérique effective d'une propriété d'objet.
+    public func value(of item: InventoryItem, _ property: ItemProperty) -> FormulaResult {
+        content(of: item, property).numeric
+    }
+
+    /// Valeur effective d'une propriété d'objet : saisie pour l'objet, sinon défaut de la propriété,
+    /// sinon calculée.
+    public func content(of item: InventoryItem, _ property: ItemProperty) -> FormulaValueResult {
+        memo(Key(object: ObjectIdentifier(item), slot: .property(ObjectIdentifier(property)))) {
+            let value = item.value(for: property)
+            switch property.kind {
+            case .formula:
+                return computedContent(of: item, property) ?? .success(nil)
+            case .number, .percentage:
+                if let number = value?.numberValue { return .success(.number(number)) }
+                if value?.formula == nil, let number = property.numberValue { return .success(.number(number)) }
+                return computedContent(of: item, property) ?? .success(nil)
+            case .checkbox:
+                return .success(.number((value?.boolValue ?? property.boolValue) == true ? 1 : 0))
+            case .text:
+                let text = value?.textValue ?? property.textValue
+                return .success(text.flatMap(ListImport.number(from:)).map(FormulaValue.number))
+            }
+        }
+    }
+
+    /// Résultat de la formule d'une propriété d'objet (celle de l'objet, sinon celle de la propriété).
+    public func computedContent(of item: InventoryItem, _ property: ItemProperty) -> FormulaValueResult? {
+        let formula = item.value(for: property)?.formula ?? property.formula
+        return evaluate(formula, key: Key(object: ObjectIdentifier(item), slot: .propertyFormula(ObjectIdentifier(property)))) {
+            self.resolve($0, member: $1, in: item)
+        }
+    }
+
+    /// Référence depuis un objet : propriété du même objet, `quantite`, puis la fiche.
+    private func resolve(_ name: String, member: String?, in item: InventoryItem) -> FormulaValueResult {
+        if member == nil {
+            let key = Self.normalize(name)
+            if let sibling = item.type?.sortedProperties.first(where: { !$0.code.isEmpty && Self.normalize($0.code) == key }) {
+                return content(of: item, sibling)
+            }
+            if key == "QUANTITE" {
+                return .success(.number(item.quantity))
             }
         }
         return resolve(name, member: member)

@@ -1,7 +1,8 @@
 import Foundation
 import SwiftData
 
-// Modèle de données v1.
+// Modèle de données v1 — figé (test « Schéma V1 figé ») : bases réelles et iCloud.
+// Les types utilisés par l'app sont ceux de `SheetSchemaV2` (voir SchemaV2.swift).
 //
 // Règles (voir SPEC.md §7) :
 // - Un personnage possède sa propre copie de la structure (`Sheet`) : les valeurs vivent
@@ -22,18 +23,6 @@ public enum SheetSchemaV1: VersionedSchema {
         ]
     }
 }
-
-public typealias SheetTemplate = SheetSchemaV1.SheetTemplate
-public typealias PlayerCharacter = SheetSchemaV1.PlayerCharacter
-public typealias Sheet = SheetSchemaV1.Sheet
-public typealias Page = SheetSchemaV1.Page
-public typealias SheetRow = SheetSchemaV1.SheetRow
-public typealias SheetSection = SheetSchemaV1.SheetSection
-public typealias SheetField = SheetSchemaV1.SheetField
-public typealias SheetTableColumn = SheetSchemaV1.SheetTableColumn
-public typealias SheetTableGroup = SheetSchemaV1.SheetTableGroup
-public typealias SheetTableRow = SheetSchemaV1.SheetTableRow
-public typealias SheetTableCell = SheetSchemaV1.SheetTableCell
 
 extension SheetSchemaV1 {
 

@@ -16,6 +16,10 @@ final class SyncMonitor {
 
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
 
+    /// iCloud en pause pendant la mise au point du modèle V2 : la base est locale
+    /// (`SheetStore.openLocalStore`). À réactiver avec la base V2 finale.
+    static let isEnabled = false
+
     init() {
         #if DEBUG
         // Captures : -demoSyncProblem noAccount | quota | failed.
@@ -25,9 +29,9 @@ final class SyncMonitor {
         case "failed": syncProblem = .failed("Le serveur iCloud a refusé la demande."); return
         default: break
         }
-        // -noCloud YES : pas d'iCloud, pas de suivi (CloudKit arrêterait l'app sans ses droits).
-        if UserDefaults.standard.bool(forKey: "noCloud") { return }
         #endif
+        // Synchronisation en pause (SPEC §5.16) : rien à suivre.
+        guard Self.isEnabled else { return }
         let center = NotificationCenter.default
         observers.append(center.addObserver(forName: .CKAccountChanged, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.refreshAccount() }
@@ -139,5 +143,31 @@ struct SyncNotice: View {
     VStack {
         SyncNotice(problem: .noAccount)
         SyncNotice(problem: .quotaExceeded)
+    }
+}
+
+// MARK: - Base d'essai V2
+
+extension View {
+    /// Prévient une fois si la base d'essai V2 a dû être recréée depuis la base V1.
+    func storeOpeningNotice(_ opening: StoreOpening) -> some View {
+        modifier(StoreOpeningNotice(opening: opening))
+    }
+}
+
+private struct StoreOpeningNotice: ViewModifier {
+    let opening: StoreOpening
+    @State private var isPresented = false
+
+    func body(content: Content) -> some View {
+        content
+            .onAppear { if case .recreated = opening { isPresented = true } }
+            .alert("Base d'essai recréée", isPresented: $isPresented) {
+                Button("OK") {}
+            } message: {
+                if case .recreated(let setAside) = opening {
+                    Text("Le modèle de l'app a changé et l'ancienne base d'essai ne s'ouvrait plus. Elle est gardée sous le nom « \(setAside) » ; tes fiches ont été recopiées depuis la base d'avant la V2. Réimporte tes exports récents pour retrouver les dernières modifications.")
+                }
+            }
     }
 }

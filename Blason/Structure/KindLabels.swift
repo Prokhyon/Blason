@@ -43,6 +43,17 @@ extension FieldKind {
     }
 }
 
+extension SectionKind {
+    var title: String {
+        switch self {
+        case .fields: String(localized: "Champs")
+        case .table: String(localized: "Tableau")
+        case .inventory: String(localized: "Besace")
+        case .inventoryView: String(localized: "Vue de la Besace")
+        }
+    }
+}
+
 extension ColumnKind {
     var title: LocalizedStringKey {
         switch self {

@@ -5,7 +5,7 @@ import SheetKit
 enum PreviewData {
     static let container: ModelContainer = {
         do {
-            let container = try SheetStore.makeContainer(inMemory: true)
+            let container = try SheetStore.makeInMemoryContainer()
             try DemoData.seedIfEmpty(in: container.mainContext)
             return container
         } catch {

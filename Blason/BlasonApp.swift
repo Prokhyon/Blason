@@ -5,6 +5,8 @@ import SheetKit
 @main
 struct BlasonApp: App {
     let container: ModelContainer
+    /// Ouverture de la base (avis si la base d'essai V2 a dû être recréée).
+    let storeOpening: StoreOpening
     @State private var syncMonitor = SyncMonitor()
 
     init() {
@@ -13,7 +15,7 @@ struct BlasonApp: App {
         if UserDefaults.standard.bool(forKey: "resetStore") {
             SheetStore.destroyStore()
         }
-        // Avant de déployer le schéma iCloud en production : -initCloudKitSchema YES (voir SheetStore).
+        // Avant de déployer le schéma iCloud en production : -initCloudKitSchema YES (voir CloudSchema).
         if UserDefaults.standard.bool(forKey: "initCloudKitSchema") {
             do {
                 try SheetStore.initializeCloudKitSchema()
@@ -24,15 +26,9 @@ struct BlasonApp: App {
         }
         #endif
         do {
-            // Une base qui ne s'ouvre pas n'est jamais effacée : elle contient de vraies fiches.
-            // Un changement du modèle passe par une nouvelle version de schéma (voir SheetStore).
-            var syncsWithICloud = true
-            #if DEBUG
-            // -noCloud YES : sans iCloud, pour lancer une version signée localement (sans les droits
-            // iCloud, CloudKit arrête l'app). La base locale est la même.
-            if UserDefaults.standard.bool(forKey: "noCloud") { syncsWithICloud = false }
-            #endif
-            container = try SheetStore.makeContainer(syncsWithICloud: syncsWithICloud)
+            // Base locale, sans iCloud (synchronisation en pause, SPEC §5.16). Une base qui ne s'ouvre
+            // pas n'est jamais effacée : elle contient de vraies fiches.
+            (container, storeOpening) = try SheetStore.openLocalStore()
         } catch {
             fatalError("Impossible d'ouvrir la base de données : \(error)")
         }
@@ -51,6 +47,7 @@ struct BlasonApp: App {
         WindowGroup {
             LibraryView()
                 .environment(syncMonitor)
+                .storeOpeningNotice(storeOpening)
                 #if os(macOS)
                 .frame(minWidth: 760, minHeight: 520)
                 #endif

@@ -49,6 +49,11 @@ extension SheetSection {
         copy.arrangementRaw = arrangementRaw
         copy.columnCount = columnCount
         copy.labelColumnTitle = labelColumnTitle
+        copy.viewTypeCodes = viewTypeCodes
+        copy.viewPropertyCodes = viewPropertyCodes
+        if let inventory {
+            inventory.copy(into: copy, in: context)
+        }
 
         for field in sortedFields {
             field.copy(into: copy, in: context)
@@ -127,6 +132,101 @@ extension SheetField {
         boolValue = other.boolValue
         dateValue = other.dateValue
         imageData = other.imageData
+    }
+}
+
+extension Inventory {
+    /// Copie la Besace (réglages, types et propriétés, monnaies, paliers, emplacements et objets,
+    /// valeurs comprises) dans `section`.
+    @discardableResult
+    func copy(into section: SheetSection, in context: ModelContext) -> Inventory {
+        let copy = Inventory()
+        context.insert(copy)
+        copy.section = section
+        copy.code = code
+        copy.tracksWeight = tracksWeight
+        copy.weightUnit = weightUnit
+        copy.weightLimitFormula = weightLimitFormula
+        copy.appliesMalus = appliesMalus
+
+        var types: [ObjectIdentifier: ItemType] = [:]
+        var properties: [ObjectIdentifier: ItemProperty] = [:]
+        for type in sortedItemTypes {
+            let typeCopy = ItemType(name: type.name, code: type.code, icon: type.icon, order: type.order)
+            context.insert(typeCopy)
+            typeCopy.inventory = copy
+            types[ObjectIdentifier(type)] = typeCopy
+            for property in type.sortedProperties {
+                let propertyCopy = ItemProperty(label: property.label, kind: property.kind, code: property.code, order: property.order)
+                context.insert(propertyCopy)
+                propertyCopy.type = typeCopy
+                propertyCopy.formula = property.formula
+                propertyCopy.isLive = property.isLive
+                propertyCopy.textValue = property.textValue
+                propertyCopy.numberValue = property.numberValue
+                propertyCopy.boolValue = property.boolValue
+                properties[ObjectIdentifier(property)] = propertyCopy
+            }
+        }
+
+        var currencies: [ObjectIdentifier: Currency] = [:]
+        for currency in sortedCurrencies {
+            let currencyCopy = Currency(name: currency.name, abbreviation: currency.abbreviation, rate: currency.rate, order: currency.order)
+            context.insert(currencyCopy)
+            currencyCopy.inventory = copy
+            currencies[ObjectIdentifier(currency)] = currencyCopy
+        }
+
+        for level in sortedLevels {
+            let levelCopy = EncumbranceLevel(name: level.name, thresholdFormula: level.thresholdFormula, order: level.order)
+            context.insert(levelCopy)
+            levelCopy.inventory = copy
+            levelCopy.malus = level.malus
+            levelCopy.effect = level.effect
+        }
+
+        func copyItem(_ item: InventoryItem, slot: InventorySlot, container: InventoryItem?) -> InventoryItem {
+            let itemCopy = InventoryItem(name: item.name, quantity: item.quantity, order: item.order)
+            context.insert(itemCopy)
+            itemCopy.slot = slot
+            itemCopy.container = container
+            itemCopy.unitWeight = item.unitWeight
+            itemCopy.price = item.price
+            itemCopy.isEquipped = item.isEquipped
+            itemCopy.isContainer = item.isContainer
+            itemCopy.summary = item.summary
+            itemCopy.notes = item.notes
+            itemCopy.imageData = item.imageData
+            itemCopy.type = item.type.flatMap { types[ObjectIdentifier($0)] }
+            itemCopy.currency = item.currency.flatMap { currencies[ObjectIdentifier($0)] }
+            for value in item.propertyValues ?? [] {
+                guard let property = value.property.flatMap({ properties[ObjectIdentifier($0)] }) else { continue }
+                let valueCopy = ItemPropertyValue()
+                context.insert(valueCopy)
+                valueCopy.item = itemCopy
+                valueCopy.property = property
+                valueCopy.textValue = value.textValue
+                valueCopy.numberValue = value.numberValue
+                valueCopy.boolValue = value.boolValue
+                valueCopy.formula = value.formula
+            }
+            return itemCopy
+        }
+
+        for slot in sortedSlots {
+            let slotCopy = InventorySlot(name: slot.name, icon: slot.icon, order: slot.order)
+            context.insert(slotCopy)
+            slotCopy.inventory = copy
+            slotCopy.countsTowardEncumbrance = slot.countsTowardEncumbrance
+            slotCopy.capacity = slot.capacity
+            for item in slot.looseItems {
+                let itemCopy = copyItem(item, slot: slotCopy, container: nil)
+                for content in item.sortedContents {
+                    _ = copyItem(content, slot: slotCopy, container: itemCopy)
+                }
+            }
+        }
+        return copy
     }
 }
 

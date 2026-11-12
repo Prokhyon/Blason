@@ -68,3 +68,104 @@ struct StoreTests {
         #expect(fileManager.fileExists(atPath: directory.appending(path: "CharacterSheet.store").path))
     }
 }
+
+@MainActor
+@Suite("Base d'essai V2", .serialized)
+struct DraftStoreTests {
+
+    private func makeDirectory() throws -> URL {
+        let directory = FileManager.default.temporaryDirectory.appending(path: "DraftStore-\(UUID())")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory
+    }
+
+    /// Base V1 sur disque, avec un template, sa fiche et une image en stockage externe.
+    private func writeV1Store(in directory: URL) throws {
+        let schema = Schema(versionedSchema: SheetSchemaV1.self)
+        let configuration = ModelConfiguration(schema: schema, url: directory.appending(path: "Blason.store"), cloudKitDatabase: .none)
+        let container = try ModelContainer(for: schema, configurations: configuration)
+        let context = ModelContext(container)
+        let template = SheetSchemaV1.SheetTemplate(name: "BRP", system: "Basic Roleplaying")
+        context.insert(template)
+        let sheet = SheetSchemaV1.Sheet()
+        context.insert(sheet)
+        template.sheet = sheet
+        let page = SheetSchemaV1.Page(title: "Fiche")
+        context.insert(page)
+        page.sheet = sheet
+        let row = SheetSchemaV1.SheetRow()
+        context.insert(row)
+        row.page = page
+        let section = SheetSchemaV1.SheetSection(title: "Personnel")
+        context.insert(section)
+        section.row = row
+        let portrait = SheetSchemaV1.SheetField(label: "Portrait", kind: .image)
+        context.insert(portrait)
+        portrait.section = section
+        portrait.imageData = Data((0..<200_000).map { UInt8($0 % 251) })
+        try context.save()
+    }
+
+    private func modificationDate(_ url: URL) throws -> Date? {
+        try FileManager.default.attributesOfItem(atPath: url.path)[.modificationDate] as? Date
+    }
+
+    @Test("La base d'essai est une copie migrée de la base V1, qui reste intacte")
+    func draftIsCopiedFromV1() throws {
+        let directory = try makeDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        try writeV1Store(in: directory)
+        let v1 = directory.appending(path: "Blason.store")
+        let v1Date = try modificationDate(v1)
+        let v1Data = try Data(contentsOf: v1)
+
+        do {
+            let (container, opening) = try SheetStore.openDraftStore(in: directory)
+            #expect(opening == .createdFromV1)
+            let context = ModelContext(container)
+            let templates = try context.fetch(FetchDescriptor<SheetTemplate>())
+            #expect(templates.map(\.name) == ["BRP"])
+            let portrait = try #require(templates.first?.sheet?.allFields.first)
+            #expect(portrait.imageData?.count == 200_000)
+            // Le modèle V2 est utilisable : une Besace s'ajoute et s'enregistre.
+            let row = try #require(templates.first?.sheet?.sortedPages.first?.sortedRows.first)
+            row.addInventorySection(in: context)
+            try context.save()
+        }
+
+        #expect(try modificationDate(v1) == v1Date)
+        #expect(try Data(contentsOf: v1) == v1Data)
+
+        // Lancement suivant : la base d'essai s'ouvre telle quelle, Besace comprise.
+        let (container, opening) = try SheetStore.openDraftStore(in: directory)
+        #expect(opening == .opened)
+        #expect(try ModelContext(container).fetchCount(FetchDescriptor<Inventory>()) == 1)
+    }
+
+    @Test("Sans base V1, la base d'essai est neuve")
+    func draftWithoutV1() throws {
+        let directory = try makeDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let (container, opening) = try SheetStore.openDraftStore(in: directory)
+        #expect(opening == .createdFromV1)
+        #expect(try ModelContext(container).fetchCount(FetchDescriptor<SheetTemplate>()) == 0)
+        #expect(!FileManager.default.fileExists(atPath: directory.appending(path: "Blason.store").path))
+    }
+
+    @Test("Une base d'essai illisible est mise de côté, jamais effacée, puis recréée depuis V1")
+    func unreadableDraftIsSetAside() throws {
+        let directory = try makeDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        try writeV1Store(in: directory)
+        let garbage = Data("pas une base".utf8)
+        try garbage.write(to: directory.appending(path: "Blason-V2.store"))
+
+        let date = Date(timeIntervalSince1970: 1_800_000_000)
+        let (container, opening) = try SheetStore.openDraftStore(in: directory, now: date)
+        guard case .recreated(let setAside) = opening else {
+            Issue.record("attendu : recréée, obtenu \(opening)"); return
+        }
+        #expect(try Data(contentsOf: directory.appending(path: setAside)) == garbage)
+        #expect(try ModelContext(container).fetch(FetchDescriptor<SheetTemplate>()).map(\.name) == ["BRP"])
+    }
+}

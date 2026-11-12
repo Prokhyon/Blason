@@ -1,53 +1,120 @@
 import Foundation
 import SwiftData
 
-/// Plan de migration : une seule version pour l'instant. Chaque évolution du modèle
-/// ajoutera un `SheetSchemaV2` et une étape ici.
+/// Plan de migration : V1 (figé) → V2 (brouillon, ajouts seulement).
 public enum SheetMigrationPlan: SchemaMigrationPlan {
-    public static var schemas: [any VersionedSchema.Type] { [SheetSchemaV1.self] }
-    public static var stages: [MigrationStage] { [] }
+    public static var schemas: [any VersionedSchema.Type] { [SheetSchemaV1.self, SheetSchemaV2.self] }
+    public static var stages: [MigrationStage] {
+        [.lightweight(fromVersion: SheetSchemaV1.self, toVersion: SheetSchemaV2.self)]
+    }
+}
+
+/// Ouverture de la base locale.
+public enum StoreOpening: Equatable, Sendable {
+    /// Base d'essai V2 ouverte telle quelle.
+    case opened
+    /// Base d'essai créée : copie de la base V1, migrée vers V2 (ou base neuve sans base V1).
+    case createdFromV1
+    /// La base d'essai ne s'ouvrait plus (modèle trop changé) : mise de côté sous ce nom,
+    /// puis recréée depuis la base V1. Les fiches modifiées depuis sont dans les exports.
+    case recreated(setAside: String)
 }
 
 public enum SheetStore {
-    /// Le schéma V1 est **figé** depuis la synchronisation iCloud (test « Schéma V1 figé ») : de vraies
-    /// fiches existent, sur l'appareil et dans iCloud. Tout changement du modèle passe par un
-    /// `SheetSchemaV2`, une étape de `SheetMigrationPlan` et un test de migration ; côté iCloud,
-    /// il ne fait qu'ajouter (SPEC §5.7). Sans nouvelle version, SwiftData migre silencieusement
-    /// l'ancienne base (constaté en M2 : tableaux perdus, colonnes ignorées).
-    public static var schema: Schema { Schema(versionedSchema: SheetSchemaV1.self) }
+    /// Modèle utilisé par l'app : V2 (brouillon). Le schéma V1 est **figé** (test « Schéma V1 figé ») :
+    /// de vraies fiches existent, sur l'appareil et dans iCloud.
+    public static var schema: Schema { Schema(versionedSchema: SheetSchemaV2.self) }
 
     /// Conteneur iCloud de l'app (aussi déclaré dans `Blason.entitlements`).
+    /// La synchronisation est en pause (SPEC §5.16) : rien n'utilise ce conteneur pour l'instant.
     public static let cloudContainerID = "iCloud.ch.loristhomas.blason"
 
-    /// Conteneur de l'app. `syncsWithICloud` : la base se synchronise avec la base privée iCloud
-    /// de l'utilisateur (SPEC §5.10) ; sans compte iCloud, elle reste locale et se synchronisera
-    /// à la connexion. Les tests et les aperçus restent locaux.
-    /// Le fichier s'appelle `Blason.store` ; une base `CharacterSheet.store` (ancien nom du projet)
-    /// est d'abord renommée. L'ancien `default.store` (modèle v0) est ignoré.
-    public static func makeContainer(inMemory: Bool = false, syncsWithICloud: Bool = false) throws -> ModelContainer {
-        let cloud: ModelConfiguration.CloudKitDatabase = syncsWithICloud && !inMemory
-            ? .private(cloudContainerID) : .none
-        if !inMemory {
-            moveLegacyStore(in: storeURL.deletingLastPathComponent())
-        }
-        let configuration = inMemory
-            ? ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
-            : ModelConfiguration(storeName, schema: schema, cloudKitDatabase: cloud)
-        return try ModelContainer(
-            for: schema,
-            migrationPlan: SheetMigrationPlan.self,
-            configurations: configuration
-        )
+    /// Base en mémoire (tests, aperçus).
+    public static func makeInMemoryContainer() throws -> ModelContainer {
+        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
+        return try ModelContainer(for: schema, configurations: configuration)
     }
 
-    /// Nom de la base : `Blason.store`.
+    // MARK: Base locale (iCloud en pause)
+
+    /// Base V1 : `Blason.store`, celle qu'iCloud synchronisait. Pendant la mise au point du modèle V2,
+    /// l'app ne l'ouvre plus et ne la modifie jamais (SPEC §5.16).
     public static let storeName = "Blason"
+    /// Base d'essai du modèle V2 : `Blason-V2.store`, à côté de la base V1.
+    public static let draftStoreName = "Blason-V2"
     /// Nom de la base avant le renommage du projet (11 novembre 2026).
     static let legacyStoreName = "CharacterSheet"
 
-    /// Emplacement de la base (dossier Application Support de l'app).
-    static var storeURL: URL {
-        ModelConfiguration(storeName, schema: schema, cloudKitDatabase: .none).url
+    /// Dossier des bases (Application Support de l'app).
+    static var storeDirectory: URL {
+        ModelConfiguration(storeName, schema: schema, cloudKitDatabase: .none).url.deletingLastPathComponent()
+    }
+
+    /// Ouvre la base d'essai V2, locale (sans iCloud). À la première ouverture, elle est créée
+    /// par **copie** de la base V1, migrée vers V2 : la base V1 reste intacte. Si elle ne s'ouvre
+    /// plus (brouillon du modèle trop changé), elle est mise de côté, jamais effacée, puis recréée.
+    public static func openLocalStore() throws -> (ModelContainer, StoreOpening) {
+        let directory = storeDirectory
+        moveLegacyStore(in: directory)
+        return try openDraftStore(in: directory)
+    }
+
+    static func openDraftStore(in directory: URL, now: Date = Date()) throws -> (ModelContainer, StoreOpening) {
+        let fileManager = FileManager.default
+        let draft = directory.appending(path: "\(draftStoreName).store")
+        if fileManager.fileExists(atPath: draft.path) {
+            do {
+                // Sans plan de migration : un brouillon modifié par ajouts s'ouvre par migration légère.
+                return (try ModelContainer(for: schema, configurations: configuration(at: draft)), .opened)
+            } catch {
+                let setAside = "\(draftStoreName) mise de côté \(timestamp(now))"
+                moveStoreFiles(named: draftStoreName, to: setAside, in: directory)
+                let container = try createDraftFromV1(in: directory)
+                return (container, .recreated(setAside: "\(setAside).store"))
+            }
+        }
+        return (try createDraftFromV1(in: directory), .createdFromV1)
+    }
+
+    /// Copie la base V1 (s'il y en a une) en base d'essai et l'ouvre avec le plan V1 → V2.
+    private static func createDraftFromV1(in directory: URL) throws -> ModelContainer {
+        copyStoreFiles(named: storeName, to: draftStoreName, in: directory)
+        let draft = directory.appending(path: "\(draftStoreName).store")
+        return try ModelContainer(for: schema, migrationPlan: SheetMigrationPlan.self, configurations: configuration(at: draft))
+    }
+
+    private static func configuration(at url: URL) -> ModelConfiguration {
+        ModelConfiguration(schema: schema, url: url, cloudKitDatabase: .none)
+    }
+
+    /// Fichiers d'une base : la base, son journal (`-wal`, `-shm`) et ses images (`.Nom_SUPPORT`).
+    /// Le cache iCloud (`Nom_ckAssets`) n'est pas copié.
+    private static func storeFiles(named name: String) -> [String] {
+        ["\(name).store", "\(name).store-wal", "\(name).store-shm", ".\(name)_SUPPORT"]
+    }
+
+    static func copyStoreFiles(named source: String, to destination: String, in directory: URL) {
+        let fileManager = FileManager.default
+        // La base en dernier : sans elle, une copie interrompue est refaite au lancement suivant.
+        for (from, to) in zip(storeFiles(named: source), storeFiles(named: destination)).reversed() {
+            let target = directory.appending(path: to)
+            try? fileManager.removeItem(at: target)
+            try? fileManager.copyItem(at: directory.appending(path: from), to: target)
+        }
+    }
+
+    static func moveStoreFiles(named source: String, to destination: String, in directory: URL) {
+        let fileManager = FileManager.default
+        for (from, to) in zip(storeFiles(named: source), storeFiles(named: destination)) {
+            try? fileManager.moveItem(at: directory.appending(path: from), to: directory.appending(path: to))
+        }
+    }
+
+    private static func timestamp(_ date: Date) -> String {
+        let components = Calendar(identifier: .gregorian).dateComponents(in: .current, from: date)
+        return String(format: "%04d-%02d-%02d %02dh%02d%02d",
+                      components.year ?? 0, components.month ?? 0, components.day ?? 0,
+                      components.hour ?? 0, components.minute ?? 0, components.second ?? 0)
     }
 
     /// Renomme une base `CharacterSheet.store` en `Blason.store`, avec ses fichiers associés :
@@ -84,17 +151,14 @@ public enum SheetStore {
         }
     }
 
-    /// Supprime la base locale, ses images et son cache iCloud. Réservé au développement, à la
-    /// demande (`-resetStore YES`) : jamais automatique. Avec iCloud, les données reviennent ensuite
-    /// du cloud : pour repartir de zéro, réinitialiser aussi l'environnement de développement
-    /// dans CloudKit Console.
+    /// Supprime les bases locales (V1 et essai V2), leurs images et le cache iCloud. Réservé au
+    /// développement, à la demande (`-resetStore YES`) : jamais automatique.
     public static func destroyStore() {
-        let url = storeURL
-        let directory = url.deletingLastPathComponent()
-        let items = ["", "-shm", "-wal"].map { URL(fileURLWithPath: url.path + $0) }
-            + [directory.appending(path: ".\(storeName)_SUPPORT"), directory.appending(path: "\(storeName)_ckAssets")]
-        for item in items {
-            try? FileManager.default.removeItem(at: item)
+        let directory = storeDirectory
+        for name in [storeName, draftStoreName] {
+            for item in storeFiles(named: name) + ["\(name)_ckAssets"] {
+                try? FileManager.default.removeItem(at: directory.appending(path: item))
+            }
         }
     }
 }

@@ -351,7 +351,9 @@ public final class StructureEditor {
 
     public func addSection(_ kind: SectionKind, to row: SheetRow, column: Int) {
         guard let context else { return }
-        let section = row.addSection(title: "", kind: kind, column: column, in: context)
+        let section = kind == .inventory
+            ? row.addInventorySection(title: "", column: column, in: context)
+            : row.addSection(title: "", kind: kind, column: column, in: context)
         if kind == .table {
             section.labelColumnTitle = "Nom"
             section.addColumn(title: "Valeur", kind: .number, code: "valeur", in: context)
@@ -433,6 +435,9 @@ public final class StructureEditor {
             if target == nil, case .group(let selected) = primary, selected.section === section { target = selected }
             if target == nil, case .tableRow(let row) = primary, row.group?.section === section { target = row.group }
             pasteList = PasteListRequest(target: .rows(section, group: target))
+        case .inventory, .inventoryView:
+            // Coller une liste d'objets : avec l'interface de la Besace.
+            break
         }
     }
 

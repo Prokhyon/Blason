@@ -7,6 +7,8 @@ import SwiftData
 //   { "format": "blason", "version": 1, "exportedAt": "…",
 //     "template": { "name": …, "sheet": { "pages": [ { "rows": [ { "sections": [ … ] } ] } ] } } }
 // ou "character" à la place de "template".
+// Version 2 (modèle V2, brouillon) : sections Besace (`inventory`) et vues de la Besace
+// (`viewTypeCodes`, `viewPropertyCodes`). Un fichier version 1 se lit toujours.
 //
 // L'ordre des éléments est celui des tableaux JSON (pas de champ `order`). Les cellules d'une ligne
 // suivent l'ordre des colonnes de son tableau. Les types sont écrits comme dans le modèle
@@ -18,7 +20,7 @@ public struct SheetDocument: Codable, Equatable, Sendable {
     /// Identifiants acceptés à l'import : `character-sheet` est l'ancien nom du format
     /// (fichiers exportés avant le renommage du projet), identique pour le reste.
     public static let acceptedFormatIdentifiers: Set<String> = [formatIdentifier, "character-sheet"]
-    public static let currentVersion = 1
+    public static let currentVersion = 2
 
     public var format: String
     public var version: Int
@@ -74,6 +76,94 @@ public struct SheetDocument: Codable, Equatable, Sendable {
         public var fields: [FieldRecord]
         public var columns: [ColumnRecord]
         public var groups: [GroupRecord]
+        /// Section Besace (version 2).
+        public var inventory: InventoryRecord?
+        /// Vue de la Besace (version 2) : types montrés et propriétés en colonnes.
+        public var viewTypeCodes: [String]?
+        public var viewPropertyCodes: [String]?
+    }
+
+    // Besace. Les objets désignent leur type, leur monnaie et leurs propriétés par leur position
+    // dans les listes de la Besace (les codes peuvent être vides).
+
+    public struct InventoryRecord: Codable, Equatable, Sendable {
+        public var code: String
+        public var tracksWeight: Bool
+        public var weightUnit: String
+        public var weightLimitFormula: String?
+        public var appliesMalus: Bool
+        public var itemTypes: [ItemTypeRecord]
+        public var currencies: [CurrencyRecord]
+        public var levels: [LevelRecord]
+        public var slots: [SlotRecord]
+    }
+
+    public struct ItemTypeRecord: Codable, Equatable, Sendable {
+        public var name: String
+        public var code: String
+        public var icon: String
+        public var properties: [PropertyRecord]
+    }
+
+    public struct PropertyRecord: Codable, Equatable, Sendable {
+        public var label: String
+        public var code: String
+        public var kind: String
+        public var formula: String?
+        public var isLive: Bool
+        public var textValue: String?
+        public var numberValue: Double?
+        public var boolValue: Bool?
+    }
+
+    public struct CurrencyRecord: Codable, Equatable, Sendable {
+        public var name: String
+        public var abbreviation: String
+        public var rate: Double
+    }
+
+    public struct LevelRecord: Codable, Equatable, Sendable {
+        public var name: String
+        public var thresholdFormula: String?
+        public var malus: Double?
+        public var effect: String
+    }
+
+    public struct SlotRecord: Codable, Equatable, Sendable {
+        public var name: String
+        public var icon: String
+        public var countsTowardEncumbrance: Bool
+        public var capacity: Double?
+        public var items: [ItemRecord]
+    }
+
+    public struct ItemRecord: Codable, Equatable, Sendable {
+        public var name: String
+        public var quantity: Double
+        public var unitWeight: Double?
+        public var price: String
+        public var isEquipped: Bool
+        public var isContainer: Bool
+        public var summary: String
+        public var notes: String
+        /// Image encodée en base64.
+        public var imageData: Data?
+        /// Position du type dans `itemTypes`.
+        public var type: Int?
+        /// Position de la monnaie dans `currencies` (compteur d'argent).
+        public var currency: Int?
+        public var values: [ItemValueRecord]
+        /// Contenu d'un contenant (un seul niveau).
+        public var contents: [ItemRecord]?
+    }
+
+    public struct ItemValueRecord: Codable, Equatable, Sendable {
+        /// Position de la propriété dans le type de l'objet.
+        public var property: Int
+        public var textValue: String?
+        public var numberValue: Double?
+        public var boolValue: Bool?
+        public var formula: String?
     }
 
     public struct FieldRecord: Codable, Equatable, Sendable {
@@ -309,8 +399,141 @@ extension SheetDocument.SectionRecord {
                         )
                     }
                 )
+            },
+            inventory: section.inventory.map(SheetDocument.InventoryRecord.init),
+            viewTypeCodes: section.viewTypeCodes.isEmpty ? nil : section.viewTypeCodes,
+            viewPropertyCodes: section.viewPropertyCodes.isEmpty ? nil : section.viewPropertyCodes
+        )
+    }
+}
+
+extension SheetDocument.InventoryRecord {
+    init(_ inventory: Inventory) {
+        let types = inventory.sortedItemTypes
+        let currencies = inventory.sortedCurrencies
+        func record(_ item: InventoryItem) -> SheetDocument.ItemRecord {
+            let properties = item.type?.sortedProperties ?? []
+            return SheetDocument.ItemRecord(
+                name: item.name, quantity: item.quantity, unitWeight: item.unitWeight, price: item.price,
+                isEquipped: item.isEquipped, isContainer: item.isContainer, summary: item.summary, notes: item.notes,
+                imageData: item.imageData,
+                type: item.type.flatMap { type in types.firstIndex { $0 === type } },
+                currency: item.currency.flatMap { currency in currencies.firstIndex { $0 === currency } },
+                values: properties.enumerated().compactMap { index, property in
+                    item.value(for: property).map {
+                        SheetDocument.ItemValueRecord(property: index, textValue: $0.textValue, numberValue: $0.numberValue,
+                                                      boolValue: $0.boolValue, formula: $0.formula)
+                    }
+                },
+                contents: item.isContainer ? item.sortedContents.map(record) : nil
+            )
+        }
+        self.init(
+            code: inventory.code, tracksWeight: inventory.tracksWeight, weightUnit: inventory.weightUnit,
+            weightLimitFormula: inventory.weightLimitFormula, appliesMalus: inventory.appliesMalus,
+            itemTypes: types.map { type in
+                SheetDocument.ItemTypeRecord(name: type.name, code: type.code, icon: type.icon, properties: type.sortedProperties.map {
+                    SheetDocument.PropertyRecord(label: $0.label, code: $0.code, kind: $0.kindRaw, formula: $0.formula, isLive: $0.isLive,
+                                                 textValue: $0.textValue, numberValue: $0.numberValue, boolValue: $0.boolValue)
+                })
+            },
+            currencies: currencies.map { SheetDocument.CurrencyRecord(name: $0.name, abbreviation: $0.abbreviation, rate: $0.rate) },
+            levels: inventory.sortedLevels.map {
+                SheetDocument.LevelRecord(name: $0.name, thresholdFormula: $0.thresholdFormula, malus: $0.malus, effect: $0.effect)
+            },
+            slots: inventory.sortedSlots.map { slot in
+                SheetDocument.SlotRecord(name: slot.name, icon: slot.icon, countsTowardEncumbrance: slot.countsTowardEncumbrance,
+                                         capacity: slot.capacity, items: slot.looseItems.map(record))
             }
         )
+    }
+
+    func makeInventory(in section: SheetSection, context: ModelContext) {
+        let inventory = Inventory()
+        context.insert(inventory)
+        inventory.section = section
+        inventory.code = code
+        inventory.tracksWeight = tracksWeight
+        inventory.weightUnit = weightUnit
+        inventory.weightLimitFormula = weightLimitFormula
+        inventory.appliesMalus = appliesMalus
+
+        var types: [ItemType] = []
+        for (order, record) in itemTypes.enumerated() {
+            let type = ItemType(name: record.name, code: record.code, icon: record.icon, order: order)
+            context.insert(type)
+            type.inventory = inventory
+            for (propertyOrder, propertyRecord) in record.properties.enumerated() {
+                let property = ItemProperty(label: propertyRecord.label, code: propertyRecord.code, order: propertyOrder)
+                context.insert(property)
+                property.type = type
+                property.kindRaw = propertyRecord.kind
+                property.formula = propertyRecord.formula
+                property.isLive = propertyRecord.isLive
+                property.textValue = propertyRecord.textValue
+                property.numberValue = propertyRecord.numberValue
+                property.boolValue = propertyRecord.boolValue
+            }
+            types.append(type)
+        }
+        var currencyModels: [Currency] = []
+        for (order, record) in currencies.enumerated() {
+            let currency = Currency(name: record.name, abbreviation: record.abbreviation, rate: record.rate, order: order)
+            context.insert(currency)
+            currency.inventory = inventory
+            currencyModels.append(currency)
+        }
+        for (order, record) in levels.enumerated() {
+            let level = EncumbranceLevel(name: record.name, thresholdFormula: record.thresholdFormula, order: order)
+            context.insert(level)
+            level.inventory = inventory
+            level.malus = record.malus
+            level.effect = record.effect
+        }
+
+        func makeItem(_ record: SheetDocument.ItemRecord, order: Int, slot: InventorySlot, container: InventoryItem?) {
+            let item = InventoryItem(name: record.name, quantity: record.quantity, order: order)
+            context.insert(item)
+            item.slot = slot
+            item.container = container
+            item.unitWeight = record.unitWeight
+            item.price = record.price
+            item.isEquipped = record.isEquipped
+            item.isContainer = record.isContainer
+            item.summary = record.summary
+            item.notes = record.notes
+            item.imageData = record.imageData
+            item.type = record.type.flatMap { types.indices.contains($0) ? types[$0] : nil }
+            item.currency = record.currency.flatMap { currencyModels.indices.contains($0) ? currencyModels[$0] : nil }
+            let properties = item.type?.sortedProperties ?? []
+            for valueRecord in record.values where properties.indices.contains(valueRecord.property) {
+                let value = ItemPropertyValue()
+                context.insert(value)
+                value.item = item
+                value.property = properties[valueRecord.property]
+                value.textValue = valueRecord.textValue
+                value.numberValue = valueRecord.numberValue
+                value.boolValue = valueRecord.boolValue
+                value.formula = valueRecord.formula
+            }
+            // Un seul niveau de contenant : le contenu d'un contenu est ignoré.
+            if container == nil, record.isContainer {
+                for (contentOrder, content) in (record.contents ?? []).enumerated() {
+                    makeItem(content, order: contentOrder, slot: slot, container: item)
+                }
+            }
+        }
+
+        for (order, record) in slots.enumerated() {
+            let slot = InventorySlot(name: record.name, icon: record.icon, order: order)
+            context.insert(slot)
+            slot.inventory = inventory
+            slot.countsTowardEncumbrance = record.countsTowardEncumbrance
+            slot.capacity = record.capacity
+            for (itemOrder, itemRecord) in record.items.enumerated() {
+                makeItem(itemRecord, order: itemOrder, slot: slot, container: nil)
+            }
+        }
     }
 }
 
@@ -401,6 +624,9 @@ extension SheetDocument.SectionRecord {
         section.arrangementRaw = arrangement
         section.columnCount = max(1, columnCount)
         section.labelColumnTitle = labelColumnTitle
+        section.viewTypeCodes = viewTypeCodes ?? []
+        section.viewPropertyCodes = viewPropertyCodes ?? []
+        inventory?.makeInventory(in: section, context: context)
 
         for (fieldOrder, record) in fields.enumerated() {
             let field = SheetField(label: record.label, code: record.code, order: fieldOrder)

@@ -312,7 +312,7 @@ private struct SectionInspector: View {
         Form {
             Section {
                 InspectorTextRow(title: "Titre", text: $section.title, prompt: "Titre", focus: focus, focusValue: .label)
-                LabeledContent("Contenu", value: section.kind == .fields ? "Champs" : "Tableau")
+                LabeledContent("Contenu", value: section.kind.title)
             }
 
             switch section.kind {
@@ -356,6 +356,9 @@ private struct SectionInspector: View {
                         Label("Ajouter une colonne", systemImage: "plus")
                     }
                 }
+            case .inventory, .inventoryView:
+                // Réglages de la Besace : étape suivante de la V2.2.
+                EmptyView()
             }
 
             if let row = section.row {

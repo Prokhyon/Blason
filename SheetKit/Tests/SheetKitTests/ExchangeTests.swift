@@ -143,8 +143,8 @@ struct ExchangeTests {
     func rejectedFiles() throws {
         #expect(throws: SheetImportError.notASheetDocument) { try SheetDocument.decode(Data("pas du json".utf8)) }
         #expect(throws: SheetImportError.notASheetDocument) { try SheetDocument.decode(Data(#"{"name": "Leo"}"#.utf8)) }
-        #expect(throws: SheetImportError.unsupportedVersion(2)) {
-            try SheetDocument.decode(Data(#"{"format": "blason", "version": 2}"#.utf8))
+        #expect(throws: SheetImportError.unsupportedVersion(3)) {
+            try SheetDocument.decode(Data(#"{"format": "blason", "version": 3}"#.utf8))
         }
         #expect(throws: SheetImportError.empty) {
             try SheetDocument.decode(Data(#"{"format": "blason", "version": 1, "exportedAt": "2026-11-09T10:00:00Z"}"#.utf8))

@@ -1,9 +1,12 @@
 import Foundation
 
-/// Sorte de section : une liste de champs, ou un tableau (lignes × colonnes).
+/// Sorte de section : une liste de champs, un tableau (lignes × colonnes), une Besace,
+/// ou une vue de la Besace (objets équipés, ailleurs sur la fiche).
 public enum SectionKind: String, Codable, CaseIterable, Sendable {
     case fields
     case table
+    case inventory
+    case inventoryView
 }
 
 /// Disposition des champs dans une section « Champs ».
