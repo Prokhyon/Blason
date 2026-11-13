@@ -233,6 +233,7 @@ extension SheetSection {
         if let previous, previous.section === self {
             field.listIndex = previous.listIndex
             field.labelPlacement = previous.labelPlacement
+            if kind == previous.kind { field.width = previous.width }
         }
         if kind == .resource {
             field.isLive = true
@@ -280,8 +281,8 @@ extension SheetField {
     public func move(to section: SheetSection, at index: Int? = nil) {
         let oldSection = self.section
         self.section = section
-        if section.arrangement == .columns {
-            listIndex = min(listIndex, max(0, section.columnCount - 1))
+        if section.arrangement.usesLists {
+            listIndex = min(listIndex, section.arrangement.listCount(columnCount: section.columnCount) - 1)
         }
         place(self, among: section.sortedFields, at: index)
         if let oldSection, oldSection !== section {

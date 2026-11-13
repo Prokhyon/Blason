@@ -21,6 +21,7 @@ struct ExchangeTests {
         choice.options = ["Droite", "Gauche"]
         choice.textValue = "Gauche"
         choice.hint = "main directrice"
+        choice.width = .third
         let skills = try #require(sheet.section(titled: "Compétences"))
         skills.group(titled: "Communication")?.numberValue = 5
         return leo
@@ -93,7 +94,7 @@ struct ExchangeTests {
         func properties(_ value: Any) -> Set<String> {
             Set(Mirror(reflecting: value).children.compactMap(\.label))
         }
-        let renamed = ["kindRaw": "kind", "arrangementRaw": "arrangement", "labelPlacementRaw": "labelPlacement",
+        let renamed = ["kindRaw": "kind", "arrangementRaw": "arrangement", "labelPlacementRaw": "labelPlacement", "widthRaw": "width",
                        "resourceStyleRaw": "resourceStyle", "columnIndex": "column"]
         let field = SheetDocument.FieldRecord(SheetField(label: "x"))
         let column = SheetDocument.ColumnRecord(title: "", code: "", kind: "", formula: nil, isLive: false)

@@ -125,7 +125,7 @@ public final class FormulaEngine {
                 return .success(.number(field.boolValue == true ? 1 : 0))
             case .text, .longText, .choice:
                 return .success(field.textValue.flatMap(ListImport.number(from:)).map(FormulaValue.number))
-            case .date, .image:
+            case .date, .image, .spacer:
                 return .success(nil)
             }
         }

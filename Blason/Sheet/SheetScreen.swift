@@ -31,6 +31,10 @@ struct SheetScreen: View {
         if let theme = defaults.string(forKey: "demoTheme") {
             sheet?.ownAppearance = SheetAppearance(themeID: theme, colorID: defaults.string(forKey: "demoColor") ?? "blue")
         }
+        // -demoArrangement tiles : présentation des caractéristiques (modifie la base de développement).
+        if let raw = defaults.string(forKey: "demoArrangement"), let value = FieldArrangement(rawValue: raw) {
+            sheet?.section(titled: "Caractéristiques")?.arrangement = value
+        }
         if defaults.bool(forKey: "demoBesace"), let sheet, let context = sheet.modelContext {
             DemoData.addDemoInventory(to: sheet, in: context)
         }

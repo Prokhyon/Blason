@@ -174,6 +174,8 @@ public struct SheetDocument: Codable, Equatable, Sendable {
         public var code: String
         public var kind: String
         public var labelPlacement: String
+        /// Largeur dans une grille ; absente : « auto » (fichiers antérieurs, ou valeur par défaut).
+        public var width: String?
         public var listIndex: Int
         public var isLive: Bool
         public var isNameField: Bool
@@ -545,7 +547,7 @@ extension SheetDocument.FieldRecord {
     init(_ field: SheetField) {
         self.init(
             label: field.label, code: field.code, kind: field.kindRaw, labelPlacement: field.labelPlacementRaw,
-            listIndex: field.listIndex, isLive: field.isLive, isNameField: field.isNameField,
+            width: field.width == .auto ? nil : field.widthRaw, listIndex: field.listIndex, isLive: field.isLive, isNameField: field.isNameField,
             unit: field.unit, hint: field.hint, minimum: field.minimum, maximum: field.maximum, step: field.step,
             options: field.options, resourceStyle: field.resourceStyleRaw, formula: field.formula,
             textValue: field.textValue, numberValue: field.numberValue, resourceMax: field.resourceMax,
@@ -639,6 +641,7 @@ extension SheetDocument.SectionRecord {
             field.section = section
             field.kindRaw = record.kind
             field.labelPlacementRaw = record.labelPlacement
+            field.widthRaw = record.width ?? FieldWidth.auto.rawValue
             field.listIndex = record.listIndex
             field.isLive = record.isLive
             field.isNameField = record.isNameField

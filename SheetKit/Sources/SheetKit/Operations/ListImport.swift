@@ -107,7 +107,7 @@ extension SheetField {
             formula = "=" + text
         case .text, .longText:
             textValue = text
-        case .date, .image:
+        case .date, .image, .spacer:
             break
         }
     }

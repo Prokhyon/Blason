@@ -18,6 +18,7 @@ extension FieldKind {
         case .date: "Date"
         case .image: "Image"
         case .formula: "Calcul (formule)"
+        case .spacer: "Espace"
         }
     }
 
@@ -35,6 +36,7 @@ extension FieldKind {
         case .date: "calendar"
         case .image: "photo"
         case .formula: "function"
+        case .spacer: "rectangle.dashed"
         }
     }
 
@@ -82,6 +84,19 @@ extension FieldArrangement {
         case .list: "Liste"
         case .grid: "Grille"
         case .columns: "Listes côte à côte"
+        case .pairs: "Paires"
+        case .tiles: "Tuiles"
+        }
+    }
+}
+
+extension FieldWidth {
+    var title: LocalizedStringKey {
+        switch self {
+        case .auto: "Auto"
+        case .full: "Pleine"
+        case .half: "½"
+        case .third: "⅓"
         }
     }
 }

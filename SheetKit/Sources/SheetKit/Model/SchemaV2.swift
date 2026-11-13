@@ -201,7 +201,9 @@ extension SheetSchemaV2 {
         public var order: Int = 0
         public var kindRaw: String = FieldKind.text.rawValue
         public var labelPlacementRaw: String = LabelPlacement.leading.rawValue
-        /// Liste d'appartenance quand la section est en disposition `columns`.
+        /// Largeur dans une grille (`FieldWidth`). Ajout V2.
+        public var widthRaw: String = FieldWidth.auto.rawValue
+        /// Liste d'appartenance quand la section est en disposition `columns`, `pairs` ou `tiles`.
         public var listIndex: Int = 0
         /// Valeur vivante : modifiable en mode Jouer.
         public var isLive: Bool = false

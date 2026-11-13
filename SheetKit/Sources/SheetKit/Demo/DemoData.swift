@@ -44,7 +44,7 @@ public enum DemoData {
 
         builder.page("Personnage") { page in
             page.row(columns: [1, 1]) { row in
-                row.fields("Personnel", column: 0, arrangement: .grid, columns: 2) { s in
+                row.fields("Personnel", column: 0, arrangement: .grid) { s in
                     s.field("Nom", code: "NOM", isName: true)
                     s.field("Joueur")
                     s.field("Culture")
@@ -60,18 +60,20 @@ public enum DemoData {
                     s.field("Traits distinctifs", .longText, placement: .top)
                     s.field("Description", .longText, placement: .top)
                 }
-                row.fields("Caractéristiques", column: 1, arrangement: .columns, columns: 2) { s in
+                // Paires : chaque caractéristique en face de son jet ; TAI n'en a pas, le modificateur
+                // de dégâts prend sa place.
+                row.fields("Caractéristiques", column: 1, arrangement: .pairs, columns: 2) { s in
                     for code in ["FOR", "CON", "TAI", "INT", "POU", "DEX", "CHA", "EDU"] {
                         s.field(code == "EDU" ? "ÉDU" : code, .integer, code: code, min: 0, list: 0)
                     }
                     s.field("Effort", .formula, code: "EFFORT", formula: "=FOR*5", unit: "%", list: 1)
                     s.field("Endurance", .formula, code: "ENDURANCE", formula: "=CON*5", unit: "%", list: 1)
+                    s.field("Modificateur de dégâts", .modifier, code: "MODDEG", formula: Self.damageModifierTable, list: 1)
                     s.field("Idée", .formula, code: "IDEE", formula: "=INT*5", unit: "%", list: 1)
                     s.field("Chance", .formula, code: "CHANCE", formula: "=POU*5", unit: "%", list: 1)
                     s.field("Agilité", .formula, code: "AGILITE", formula: "=DEX*5", unit: "%", list: 1)
                     s.field("Charme", .formula, code: "CHARME", formula: "=CHA*5", unit: "%", list: 1)
                     s.field("Connaissance", .formula, code: "SAVOIR", formula: "=EDU*5", unit: "%", list: 1)
-                    s.field("Modificateur de dégâts", .modifier, code: "MODDEG", formula: Self.damageModifierTable, list: 1)
                 }
                 row.fields("Points de vie", column: 1) { s in
                     s.field("Points de vie", .resource, code: "PV", formula: "=plafond((CON+TAI)/2)",

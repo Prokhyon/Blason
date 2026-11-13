@@ -115,6 +115,7 @@ extension SheetField {
         order = other.order
         kindRaw = other.kindRaw
         labelPlacementRaw = other.labelPlacementRaw
+        widthRaw = other.widthRaw
         listIndex = other.listIndex
         isLive = other.isLive
         isNameField = other.isNameField

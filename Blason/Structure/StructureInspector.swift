@@ -317,13 +317,20 @@ private struct SectionInspector: View {
 
             switch section.kind {
             case .fields:
-                Section("Disposition") {
+                Section {
                     Picker("Disposition", selection: $section.arrangement) {
                         ForEach(FieldArrangement.allCases, id: \.self) { Text($0.title).tag($0) }
                     }
-                    if section.arrangement != .list {
-                        Stepper("\(section.arrangement == .grid ? "Colonnes" : "Listes") : \(section.columnCount)",
-                                value: $section.columnCount, in: 1...6)
+                    if section.arrangement == .columns {
+                        Stepper("Listes : \(section.columnCount)", value: $section.columnCount, in: 1...6)
+                    }
+                } footer: {
+                    switch section.arrangement {
+                    case .list: EmptyView()
+                    case .grid: Text("Les champs se suivent, libellé au-dessus, chacun à sa largeur (réglée dans le champ) ; à la ligne quand elle est pleine.")
+                    case .columns: Text("Chaque champ choisit sa liste.")
+                    case .pairs: Text("Deux listes lues rang par rang : chaque champ de gauche à côté de celui de droite. Un « Espace » laisse une case vide.")
+                    case .tiles: Text("Deux listes lues rang par rang : la valeur de gauche en grand, celle de droite en petit dessous.")
                     }
                 }
             case .table:
@@ -443,7 +450,7 @@ private struct FieldInspector: View {
                 }
             }
 
-            if field.kind != .formula {
+            if field.kind != .formula && field.kind != .spacer {
                 Section(isTemplate ? "Valeur par défaut" : "Valeur") {
                     FieldView(field: field, hideLabel: true)
                         .environment(\.sheetMode, .fill)
@@ -452,7 +459,7 @@ private struct FieldInspector: View {
 
             kindSpecific
 
-            if field.kind != .image {
+            if field.kind != .image && field.kind != .spacer {
                 Section {
                     InspectorTextRow(title: field.kind == .resource ? "Maximum" : "Formule",
                                      text: optionalText($field.formula), prompt: "=FOR*5",
@@ -471,13 +478,32 @@ private struct FieldInspector: View {
             }
 
             Section("Affichage") {
-                Toggle("Modifiable en mode Jouer", isOn: $field.isLive)
-                Picker("Libellé", selection: $field.labelPlacement) {
-                    ForEach(LabelPlacement.allCases, id: \.self) { Text($0.title).tag($0) }
+                let arrangement = field.section?.arrangement ?? .list
+                if field.kind != .spacer {
+                    Toggle("Modifiable en mode Jouer", isOn: $field.isLive)
+                }
+                if arrangement == .list || arrangement == .columns {
+                    Picker("Libellé", selection: $field.labelPlacement) {
+                        ForEach(LabelPlacement.allCases, id: \.self) { Text($0.title).tag($0) }
+                    }
+                }
+                if arrangement == .grid {
+                    Picker("Largeur", selection: $field.width) {
+                        ForEach(FieldWidth.allCases, id: \.self) { Text($0.title).tag($0) }
+                    }
                 }
                 if let section = field.section, section.arrangement == .columns, section.columnCount > 1 {
                     Stepper("Liste \(min(field.listIndex, section.columnCount - 1) + 1)", value: $field.listIndex,
                             in: 0...(section.columnCount - 1))
+                }
+                if arrangement == .pairs || arrangement == .tiles {
+                    Picker(arrangement == .pairs ? "Côté" : "Place", selection: Binding(
+                        get: { field.effectiveListIndex },
+                        set: { field.listIndex = $0 }
+                    )) {
+                        Text(arrangement == .pairs ? "Gauche" : "Tuile").tag(0)
+                        Text(arrangement == .pairs ? "Droite" : "Sous la valeur").tag(1)
+                    }
                 }
                 if field.kind == .text {
                     Toggle("Nom du personnage", isOn: Binding(

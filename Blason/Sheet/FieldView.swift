@@ -5,25 +5,41 @@ import SheetKit
 struct FieldView: View {
     @Bindable var field: SheetField
     var hideLabel = false
+    /// Libellé au-dessus, en petit, imposé par la disposition (grille).
+    var labelOnTop = false
+    /// La valeur seule, sans libellé ni marge (tuiles).
+    var valueOnly = false
 
     @Environment(\.sheetMode) private var mode
 
     private var editable: Bool {
-        field.kind != .formula && mode.canEdit(live: field.isLive)
+        field.kind != .formula && field.kind != .spacer && mode.canEdit(live: field.isLive)
     }
 
     /// Les valeurs volumineuses passent sous leur libellé.
     private var stacksVertically: Bool {
-        field.labelPlacement == .top
+        labelOnTop
+            || field.labelPlacement == .top
             || field.kind == .longText
             || field.kind == .image
             || (field.kind == .resource && field.resourceStyle == .track)
     }
 
     var body: some View {
+        if field.kind == .spacer {
+            SpacerFieldView()
+        } else if valueOnly {
+            value
+                .accessibilityElement(children: readsAsOneElement ? .combine : .contain)
+        } else {
+            standard
+        }
+    }
+
+    private var standard: some View {
         Group {
             if stacksVertically {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: labelOnTop ? 2 : 4) {
                     if !hideLabel { label }
                     value
                 }
@@ -52,7 +68,7 @@ struct FieldView: View {
                 .foregroundStyle(.tertiary)
         } else {
             Text(field.label)
-                .font(.subheadline)
+                .font(labelOnTop ? .footnote : .subheadline)
                 .foregroundStyle(.secondary)
         }
     }
@@ -164,6 +180,9 @@ struct FieldView: View {
                     Text(unit).foregroundStyle(.secondary)
                 }
             }
+
+        case .spacer:
+            EmptyView()
         }
     }
 
@@ -194,6 +213,24 @@ struct FieldView: View {
                 }
             }
         )
+    }
+}
+
+/// Espace : une case vide. En Structure, un cadre pointillé pour pouvoir la sélectionner et la déplacer.
+struct SpacerFieldView: View {
+    @Environment(\.sheetMode) private var mode
+
+    var body: some View {
+        if mode == .structure {
+            Text("Espace")
+                .font(.footnote)
+                .foregroundStyle(.tertiary)
+                .frame(maxWidth: .infinity, minHeight: 22)
+                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(.tertiary, style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
+        } else {
+            Color.clear.frame(height: 0)
+                .accessibilityHidden(true)
+        }
     }
 }
 

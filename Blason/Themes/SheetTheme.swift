@@ -41,9 +41,9 @@ struct SheetTheme {
 
     // MARK: Pièces
 
-    /// Fond derrière les pages.
+    /// Fond derrière les pages : blanc, noir en sombre (les cartes se détachent par leur ombre).
     var pageBackground: @MainActor @Sendable () -> AnyView = {
-        AnyView(Color.groupedBackground)
+        AnyView(Color.writingBackground)
     }
     /// Cadre d'une section : place son titre et son contenu.
     var sectionFrame: @MainActor @Sendable (SectionFrameConfiguration) -> AnyView = { configuration in
@@ -121,19 +121,28 @@ private struct InputBackground: ViewModifier {
 
 // MARK: - Pièces natives
 
+/// Carte flottante (S1) : blanche, ombre douce et filet très fin sur fond blanc ; en sombre, gris
+/// surélevé sans ombre.
 struct NativeSectionFrame: View {
     let configuration: SectionFrameConfiguration
 
     @Environment(\.sheetTheme) private var theme
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 20, style: .continuous)
+        let dark = colorScheme == .dark
         VStack(alignment: .leading, spacing: 10) {
             configuration.title
             configuration.content
         }
-        .padding(14)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(theme.cardBackground, in: RoundedRectangle(cornerRadius: 14))
+        .background {
+            shape.fill(theme.cardBackground)
+                .shadow(color: .black.opacity(dark ? 0 : 0.06), radius: 10, y: 3)
+        }
+        .overlay(shape.strokeBorder(Color.primary.opacity(dark ? 0.08 : 0.06), lineWidth: 0.5))
     }
 }
 

@@ -64,6 +64,20 @@ extension SheetField {
         set { labelPlacementRaw = newValue.rawValue }
     }
 
+    public var width: FieldWidth {
+        get { FieldWidth(rawValue: widthRaw) ?? .auto }
+        set { widthRaw = newValue.rawValue }
+    }
+
+    /// Largeur effective dans une grille, en sixièmes.
+    public var gridSixths: Int { width.sixths(for: kind, resourceStyle: resourceStyle) }
+
+    /// Liste effective dans la disposition de sa section (une liste supprimée renvoie vers la dernière).
+    public var effectiveListIndex: Int {
+        guard let section, section.arrangement.usesLists else { return 0 }
+        return min(max(0, listIndex), section.arrangement.listCount(columnCount: section.columnCount) - 1)
+    }
+
     public var resourceStyle: ResourceStyle {
         get { ResourceStyle(rawValue: resourceStyleRaw) ?? .counter }
         set { resourceStyleRaw = newValue.rawValue }

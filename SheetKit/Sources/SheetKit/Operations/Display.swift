@@ -44,6 +44,8 @@ extension SheetField {
             return imageData == nil ? "" : "Image"
         case .formula:
             return formula ?? ""
+        case .spacer:
+            return ""
         }
     }
 }
