@@ -18,6 +18,7 @@ struct JournalScreen: View {
     @State private var query = ""
     @Environment(\.modelContext) private var context
     @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.paneControl) private var pane
 
     var body: some View {
         Group {
@@ -44,6 +45,9 @@ struct JournalScreen: View {
         }
         .environment(\.journalNavigator, JournalNavigator { route in navigate(to: route) })
         .toolbar {
+            if let pane, pane.canSplit, !pane.isSplit {
+                ToolbarItem(placement: .primaryAction) { OpenBesideMenu() }
+            }
             ToolbarItem(placement: .primaryAction) { libraryButton }
             ToolbarSpacer(.fixed, placement: .primaryAction)
             ToolbarItem(placement: .primaryAction) {

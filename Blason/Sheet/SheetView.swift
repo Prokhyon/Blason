@@ -17,7 +17,8 @@ struct SheetView: View {
     @State private var mode: SheetMode
     /// Mode quitté en ouvrant la Structure, retrouvé par « Terminé ».
     @State private var modeBeforeStructure: SheetMode?
-    @State private var showsInspector = true
+    /// Inspecteur ouvert (grand écran) : en touchant un élément, ou par « Afficher l'inspecteur ».
+    @State private var showsInspector: Bool
     /// Réglages de la Besace (onglet Inventaire, Remplir).
     @State private var showsInventorySettings = false
     /// Objet de la Besace ouvert (Remplir, Jouer) : panneau latéral, ou feuille sur iPhone.
@@ -28,6 +29,7 @@ struct SheetView: View {
     @AppStorage(SheetLayout.storageKey) private var layout: SheetLayout = .tabs
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.modelContext) private var context
+    @Environment(\.paneControl) private var paneControl
 
     init(title: String, sheet: Sheet?, tab: CharacterTab, editor: StructureEditor, isActive: Bool = true) {
         self.title = title
@@ -48,31 +50,17 @@ struct SheetView: View {
         }
         #endif
         _mode = State(initialValue: mode)
+        _showsInspector = State(initialValue: editor.primary != nil)
     }
 
     private var isTemplate: Bool { sheet?.template != nil }
 
     var body: some View {
-        HStack(spacing: 0) {
-            tabContent
-            if showsSidePanel {
-                Divider().ignoresSafeArea(edges: .bottom)
-                Group {
-                    if mode == .structure {
-                        StructureInspector(editor: editor, isTemplate: isTemplate) {
-                            showsInspector = false
-                        }
-                    } else if let openedItem {
-                        ItemDetailView(item: openedItem) { self.openedItem = nil }
-                            .id(openedItem.persistentModelID)
-                    }
-                }
-                .frame(width: 340)
-                .transition(.move(edge: .trailing))
-            }
-        }
-        .animation(.default, value: showsSidePanel)
-        .navigationTitle(title)
+        // Le panneau latéral flotte par-dessus la page, sous la rangée des pages : la page garde
+        // sa largeur (et sa disposition) en ouvrant l'inspecteur.
+        tabContent
+            .environment(\.sheetSidePanel, showsSidePanel ? SheetSidePanel(view: AnyView(sidePanel)) : nil)
+        .paneTitle(title)
         .inlineNavigationTitle()
         .toolbar { toolbar }
         .sheet(isPresented: compactInspectorShown) {
@@ -103,25 +91,60 @@ struct SheetView: View {
             if new == .structure, old != .structure { modeBeforeStructure = old }
             if new != .structure { editor.clearSelection() }
         }
+        #if DEBUG
+        // -demoModeCycle YES : Jouer → Remplir → Jouer → Structure → Jouer…, toutes les 3 s (vidéos).
+        .task {
+            guard UserDefaults.standard.bool(forKey: "demoModeCycle"), isActive else { return }
+            let cycle: [SheetMode] = [.fill, .play, .structure, .play]
+            for index in 0... {
+                try? await Task.sleep(for: .seconds(3))
+                if Task.isCancelled { return }
+                mode = cycle[index % cycle.count]
+            }
+        }
+        #endif
         .onChange(of: editor.primary) { _, selection in
-            // L'inspecteur fermé se rouvre en sélectionnant un élément.
-            if selection != nil, isActive { showsInspector = true }
+            // L'inspecteur suit la sélection : il s'ouvre en touchant un élément, se range en
+            // désélectionnant (il ne cache pas la page tant qu'on n'en a pas besoin).
+            if isActive { showsInspector = selection != nil }
+        }
+    }
+
+    /// Inspecteur (Structure) ou fiche de l'objet ouvert (Remplir, Jouer).
+    @ViewBuilder
+    private var sidePanel: some View {
+        if mode == .structure {
+            StructureInspector(editor: editor, isTemplate: isTemplate) {
+                showsInspector = false
+            }
+        } else if let openedItem {
+            ItemDetailView(item: openedItem) { self.openedItem = nil }
+                .id(openedItem.persistentModelID)
         }
     }
 
     /// Coller une liste : demandé depuis l'onglet affiché seulement.
     private var pasteList: Binding<PasteListRequest?> {
         Binding(
-            get: { isActive ? editor.pasteList : nil },
+            get: { isActive && mode == .structure ? editor.pasteList : nil },
             set: { editor.pasteList = $0 }
         )
     }
 
-    /// Panneau latéral sur grand écran (feuille sur écran étroit) : l'inspecteur en Structure,
+    /// Panneau flottant sur grand écran (feuille sur écran étroit) : l'inspecteur en Structure,
     /// la fiche de l'objet ouvert en Remplir et Jouer (SPEC §5.15).
     private var showsSidePanel: Bool {
         guard sizeClass != .compact else { return false }
-        return mode == .structure ? showsInspector : openedItem != nil
+        return mode == .structure ? showsInspector && ownsSelection : openedItem != nil
+    }
+
+    /// Côte à côte, les deux panneaux partagent la sélection de la Structure : l'inspecteur s'ouvre
+    /// dans celui qui montre l'élément (la Besace dans l'Inventaire, le reste dans la Fiche).
+    private var ownsSelection: Bool {
+        guard paneControl?.isSplit == true else { return true }
+        guard let primary = editor.primary else { return true }
+        let isBesace = if case .section(let section) = primary { section.kind == .inventory } else { false }
+        return isBesace == (tab == .inventory)
     }
 
     /// iPhone : fiche de l'objet en feuille.
@@ -161,7 +184,7 @@ struct SheetView: View {
     private var sheetContent: some View {
         Group {
             if editor.pages.isEmpty {
-                emptySheet
+                emptySheet.floatingSidePanel()
             } else {
                 switch layout {
                 case .tabs: TabbedPages(editor: editor)
@@ -233,8 +256,16 @@ struct SheetView: View {
                 mode = SheetMode.edit(isTemplate: isTemplate)
             }
         } else {
-            Button(mode == .structure ? "Terminé" : "OK") {
-                mode = mode == .structure ? (modeBeforeStructure ?? rest) : rest
+            // Terminé en coche (convention d'iOS 26) : le libellé ne tenait pas dans la barre en
+            // Structure sur iPad en portrait et partait dans le menu de débordement.
+            Group {
+                if mode == .structure {
+                    Button("Terminé", systemImage: "checkmark") {
+                        mode = modeBeforeStructure ?? rest
+                    }
+                } else {
+                    Button("OK") { mode = rest }
+                }
             }
             .buttonStyle(.glassProminent)
             .keyboardShortcut(.return, modifiers: .command)
@@ -266,6 +297,7 @@ struct SheetView: View {
                 }
             }
             displayCommands
+            OpenBesideMenu()
         } label: {
             Label("Plus", systemImage: "ellipsis")
         }

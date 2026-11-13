@@ -48,6 +48,7 @@ struct TabbedPages: View {
             }
         }
         .sheetScrollStyle()
+        .floatingSidePanel()
         .safeAreaBar(edge: .top, spacing: 0) {
             if editor.pages.count > 1 || mode == .structure {
                 PageBar(editor: editor)
@@ -84,6 +85,7 @@ struct ContinuousPages: View {
             }
             .scrollPosition(id: $visiblePage, anchor: .top)
             .sheetScrollStyle()
+            .floatingSidePanel()
             .safeAreaBar(edge: .top, spacing: 0) {
                 PageBar(editor: editor) { section in
                     withAnimation { proxy.scrollTo(section.persistentModelID, anchor: .top) }

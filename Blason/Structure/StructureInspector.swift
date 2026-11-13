@@ -21,21 +21,32 @@ struct StructureInspector: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                Text(title)
-                    .font(.headline)
-                Spacer()
+            HStack(alignment: .center, spacing: 12) {
+                // Le type en petit, puis le nom de l'élément : on voit ce qu'on modifie.
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(title)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    if let name {
+                        Text(name)
+                            .font(.headline)
+                            .lineLimit(1)
+                    }
+                }
+                Spacer(minLength: 0)
                 Button {
                     onClose()
                 } label: {
-                    Label("Masquer l'inspecteur", systemImage: "xmark")
+                    Label("Masquer l'inspecteur", systemImage: "xmark.circle.fill")
                         .labelStyle(.iconOnly)
+                        .font(.title2)
+                        .symbolRenderingMode(.hierarchical)
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.vertical, 10)
             Divider()
             content
         }
@@ -49,6 +60,13 @@ struct StructureInspector: View {
             try? await Task.sleep(for: .milliseconds(150))
             focus = .label
         }
+    }
+
+    /// Nom de l'élément sélectionné (un seul).
+    private var name: String? {
+        let items = editor.liveSelection
+        guard items.count == 1, let item = items.first else { return nil }
+        return item.displayName
     }
 
     private var title: LocalizedStringKey {

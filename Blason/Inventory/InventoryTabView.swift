@@ -24,6 +24,7 @@ struct InventoryTabView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .scrollDismissesKeyboard(.interactively)
+                .floatingSidePanel()
                 .safeAreaBar(edge: .top, spacing: 0) {
                     InventorySummary(inventory: inventory, pills: true)
                         .fixedSize()
@@ -48,6 +49,7 @@ struct InventoryTabView: View {
                     }
                     .buttonStyle(.borderedProminent)
                 }
+                .floatingSidePanel()
             }
         }
         .background(SheetBackground())

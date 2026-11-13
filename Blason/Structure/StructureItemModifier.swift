@@ -21,6 +21,9 @@ extension View {
     }
 }
 
+/// Les modificateurs restent posés dans tous les modes, seulement activés en Structure : l'élément
+/// garde son identité au changement de mode (sinon chaque champ, section et page était recréé, et
+/// la fiche se fondait d'une disposition à l'autre).
 private struct StructureItemModifier: ViewModifier {
     let item: StructureItem
 
@@ -29,35 +32,87 @@ private struct StructureItemModifier: ViewModifier {
     @State private var isTargeted = false
 
     func body(content: Content) -> some View {
-        if mode == .structure, let editor {
-            let selected = editor.isSelected(item)
-            content
-                .padding(3)
-                .contentShape(Rectangle())
-                .background {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(selected ? Color.accentColor.opacity(0.10) : .clear)
+        let active = mode == .structure && editor != nil
+        let selected = active && editor?.isSelected(item) == true
+        content
+            .padding(active ? 3 : 0)
+            .contentShape(Rectangle())
+            .background {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(selected ? Color.accentColor.opacity(0.10) : .clear)
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 6)
+                    .strokeBorder(selected ? Color.accentColor : .clear, lineWidth: 2)
+            }
+            .overlay(alignment: .top) {
+                if isTargeted {
+                    Capsule()
+                        .fill(Color.accentColor)
+                        .frame(height: 3)
+                        .offset(y: -3)
                 }
-                .overlay {
-                    RoundedRectangle(cornerRadius: 6)
-                        .strokeBorder(selected ? Color.accentColor : .clear, lineWidth: 2)
-                }
-                .overlay(alignment: .top) {
-                    if isTargeted {
-                        Capsule()
-                            .fill(Color.accentColor)
-                            .frame(height: 3)
-                            .offset(y: -3)
-                    }
-                }
-                .onTapGesture {
-                    editor.select(item, extending: HardwareKeyboard.isExtendingSelection)
-                }
-                // Cible du défilement vers l'élément sélectionné (`scrollsToSelection`).
-                .id(item)
-                .contextMenu {
+            }
+            // Hors Structure, le toucher va aux sous-vues seulement (valeurs, compteurs…).
+            .gesture(TapGesture().onEnded {
+                editor?.select(item, extending: HardwareKeyboard.isExtendingSelection)
+            }, including: active ? .all : .subviews)
+            // Cible du défilement vers l'élément sélectionné (`scrollsToSelection`).
+            .id(item)
+            // Position de l'élément principal : l'inspecteur flottant se place du côté libre.
+            // (`transform` : un parent ne doit pas effacer la valeur posée par un enfant.)
+            .transformAnchorPreference(key: SelectionBoundsKey.self, value: .bounds) { value, bounds in
+                if selected && editor?.primary == item { value = bounds }
+            }
+            .contextMenu {
+                if active, let editor {
                     StructureItemMenu(item: item, editor: editor)
                 }
+            }
+            .modifier(StructureDragDrop(item: item, editor: active ? editor : nil, isTargeted: $isTargeted))
+    }
+}
+
+/// Cadre de l'élément sélectionné (principal), pour placer l'inspecteur flottant.
+struct SelectionBoundsKey: PreferenceKey {
+    static let defaultValue: Anchor<CGRect>? = nil
+
+    static func reduce(value: inout Anchor<CGRect>?, nextValue: () -> Anchor<CGRect>?) {
+        value = value ?? nextValue()
+    }
+}
+
+/// Jeton glissé d'un élément de la structure (le texte `StructureEditor.dragToken`).
+nonisolated private struct StructureDrag: Transferable, Identifiable {
+    var id: String { "blason.structure-item" }  // `StructureEditor.dragToken`
+
+    static var transferRepresentation: some TransferRepresentation {
+        ProxyRepresentation(exporting: \.id)
+    }
+}
+
+/// Glisser-déposer en Structure (`editor` non nil). Depuis iOS 27, les modificateurs restent posés
+/// et s'activent ; avant, ils ne sont posés qu'en Structure.
+private struct StructureDragDrop: ViewModifier {
+    let item: StructureItem
+    let editor: StructureEditor?
+    @Binding var isTargeted: Bool
+
+    func body(content: Content) -> some View {
+        if #available(iOS 27.0, macOS 26.0, *) {
+            content
+                .draggable(StructureDrag.self, item: begin())
+                .dropDestination(for: String.self, isEnabled: editor != nil) { tokens, _ in
+                    if tokens.contains(StructureEditor.dragToken) { _ = editor?.drop(onto: item) }
+                }
+                .onDropSessionUpdated { session in
+                    switch session.phase {
+                    case .entering, .active: isTargeted = editor != nil
+                    default: isTargeted = false
+                    }
+                }
+        } else if let editor {
+            content
                 .draggable(editor.beginDrag(item))
                 .dropDestination(for: String.self) { tokens, _ in
                     tokens.contains(StructureEditor.dragToken) && editor.drop(onto: item)
@@ -67,6 +122,14 @@ private struct StructureItemModifier: ViewModifier {
         } else {
             content
         }
+    }
+
+    /// Appelé au début du glisser : rien hors Structure.
+    private func begin() -> StructureDrag? {
+        guard let editor else { return nil }
+        let token = editor.beginDrag(item)
+        assert(token == StructureDrag().id)
+        return StructureDrag()
     }
 }
 

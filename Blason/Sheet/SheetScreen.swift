@@ -15,7 +15,11 @@ struct SheetScreen: View {
     var onClose: (() -> Void)?
 
     @State private var tab: CharacterTab = .sheet
+    /// Onglet du panneau de droite quand deux onglets sont côte à côte (iPad assez large).
+    @State private var companion: CharacterTab?
+    @State private var width: CGFloat = 0
     @State private var editor: StructureEditor
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     init(title: String, sheet: Sheet?, onEdit: @escaping () -> Void = {}, onClose: (() -> Void)? = nil) {
         self.title = title
@@ -42,6 +46,10 @@ struct SheetScreen: View {
         if let raw = defaults.string(forKey: "demoTab"), let value = CharacterTab(rawValue: raw) {
             _tab = State(initialValue: value)
         }
+        // -demoSplit journal : un deuxième onglet à droite.
+        if let raw = defaults.string(forKey: "demoSplit"), let value = CharacterTab(rawValue: raw) {
+            _companion = State(initialValue: value)
+        }
         if defaults.bool(forKey: "demoJournal"), let character = sheet?.character, let context = sheet?.modelContext {
             DemoData.addDemoJournal(to: character, in: context)
             _tab = State(initialValue: .journal)
@@ -58,7 +66,37 @@ struct SheetScreen: View {
     }
 
     var body: some View {
-        TabView(selection: $tab) {
+        HStack(spacing: 0) {
+            tabs
+                .environment(\.paneControl, leftPane)
+                .frame(maxWidth: .infinity)
+            if isSplit, let companion {
+                Divider().ignoresSafeArea()
+                companionPane(companion)
+                    .environment(\.paneControl, rightPane(companion))
+                    .frame(maxWidth: .infinity)
+                    .transition(.move(edge: .trailing))
+            }
+        }
+        .animation(.default, value: isSplit)
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
+        .focusedSceneValue(\.characterTabBinding, leftTab)
+        .focusedSceneValue(\.availableCharacterTabs, availableTabs)
+        .onChange(of: tab) {
+            // La sélection de la Structure ne suit pas d'un onglet à l'autre.
+            editor.clearSelection()
+        }
+        .onChange(of: companion) { editor.clearSelection() }
+        .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { notification in
+            if Self.containsSheetEdit(notification, owner: sheet?.character?.persistentModelID ?? sheet?.template?.persistentModelID) {
+                onEdit()
+            }
+        }
+    }
+
+    /// Onglets du système ; côte à côte, leur barre s'efface devant les titres-menus des panneaux.
+    private var tabs: some View {
+        TabView(selection: leftTab) {
             Tab(CharacterTab.sheet.title, systemImage: CharacterTab.sheet.symbol, value: CharacterTab.sheet) {
                 pane(.sheet)
             }
@@ -69,24 +107,74 @@ struct SheetScreen: View {
                 Tab(CharacterTab.journal.title, systemImage: CharacterTab.journal.symbol, value: CharacterTab.journal) {
                     TabStack {
                         JournalScreen(character: character)
-                            .navigationTitle(title)
+                            .paneTitle(title)
                             .inlineNavigationTitle()
                             .closesToLibrary(onClose, title: title)
+                            .hidesTabBar(isSplit)
                     }
                 }
             }
         }
-        .focusedSceneValue(\.characterTabBinding, $tab)
-        .focusedSceneValue(\.availableCharacterTabs, availableTabs)
-        .onChange(of: tab) {
-            // La sélection de la Structure ne suit pas d'un onglet à l'autre.
-            editor.clearSelection()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { notification in
-            if Self.containsSheetEdit(notification, owner: sheet?.character?.persistentModelID ?? sheet?.template?.persistentModelID) {
-                onEdit()
+    }
+
+    // MARK: Côte à côte
+
+    /// Deux onglets côte à côte : sur iPad, quand la largeur laisse à chacun la place d'une fiche.
+    private var canSplit: Bool {
+        #if os(iOS)
+        sizeClass == .regular && width >= 1000
+        #else
+        false
+        #endif
+    }
+
+    private var isSplit: Bool { companion != nil && companion != tab && canSplit }
+
+    /// Onglet de gauche ; choisir celui de droite échange les deux panneaux.
+    private var leftTab: Binding<CharacterTab> {
+        Binding(get: { tab }, set: { new in
+            if isSplit, new == companion { companion = tab }
+            tab = new
+        })
+    }
+
+    private var leftPane: PaneControl {
+        PaneControl(
+            tabs: availableTabs, current: tab, isSplit: isSplit, canSplit: canSplit,
+            select: { leftTab.wrappedValue = $0 },
+            openBeside: { companion = $0 },
+            close: {
+                if let companion { tab = companion }
+                companion = nil
+            }
+        )
+    }
+
+    private func rightPane(_ current: CharacterTab) -> PaneControl {
+        PaneControl(
+            tabs: availableTabs, current: current, isSplit: true, canSplit: canSplit,
+            select: { new in
+                if new == tab { tab = current }
+                companion = new
+            },
+            openBeside: { _ in },
+            close: { companion = nil }
+        )
+    }
+
+    /// Panneau de droite : sa pile, sa barre et son mode.
+    @ViewBuilder
+    private func companionPane(_ kind: CharacterTab) -> some View {
+        NavigationStack {
+            if kind == .journal, let character = sheet?.character {
+                JournalScreen(character: character)
+                    .paneTitle(title)
+                    .inlineNavigationTitle()
+            } else {
+                SheetView(title: title, sheet: sheet, tab: kind, editor: editor)
             }
         }
+        .id(kind)
     }
 
     /// Onglets proposés : le journal appartient au personnage, un template n'en a pas.
@@ -98,6 +186,7 @@ struct SheetScreen: View {
         TabStack {
             SheetView(title: title, sheet: sheet, tab: kind, editor: editor, isActive: tab == kind)
                 .closesToLibrary(onClose, title: title)
+                .hidesTabBar(isSplit)
         }
     }
 
@@ -113,6 +202,15 @@ extension View {
     /// Sur Mac, la pile a son bouton de retour.
     fileprivate func closesToLibrary(_ onClose: (() -> Void)?, title: String) -> some View {
         modifier(LibraryReturn(onClose: onClose, title: title))
+    }
+
+    /// Côte à côte, les onglets du système laissent la place aux titres-menus des panneaux.
+    fileprivate func hidesTabBar(_ hidden: Bool) -> some View {
+        #if os(iOS)
+        toolbarVisibility(hidden ? .hidden : .automatic, for: .tabBar)
+        #else
+        self
+        #endif
     }
 }
 
