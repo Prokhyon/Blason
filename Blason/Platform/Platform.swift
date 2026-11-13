@@ -47,6 +47,15 @@ extension Color {
         #endif
     }()
 
+    /// Fond d'une page où l'on écrit (journal) : blanc, noir en sombre.
+    static let writingBackground: Color = {
+        #if canImport(UIKit)
+        Color(uiColor: .systemBackground)
+        #else
+        Color(nsColor: .textBackgroundColor)
+        #endif
+    }()
+
     /// Remplissage discret (zones de saisie, pastilles).
     static let tertiaryFill: Color = {
         #if canImport(UIKit)
@@ -125,9 +134,11 @@ extension View {
     }
 
     /// Fiche ouverte en plein écran : elle grandit depuis sa carte et y retourne en se fermant (iOS).
+    /// Seul le bouton retour la ferme : le glissement vers le bas du zoom se déclenchait par mégarde.
     func zoomTransition(sourceID: some Hashable, in namespace: Namespace.ID) -> some View {
         #if os(iOS)
         navigationTransition(.zoom(sourceID: sourceID, in: namespace))
+            .interactiveDismissDisabled()
         #else
         self
         #endif

@@ -51,7 +51,8 @@ struct JournalSessionEditor: View {
     var body: some View {
         JournalTextView(controller: controller, initialText: initialText, allowsScribble: allowsScribble,
                         header: AnyView(header))
-        .background(Color.secondaryGroupedBackground)
+        // Le fond passe sous les barres et sous le clavier, comme le texte.
+        .background { Color.writingBackground.ignoresSafeArea() }
         // Au-dessus du récit (qui garde une marge en bas pour qu'on puisse y écrire), et du clavier.
         .overlay(alignment: .bottom) { toolbox }
         .background { shortcuts }
@@ -109,6 +110,11 @@ struct JournalSessionEditor: View {
             }
             if defaults.bool(forKey: "demoHandwriting") {
                 drawing = DrawingRequest(kind: .handwriting, title: "", isListed: false)
+            }
+            // -demoFocus YES : curseur dans le récit (clavier).
+            if defaults.bool(forKey: "demoFocus") {
+                try? await Task.sleep(for: .seconds(1))
+                controller.host?.journalFocus()
             }
             if defaults.bool(forKey: "demoCite") {
                 try? await Task.sleep(for: .seconds(1))

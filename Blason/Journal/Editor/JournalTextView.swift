@@ -17,11 +17,24 @@ struct JournalTextView: View {
     /// En-tête posé au-dessus du récit, qui défile avec lui (iOS) ; sur Mac, il reste au-dessus.
     var header: AnyView?
 
+    #if canImport(UIKit)
+    /// Zone sûre (sous les barres, au-dessus du clavier), dans la fenêtre.
+    @State private var safeFrame: CGRect = .zero
+    #endif
+
     var body: some View {
         #if canImport(UIKit)
-        JournalTextRepresentable(controller: controller, initialText: initialText, allowsScribble: allowsScribble,
-                                 header: header)
-            .accessibilityLabel(Text(placeholder))
+        // Bord à bord : le texte passe sous les barres et sous le clavier ; les marges du système
+        // deviennent celles du défilement.
+        // La vue de texte compare elle-même la zone sûre à son propre cadre.
+        Color.clear
+            .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { safeFrame = $0 }
+            .overlay {
+                JournalTextRepresentable(controller: controller, initialText: initialText, allowsScribble: allowsScribble,
+                                         header: header, safeFrame: safeFrame)
+                    .accessibilityLabel(Text(placeholder))
+                    .ignoresSafeArea()
+            }
         #else
         VStack(spacing: 0) {
             if let header {
@@ -49,6 +62,7 @@ private struct JournalTextRepresentable: UIViewRepresentable {
     let initialText: JournalText
     let allowsScribble: Bool
     let header: AnyView?
+    let safeFrame: CGRect
 
     func makeCoordinator() -> Coordinator { Coordinator(controller: controller) }
 
@@ -59,6 +73,7 @@ private struct JournalTextRepresentable: UIViewRepresentable {
         view.allowsEditingTextAttributes = false
         view.alwaysBounceVertical = true
         view.keyboardDismissMode = .interactive
+        view.contentInsetAdjustmentBehavior = .never
         view.adjustsFontForContentSizeCategory = false
         view.textContainer.lineFragmentPadding = 0
         view.attributedText = controller.initialText(for: initialText)
@@ -87,6 +102,7 @@ private struct JournalTextRepresentable: UIViewRepresentable {
 
     func updateUIView(_ view: JournalUITextView, context: Context) {
         context.coordinator.allowsScribble = allowsScribble
+        view.safeFrame = safeFrame
         if let header, let host = context.coordinator.header {
             host.rootView = measured(header, in: view)
         }
@@ -172,6 +188,25 @@ final class JournalUITextView: UITextView, JournalTextHost {
         didSet { if headerHeight != oldValue { setNeedsLayout() } }
     }
 
+    /// Zone sûre dans la fenêtre : barres et clavier passent par-dessus le texte, le défilement
+    /// s'arrête à leur bord.
+    var safeFrame: CGRect = .zero {
+        didSet { if safeFrame != oldValue { setNeedsLayout() } }
+    }
+
+    private func applyOuterInsets() {
+        guard window != nil, !safeFrame.isEmpty else { return }
+        let frame = convert(bounds, to: nil)
+        let insets = UIEdgeInsets(top: max(0, safeFrame.minY - frame.minY), left: 0,
+                                  bottom: max(0, frame.maxY - safeFrame.maxY), right: 0)
+        guard insets != contentInset else { return }
+        // En haut du texte, on y reste : la session s'affiche depuis son en-tête.
+        let atTop = contentOffset.y <= -contentInset.top + 1
+        contentInset = insets
+        verticalScrollIndicatorInsets = insets
+        if atTop { contentOffset.y = -insets.top }
+    }
+
     override var undoManager: UndoManager? { journalUndo ?? super.undoManager }
 
     override func layoutSubviews() {
@@ -184,6 +219,7 @@ final class JournalUITextView: UITextView, JournalTextHost {
         }
         let inset = UIEdgeInsets(top: top, left: side, bottom: 120, right: side)
         if textContainerInset != inset { textContainerInset = inset }
+        applyOuterInsets()
     }
 
     /// Les gestes du texte (curseur, sélection, citations) ne partent pas de l'en-tête.

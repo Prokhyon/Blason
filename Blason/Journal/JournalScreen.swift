@@ -101,7 +101,8 @@ struct JournalScreen: View {
 
     // MARK: Grand écran
 
-    /// La session occupe toute la largeur ; les panneaux flottent par-dessus, sur les côtés.
+    /// La session occupe toute la largeur ; les panneaux flottent par-dessus, sur les côtés, sous la
+    /// rangée des sessions (elle reste visible, avec le bouton qui les ouvre et les ferme).
     private func regular(_ journal: Journal) -> some View {
         ZStack {
             Group {
@@ -114,7 +115,6 @@ struct JournalScreen: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .safeAreaBar(edge: .top, spacing: 0) { sessionBar(journal) }
         .overlay(alignment: .leading) {
             if showsSessions {
                 SessionSidebar(journal: journal, selection: sidebarSelection, query: $query,
@@ -130,6 +130,8 @@ struct JournalScreen: View {
                     .transition(.move(edge: .trailing).combined(with: .opacity))
             }
         }
+        // Après les panneaux : ils s'arrêtent sous la rangée au lieu de la couvrir.
+        .safeAreaBar(edge: .top, spacing: 0) { sessionBar(journal) }
     }
 
     /// Choisir une session dans le panneau la montre et range le panneau.
@@ -153,7 +155,7 @@ struct JournalScreen: View {
             Button("Session du jour") { newSession(in: journal) }
                 .buttonStyle(.borderedProminent)
         }
-        .background(Color.secondaryGroupedBackground)
+        .background { Color.writingBackground.ignoresSafeArea() }
     }
 
     // MARK: iPhone
@@ -229,6 +231,8 @@ struct JournalScreen: View {
         if number > 0, let session = journal.sortedSessions.first(where: { $0.number == number }) {
             selected = session
         }
+        // -demoSessions YES : panneau des sessions ouvert.
+        if defaults.bool(forKey: "demoSessions") { showsSessions = true }
         if let raw = defaults.string(forKey: "demoLibrary"), let tab = JournalTab(rawValue: raw) {
             libraryTab = tab
             showsLibrary = true

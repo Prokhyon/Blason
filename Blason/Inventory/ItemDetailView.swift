@@ -38,7 +38,7 @@ struct ItemDetailView: View {
                 form
             }
         }
-        .background(Color.groupedBackground)
+        .background { Color.groupedBackground.ignoresSafeArea() }
         .task(id: item.persistentModelID) {
             // Objet tout juste créé : le curseur va dans le nom.
             guard canEdit, item.name.isEmpty, !item.isMoney else { return }

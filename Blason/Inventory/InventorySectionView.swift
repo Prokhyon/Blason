@@ -15,18 +15,14 @@ extension EnvironmentValues {
 }
 
 /// Emplacements de la Besace, en cartes, sur deux colonnes quand la place le permet (onglet
-/// Inventaire). Fortune et charge sont dans la rangée sous les onglets (`InventoryTabView`).
+/// Inventaire). Fortune et charge sont sous les onglets (`InventoryTabView`).
 struct InventoryBoard: View {
     let section: SheetSection
-    /// Position de chaque emplacement dans le contenu : la rangée suit celui du haut.
-    var onSlotFrame: (PersistentIdentifier, CGRect) -> Void = { _, _ in }
 
     @Environment(\.sheetMode) private var mode
     @Environment(\.sheetTheme) private var theme
     @Environment(\.modelContext) private var context
     @State private var width: CGFloat = 0
-
-    static let coordinateSpace = "inventaire"
 
     var body: some View {
         if let inventory = section.inventory {
@@ -45,7 +41,6 @@ struct InventoryBoard: View {
                     column(slots, inventory: inventory, addsSlot: mode == .fill)
                 }
             }
-            .coordinateSpace(.named(Self.coordinateSpace))
             .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
             // En Structure, toucher la Besace sélectionne la section.
             .allowsHitTesting(mode != .structure)
@@ -57,10 +52,6 @@ struct InventoryBoard: View {
             ForEach(slots) { slot in
                 theme.sectionFrame(SectionFrameConfiguration(
                     title: nil, content: AnyView(SlotView(slot: slot, inventory: inventory))))
-                    .id(slot.persistentModelID)
-                    .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(Self.coordinateSpace)) } action: {
-                        onSlotFrame(slot.persistentModelID, $0)
-                    }
             }
             if addsSlot {
                 DashedAddZone {

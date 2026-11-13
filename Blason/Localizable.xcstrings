@@ -714,6 +714,9 @@
     "Groupe sans titre" : {
 
     },
+    "Hors charge" : {
+
+    },
     "iCloud à reconnecter" : {
 
     },
@@ -952,9 +955,6 @@
     "Natif" : {
 
     },
-    "Ne compte pas dans la charge" : {
-
-    },
     "Nom" : {
 
     },
@@ -1013,6 +1013,9 @@
 
     },
     "Nouvelle monnaie" : {
+
+    },
+    "Nouvelle session" : {
 
     },
     "Numéro %lld" : {
