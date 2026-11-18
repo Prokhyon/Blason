@@ -306,6 +306,13 @@ private struct CellView: View {
     }
 
     var body: some View {
+        content
+            // En Jouer, appui long sur une valeur non vivante : bulle de retouche.
+            .playRetouch(.cell(cell, column: column, editable: editable))
+    }
+
+    @ViewBuilder
+    private var content: some View {
         switch column.kind {
         case .text:
             if editable {

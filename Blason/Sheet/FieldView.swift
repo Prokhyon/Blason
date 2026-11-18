@@ -26,14 +26,18 @@ struct FieldView: View {
     }
 
     var body: some View {
-        if field.kind == .spacer {
-            SpacerFieldView()
-        } else if valueOnly {
-            value
-                .accessibilityElement(children: readsAsOneElement ? .combine : .contain)
-        } else {
-            standard
+        Group {
+            if field.kind == .spacer {
+                SpacerFieldView()
+            } else if valueOnly {
+                value
+                    .accessibilityElement(children: readsAsOneElement ? .combine : .contain)
+            } else {
+                standard
+            }
         }
+        // En Jouer, appui long sur une valeur non vivante : bulle de retouche.
+        .playRetouch(.field(field, editable: editable))
     }
 
     private var standard: some View {

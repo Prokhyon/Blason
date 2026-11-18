@@ -123,6 +123,9 @@
     "^[%lld page](inflect: true)" : {
 
     },
+    "+%@" : {
+
+    },
     "=BESACE.limite" : {
 
     },
@@ -130,6 +133,9 @@
 
     },
     "=pct/2" : {
+
+    },
+    "−%@" : {
 
     },
     "⌘ ou ⇧ + toucher : sélection multiple" : {
@@ -144,6 +150,12 @@
     "1 personnage" : {
 
     },
+    "½" : {
+
+    },
+    "⅓" : {
+
+    },
     "À gauche" : {
 
     },
@@ -154,6 +166,9 @@
 
     },
     "Affichage" : {
+
+    },
+    "Afficher à côté" : {
 
     },
     "Afficher l'inspecteur" : {
@@ -171,7 +186,13 @@
     "Ajouter" : {
 
     },
+    "Ajouter %@" : {
+
+    },
     "Ajouter %lld" : {
+
+    },
+    "Ajouter 1" : {
 
     },
     "Ajouter à la sélection" : {
@@ -294,6 +315,9 @@
     "Augmenter %@" : {
 
     },
+    "Auto" : {
+
+    },
     "Autre" : {
 
     },
@@ -373,6 +397,9 @@
 
     },
     "Changer d'image" : {
+
+    },
+    "Chaque champ choisit sa liste." : {
 
     },
     "Chaque ligne vaut jusqu'à son seuil compris. Un résultat est un nombre (2) ou un texte (+1d4). « Au-delà » : au-dessus du dernier seuil ; vide, le champ reste vide." : {
@@ -480,6 +507,9 @@
     "Correspondances" : {
 
     },
+    "Côté" : {
+
+    },
     "Couleur" : {
 
     },
@@ -558,6 +588,12 @@
     "Détails" : {
 
     },
+    "Deux listes lues rang par rang : chaque champ de gauche à côté de celui de droite. Un « Espace » laisse une case vide." : {
+
+    },
+    "Deux listes lues rang par rang : la valeur de gauche en grand, celle de droite en petit dessous." : {
+
+    },
     "Diminuer %@" : {
 
     },
@@ -580,6 +616,9 @@
 
     },
     "Documents" : {
+
+    },
+    "Droite" : {
 
     },
     "Dupliquer" : {
@@ -639,6 +678,9 @@
     "Équiper" : {
 
     },
+    "Espace" : {
+
+    },
     "État" : {
 
     },
@@ -669,6 +711,9 @@
     "Fermer" : {
 
     },
+    "Fermer ce panneau" : {
+
+    },
     "Fermer la fiche de l'objet" : {
 
     },
@@ -694,6 +739,9 @@
 
     },
     "Gains" : {
+
+    },
+    "Gauche" : {
 
     },
     "Genre" : {
@@ -798,6 +846,9 @@
     "La valeur est relative à la plus petite monnaie (cuivre = 1, argent = 10, or = 100). La fortune s'affiche convertie, sans changer les pièces." : {
 
     },
+    "Largeur" : {
+
+    },
     "Largeur de la colonne %lld : %lld" : {
       "localizations" : {
         "fr" : {
@@ -836,6 +887,9 @@
 
     },
     "Le template s'ouvre ensuite en mode Structure pour construire la fiche." : {
+
+    },
+    "Les champs se suivent, libellé au-dessus, chacun à sa largeur (réglée dans le champ) ; à la ligne quand elle est pleine." : {
 
     },
     "Les compteurs de cette monnaie restent dans la Besace, comme des objets ordinaires." : {
@@ -887,6 +941,9 @@
 
     },
     "Liste de tâches" : {
+
+    },
+    "Listes : %lld" : {
 
     },
     "Listes côte à côte" : {
@@ -1036,6 +1093,9 @@
     "OK" : {
 
     },
+    "Onglet" : {
+
+    },
     "Options" : {
 
     },
@@ -1069,6 +1129,9 @@
     "Pages" : {
 
     },
+    "Paires" : {
+
+    },
     "Palier" : {
 
     },
@@ -1099,10 +1162,16 @@
     "Piste numérotée" : {
 
     },
+    "Place" : {
+
+    },
     "Placement" : {
 
     },
     "Plan de l'auberge, carte du port…" : {
+
+    },
+    "Pleine" : {
 
     },
     "Plus" : {
@@ -1241,13 +1310,28 @@
     "Retirer" : {
 
     },
+    "Retirer %@" : {
+
+    },
+    "Retirer 1" : {
+
+    },
     "Retirer de la sélection" : {
 
     },
     "Retirer un %@" : {
 
     },
+    "Retouche par appui long" : {
+
+    },
+    "Retoucher" : {
+
+    },
     "Retour" : {
+
+    },
+    "Revenir au calcul (%@)" : {
 
     },
     "rien" : {
@@ -1314,6 +1398,9 @@
 
     },
     "Souligné" : {
+
+    },
+    "Sous la valeur" : {
 
     },
     "Sous-en-tête" : {
@@ -1440,6 +1527,12 @@
 
     },
     "Toutes les pages à la suite" : {
+
+    },
+    "Tuile" : {
+
+    },
+    "Tuiles" : {
 
     },
     "Type" : {

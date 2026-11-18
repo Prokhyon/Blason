@@ -27,6 +27,8 @@ struct SheetView: View {
     /// pour que tout élément puisse remonter au-dessus d'elle.
     @State private var inspectorSheetHeight: CGFloat = 0
     @AppStorage(SheetLayout.storageKey) private var layout: SheetLayout = .tabs
+    /// Retouche d'une valeur en Jouer, par appui long (préférence de l'appareil).
+    @AppStorage(PlayRetouch.storageKey) private var retouch = true
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.modelContext) private var context
     @Environment(\.paneControl) private var paneControl
@@ -294,6 +296,9 @@ struct SheetView: View {
                     Button("Éditer la structure", systemImage: "square.stack.3d.up") {
                         mode = .structure
                     }
+                }
+                if mode == .play {
+                    Toggle("Retouche par appui long", systemImage: "hand.tap", isOn: $retouch)
                 }
             }
             displayCommands
