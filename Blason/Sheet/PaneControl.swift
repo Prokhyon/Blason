@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Panneau de l'écran d'un personnage (SPEC §5.17) : son onglet et, quand deux onglets sont
 /// côte à côte, de quoi en changer, ouvrir l'autre panneau ou se fermer.
-struct PaneControl {
+struct PaneControl: Equatable {
     /// Onglets proposés (le journal pour un personnage seulement).
     let tabs: [CharacterTab]
     /// Onglet affiché dans ce panneau.
@@ -14,6 +14,12 @@ struct PaneControl {
     let select: @MainActor (CharacterTab) -> Void
     let openBeside: @MainActor (CharacterTab) -> Void
     let close: @MainActor () -> Void
+
+    /// Égalité par les données : les fonctions, recréées à chaque affichage, font la même chose.
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.tabs == rhs.tabs && lhs.current == rhs.current
+            && lhs.isSplit == rhs.isSplit && lhs.canSplit == rhs.canSplit
+    }
 
     /// Onglets qu'on peut ouvrir à côté de celui-ci.
     var others: [CharacterTab] { tabs.filter { $0 != current } }
@@ -78,8 +84,12 @@ struct OpenBesideMenu: View {
 // MARK: - Panneau flottant
 
 /// Inspecteur (Structure) ou fiche d'objet (Remplir, Jouer), posé par l'onglet sur son contenu.
-struct SheetSidePanel {
+struct SheetSidePanel: Equatable {
+    /// Ce que montre le panneau (l'inspecteur, tel objet) : il ne change de contenu qu'avec lui.
+    let id: AnyHashable
     let view: AnyView
+
+    static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
 }
 
 extension EnvironmentValues {

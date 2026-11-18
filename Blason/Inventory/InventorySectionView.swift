@@ -6,8 +6,12 @@ import SheetKit
 // Interface provisoire, en attendant la refonte de l'interface (après la V2).
 
 /// Ouvre la fiche d'un objet dans le panneau latéral (feuille sur iPhone).
-struct InventoryItemOpener {
+struct InventoryItemOpener: Equatable {
     let open: @MainActor (InventoryItem) -> Void
+
+    /// Toujours égal : la fonction, recréée à chaque affichage, fait la même chose ; sans cela,
+    /// la valeur semblait nouvelle et tout ce qui est dessous était mis à jour.
+    static func == (lhs: Self, rhs: Self) -> Bool { true }
 }
 
 extension EnvironmentValues {

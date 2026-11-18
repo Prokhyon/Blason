@@ -4,24 +4,36 @@ import UniformTypeIdentifiers
 import SheetKit
 
 /// Fichier JSON à partager (Fichiers, AirDrop, Mail…), écrit au moment du partage.
-struct SheetExportFile: Transferable {
-    let document: SheetDocument
+///
+/// Le document est construit au moment de partager, pas à l'affichage : le menu contextuel de chaque
+/// carte de la bibliothèque le construisait à chaque affichage de la grille, ce qui lisait toute la
+/// fiche (la bibliothèque se redessinait alors à chaque frappe dans une fiche ouverte).
+struct SheetExportFile: Transferable, @unchecked Sendable {
+    /// Titre de l'aperçu de partage.
+    let title: String
+    private let makeDocument: @MainActor () -> SheetDocument
 
     init(template: SheetTemplate) {
-        document = SheetDocument(template: template)
+        title = template.name
+        // Modèle SwiftData lu sur le fil principal seulement (makeDocument est @MainActor).
+        nonisolated(unsafe) let template = template
+        makeDocument = { SheetDocument(template: template) }
     }
 
     init(character: PlayerCharacter) {
-        document = SheetDocument(character: character)
+        title = character.displayName
+        nonisolated(unsafe) let character = character
+        makeDocument = { SheetDocument(character: character) }
     }
 
     static var transferRepresentation: some TransferRepresentation {
         FileRepresentation(exportedContentType: .json) { file in
+            let document = await file.makeDocument()
             let folder = FileManager.default.temporaryDirectory
                 .appendingPathComponent("Export-\(UUID().uuidString)", isDirectory: true)
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-            let url = folder.appendingPathComponent(file.document.suggestedFilename)
-            try file.document.jsonData().write(to: url, options: .atomic)
+            let url = folder.appendingPathComponent(document.suggestedFilename)
+            try document.jsonData().write(to: url, options: .atomic)
             return SentTransferredFile(url)
         }
     }
@@ -32,7 +44,7 @@ struct ExportButton: View {
     let file: SheetExportFile
 
     var body: some View {
-        ShareLink(item: file, preview: SharePreview(file.document.title)) {
+        ShareLink(item: file, preview: SharePreview(file.title)) {
             Label("Exporter…", systemImage: "square.and.arrow.up")
         }
     }

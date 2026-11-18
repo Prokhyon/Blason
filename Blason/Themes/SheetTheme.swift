@@ -12,7 +12,16 @@ import SheetKit
 // (voir `PaperTheme.swift`), puis s'inscrit dans `SheetThemes.all`. Les vues de la fiche ne
 // connaissent que `SheetTheme` : elles ne changent pas quand un thème s'ajoute.
 
-struct SheetTheme {
+struct SheetTheme: Equatable {
+    /// Apparence dont le thème est issu : deux thèmes de même apparence sont égaux. Sans cela,
+    /// les fonctions qu'il contient (fond, cadre) le rendaient « nouveau » à chaque affichage de la
+    /// fiche, et tout ce qui le lit (dont chaque champ de saisie) était mis à jour.
+    var identity = SheetAppearance.standard
+
+    static func == (lhs: SheetTheme, rhs: SheetTheme) -> Bool {
+        lhs.identity == rhs.identity
+    }
+
     // MARK: Couleurs
 
     /// Mise en avant : valeur courante d'une ressource, case cochée, boutons de la fiche.

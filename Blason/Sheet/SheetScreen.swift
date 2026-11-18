@@ -18,6 +18,9 @@ struct SheetScreen: View {
     /// Onglet du panneau de droite quand deux onglets sont côte à côte (iPad assez large).
     @State private var companion: CharacterTab?
     @State private var width: CGFloat = 0
+    /// Dernière mise à jour de la date de modification, et modification depuis non signalée.
+    @State private var lastEditNotice: Date?
+    @State private var hasPendingEdit = false
     @State private var editor: StructureEditor
     @Environment(\.horizontalSizeClass) private var sizeClass
 
@@ -89,9 +92,10 @@ struct SheetScreen: View {
         .onChange(of: companion) { editor.clearSelection() }
         .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { notification in
             if Self.containsSheetEdit(notification, owner: sheet?.character?.persistentModelID ?? sheet?.template?.persistentModelID) {
-                onEdit()
+                noteEdit()
             }
         }
+        .onDisappear { flushEdit() }
     }
 
     /// Onglets du système ; côte à côte, leur barre s'efface devant les titres-menus des panneaux.
@@ -175,6 +179,27 @@ struct SheetScreen: View {
             }
         }
         .id(kind)
+    }
+
+    // MARK: Date de modification
+
+    /// Date de modification mise à jour au plus une fois par minute, et en quittant la fiche :
+    /// la changer redessine la bibliothèque et cet écran ; à chaque enregistrement (pendant la
+    /// saisie, à chaque frappe), cela suffisait à rendre la saisie lente.
+    private func noteEdit() {
+        if let lastEditNotice, Date().timeIntervalSince(lastEditNotice) < 60 {
+            hasPendingEdit = true
+        } else {
+            lastEditNotice = Date()
+            hasPendingEdit = false
+            onEdit()
+        }
+    }
+
+    private func flushEdit() {
+        guard hasPendingEdit else { return }
+        hasPendingEdit = false
+        onEdit()
     }
 
     /// Onglets proposés : le journal appartient au personnage, un template n'en a pas.

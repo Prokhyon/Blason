@@ -49,7 +49,9 @@ struct FieldView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             } else {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                // Alignement sur la ligne de base en lecture seulement : celle d'un champ de saisie
+                // oblige à mettre son texte en page à chaque mesure (très coûteux en Remplir).
+                HStack(alignment: editable ? .center : .firstTextBaseline, spacing: 8) {
                     if !hideLabel { label }
                     Spacer(minLength: 4)
                     value
@@ -343,13 +345,28 @@ enum SheetFormat {
 /// Saisie numérique compacte. La valeur suit la frappe : les calculs qui en dépendent se mettent
 /// à jour aussitôt. Un texte qui n'est pas (encore) un nombre, comme « - », laisse la valeur telle quelle ;
 /// le texte est remis en forme en quittant le champ.
+///
+/// La valeur arrive en valeur simple (lue par la vue parente), pas en `Binding` : un lien vers un
+/// modèle SwiftData passait pour modifié à chaque enregistrement de la fiche, et chaque champ
+/// numérique de la page remettait à jour son `UITextField` à chaque frappe ailleurs.
 struct NumberField: View {
-    @Binding var value: Double?
+    let value: Double?
+    private let setValue: (Double?) -> Void
     var integer = true
     var prompt: String?
     var width: CGFloat = 56
     /// Nom lu par VoiceOver (le libellé du champ, de la colonne…).
     var accessibilityName: String = ""
+
+    init(value: Binding<Double?>, integer: Bool = true, prompt: String? = nil, width: CGFloat = 56,
+         accessibilityName: String = "") {
+        self.value = value.wrappedValue
+        self.setValue = { value.wrappedValue = $0 }
+        self.integer = integer
+        self.prompt = prompt
+        self.width = width
+        self.accessibilityName = accessibilityName
+    }
 
     @State private var text = ""
     @FocusState private var isFocused: Bool
@@ -383,7 +400,7 @@ struct NumberField: View {
                 } else {
                     return
                 }
-                if parsed != value { value = parsed }
+                if parsed != value { setValue(parsed) }
             }
     }
 

@@ -61,7 +61,7 @@ struct SheetView: View {
         // Le panneau latéral flotte par-dessus la page, sous la rangée des pages : la page garde
         // sa largeur (et sa disposition) en ouvrant l'inspecteur.
         tabContent
-            .environment(\.sheetSidePanel, showsSidePanel ? SheetSidePanel(view: AnyView(sidePanel)) : nil)
+            .environment(\.sheetSidePanel, showsSidePanel ? SheetSidePanel(id: sidePanelID, view: AnyView(sidePanel)) : nil)
         .paneTitle(title)
         .inlineNavigationTitle()
         .toolbar { toolbar }
@@ -104,12 +104,27 @@ struct SheetView: View {
                 mode = cycle[index % cycle.count]
             }
         }
+        // -demoType NOM : en Remplir, tape un caractère toutes les 120 ms dans ce champ (mesures).
+        .task(id: mode) {
+            guard mode == .fill, isActive, let code = UserDefaults.standard.string(forKey: "demoType"),
+                  let field = sheet?.field(code: code) ?? sheet?.allFields.first(where: { $0.label == code }) else { return }
+            for index in 0..<200 {
+                try? await Task.sleep(for: .milliseconds(120))
+                if Task.isCancelled { return }
+                field.textValue = (field.textValue ?? "") + (index % 8 == 7 ? " " : "a")
+            }
+        }
         #endif
         .onChange(of: editor.primary) { _, selection in
             // L'inspecteur suit la sélection : il s'ouvre en touchant un élément, se range en
             // désélectionnant (il ne cache pas la page tant qu'on n'en a pas besoin).
             if isActive { showsInspector = selection != nil }
         }
+    }
+
+    /// Identité du panneau : l'inspecteur (il suit lui-même la sélection) ou l'objet ouvert.
+    private var sidePanelID: AnyHashable {
+        mode == .structure ? AnyHashable("inspector") : AnyHashable(openedItem?.persistentModelID)
     }
 
     /// Inspecteur (Structure) ou fiche de l'objet ouvert (Remplir, Jouer).

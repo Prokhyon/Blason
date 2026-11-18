@@ -25,7 +25,9 @@ enum SheetThemes {
     /// Thème d'une apparence ; un identifiant inconnu (version plus récente) donne le thème natif.
     static func theme(for appearance: SheetAppearance) -> SheetTheme {
         let descriptor = all.first { $0.id == appearance.themeID } ?? all[0]
-        return descriptor.make(ThemePalette.color(appearance.colorID))
+        var theme = descriptor.make(ThemePalette.color(appearance.colorID))
+        theme.identity = appearance
+        return theme
     }
 
     static func descriptor(_ id: String) -> SheetThemeDescriptor? {
