@@ -410,17 +410,28 @@ struct NumberField: View {
 }
 
 /// Case à cocher.
+///
+/// Reçoit une valeur et non un `Binding` (voir `NumberField`) : un `Binding(get:set:)` est relu à
+/// chaque changement de la fiche, ce qui redessinait toutes les cases de la page à chaque frappe.
 struct CheckboxButton: View {
-    @Binding var isOn: Bool
+    let isOn: Bool
+    private let setOn: (Bool) -> Void
     let enabled: Bool
     /// Nom lu par VoiceOver (« Esquive, Exp. »).
-    var accessibilityName: String = ""
+    var accessibilityName: String
+
+    init(isOn: Binding<Bool>, enabled: Bool, accessibilityName: String = "") {
+        self.isOn = isOn.wrappedValue
+        self.setOn = { isOn.wrappedValue = $0 }
+        self.enabled = enabled
+        self.accessibilityName = accessibilityName
+    }
 
     @Environment(\.sheetTheme) private var theme
 
     var body: some View {
         Button {
-            isOn.toggle()
+            setOn(!isOn)
         } label: {
             theme.checkbox(isOn)
         }

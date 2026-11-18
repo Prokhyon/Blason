@@ -74,6 +74,16 @@ private struct TableGrid: View {
     @Environment(\.sheetMode) private var mode
     @Environment(\.structureEditor) private var editor
     @Environment(\.modelContext) private var context
+    /// Largeur d'une saisie de nombre (voir `CellView`), suivant la taille du texte.
+    @ScaledMetric(relativeTo: .body) private var numberWidth: CGFloat = 60
+
+    private func layoutColumn(_ column: SheetTableColumn) -> TableLayout.Column {
+        switch column.kind {
+        case .text: TableLayout.Column(flexible: true, trailing: false)
+        case .number, .percentage, .formula: TableLayout.Column(flexible: false, trailing: true, minimumWidth: numberWidth)
+        case .checkbox: TableLayout.Column(flexible: false, trailing: true)
+        }
+    }
 
     /// En Structure, les lignes telles qu'elles sont ; sinon les spécialités sous leur catégorie.
     private func lines(of group: SheetTableGroup) -> [TableLine] {
@@ -83,8 +93,8 @@ private struct TableGrid: View {
     }
 
     var body: some View {
-        Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 6) {
-            GridRow {
+        TableLayout(columns: columns.map(layoutColumn)) {
+            Group {
                 Text(section.labelColumnTitle)
                 ForEach(columns) { column in
                     Group {
@@ -95,7 +105,6 @@ private struct TableGrid: View {
                         }
                     }
                     .structureItem(.column(column))
-                    .gridColumnAlignment(column.kind == .text ? .leading : .trailing)
                 }
             }
             .font(.caption)
@@ -105,18 +114,17 @@ private struct TableGrid: View {
                 if !group.title.isEmpty || group.hasValue || mode == .structure {
                     GroupHeader(group: group)
                         .structureItem(.group(group))
-                        .gridCellColumns(columns.count + 1)
                         .padding(.top, 6)
+                        .tableSpan()
                 }
                 ForEach(lines(of: group)) { line in
                     switch line {
                     case .row(let row, let indented):
-                        GridRow {
+                        Group {
                             RowLabel(row: row, indented: indented)
                             ForEach(columns) { column in
                                 if let cell = row.cell(for: column) {
                                     CellView(cell: cell, column: column)
-                                        .gridColumnAlignment(column.kind == .text ? .leading : .trailing)
                                 } else {
                                     Color.clear.frame(width: 1, height: 1)
                                 }
@@ -138,7 +146,7 @@ private struct TableGrid: View {
                                 .contentShape(Rectangle().inset(by: -12))
                             }
                         }
-                        .gridCellColumns(columns.count + 1)
+                        .tableSpan()
                     }
                 }
                 if mode == .fill {
@@ -149,7 +157,7 @@ private struct TableGrid: View {
                             .font(.callout)
                     }
                     .buttonStyle(.borderless)
-                    .gridCellColumns(columns.count + 1)
+                    .tableSpan()
                 } else if mode == .structure, let editor {
                     AddButtonsBar {
                         Button {
@@ -163,7 +171,7 @@ private struct TableGrid: View {
                             AddButtonLabel(title: "Coller des lignes", systemImage: "list.clipboard")
                         }
                     }
-                    .gridCellColumns(columns.count + 1)
+                    .tableSpan()
                 }
             }
         }

@@ -112,6 +112,12 @@ struct SheetView: View {
                 try? await Task.sleep(for: .milliseconds(120))
                 if Task.isCancelled { return }
                 field.textValue = (field.textValue ?? "") + (index % 8 == 7 ? " " : "a")
+                // Horodatage de chaque frappe (mesure du temps de traitement).
+                let line = Data("\(Date().timeIntervalSinceReferenceDate)\n".utf8)
+                let url = URL.temporaryDirectory.appending(path: "demoType.log")
+                if let handle = try? FileHandle(forWritingTo: url) {
+                    handle.seekToEndOfFile(); handle.write(line); try? handle.close()
+                } else { try? line.write(to: url) }
             }
         }
         #endif
