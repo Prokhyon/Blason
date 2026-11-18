@@ -84,7 +84,7 @@ struct FieldView: View {
         switch field.kind {
         case .text:
             if editable {
-                TextField("", text: text, prompt: field.hint.map(Text.init))
+                SheetTextField(text: text, prompt: field.hint)
                     .multilineTextAlignment(stacksVertically ? .leading : .trailing)
                     .inputBackground()
                     .accessibilityLabel(field.label)
@@ -94,7 +94,7 @@ struct FieldView: View {
 
         case .longText:
             if editable {
-                TextField("", text: text, prompt: field.hint.map(Text.init), axis: .vertical)
+                SheetTextField(text: text, prompt: field.hint, axis: .vertical, minLines: 3)
                     .lineLimit(3...20)
                     .inputBackground()
                     .accessibilityLabel(field.label)
@@ -125,7 +125,7 @@ struct FieldView: View {
         case .modifier:
             if editable {
                 // Une formule (table de correspondance) donne la valeur par défaut, en gris.
-                TextField("", text: modifierText, prompt: Text(engine.computedContent(field)?.promptText ?? "+0"))
+                SheetTextField(text: modifierText, prompt: engine.computedContent(field)?.promptText ?? "+0")
                     .multilineTextAlignment(.trailing)
                     .frame(minWidth: 70)
                     .fixedSize()
@@ -368,40 +368,64 @@ struct NumberField: View {
         self.accessibilityName = accessibilityName
     }
 
+    @State private var id = UUID()
+    @State private var isEditing = false
     @State private var text = ""
+    @State private var selection: TextSelection?
+    @Environment(\.inputNavigator) private var navigator
     @FocusState private var isFocused: Bool
     /// La largeur suit la taille du texte choisie dans les réglages.
     @ScaledMetric(relativeTo: .body) private var scale: CGFloat = 1
 
     var body: some View {
-        TextField("", text: $text, prompt: prompt.map(Text.init))
-            .focused($isFocused)
-            .numericKeyboard(integer: integer)
-            .multilineTextAlignment(.trailing)
-            .monospacedDigit()
-            .frame(width: width * scale)
-            .inputBackground()
-            .accessibilityLabel(accessibilityName)
-            .onAppear { text = format(value) }
-            .onChange(of: value) { _, newValue in
-                // Changement venu d'ailleurs (annuler, boutons −/+, inspecteur).
-                if !isFocused { text = format(newValue) }
+        // Le champ n'existe que pendant la saisie (voir `SheetTextField`).
+        Group {
+            if isEditing {
+                TextField("", text: $text, selection: $selection, prompt: prompt.map(Text.init))
+                    .focused($isFocused)
+                    .tabNavigation(id: id)
+                    .numericKeyboard(integer: integer)
+                    .onAppear {
+                        text = format(value)
+                        isFocused = true
+                    }
+                    .onChange(of: isFocused) { _, focused in
+                        if focused {
+                            // Tout sélectionné : la frappe remplace le nombre.
+                            selection = TextSelection(range: text.startIndex..<text.endIndex)
+                        } else {
+                            isEditing = false
+                        }
+                    }
+                    .onChange(of: text) { _, newText in
+                        // Touche Tab du clavier à l'écran : elle insère une tabulation.
+                        if newText.contains("\t") {
+                            text = newText.replacingOccurrences(of: "\t", with: "")
+                            navigator?.move(from: id, forward: true)
+                            return
+                        }
+                        guard isFocused else { return }
+                        let parsed: Double?
+                        if newText.trimmingCharacters(in: .whitespaces).isEmpty {
+                            parsed = nil
+                        } else if let number = ListImport.number(from: newText) {
+                            parsed = integer ? number.rounded() : number
+                        } else {
+                            return
+                        }
+                        if parsed != value { setValue(parsed) }
+                    }
+                    .onSubmit { isFocused = false }
+            } else {
+                IdleInputLabel(text: format(value), prompt: prompt) { isEditing = true }
             }
-            .onChange(of: isFocused) { _, focused in
-                if !focused { text = format(value) }
-            }
-            .onChange(of: text) { _, newText in
-                guard isFocused else { return }
-                let parsed: Double?
-                if newText.trimmingCharacters(in: .whitespaces).isEmpty {
-                    parsed = nil
-                } else if let number = ListImport.number(from: newText) {
-                    parsed = integer ? number.rounded() : number
-                } else {
-                    return
-                }
-                if parsed != value { setValue(parsed) }
-            }
+        }
+        .multilineTextAlignment(.trailing)
+        .monospacedDigit()
+        .frame(width: width * scale)
+        .inputBackground()
+        .accessibilityLabel(accessibilityName)
+        .inputNavigation(id: id) { isEditing = true }
     }
 
     private func format(_ value: Double?) -> String {

@@ -197,11 +197,15 @@ struct PageContent: View {
 
     @Environment(\.sheetMode) private var mode
     @Environment(\.structureEditor) private var editor
+    /// Ordre de saisie de la page (Tab).
+    @State private var navigator = InputNavigator()
 
     var body: some View {
+        let rows = page.sortedRows
         VStack(alignment: .leading, spacing: 16) {
-            ForEach(page.sortedRows) { row in
+            ForEach(rows) { row in
                 RowView(row: row)
+                    .environment(\.inputGroup, [rows.firstIndex(of: row) ?? 0])
             }
             if page.sortedRows.isEmpty && mode != .structure {
                 Text("Page vide : ajoutez-y des sections en mode Structure.")
@@ -224,6 +228,8 @@ struct PageContent: View {
                 }
             }
         }
+        .coordinateSpace(.named(InputNavigator.space))
+        .environment(\.inputNavigator, navigator)
     }
 }
 
@@ -233,6 +239,7 @@ struct RowView: View {
     let row: SheetRow
 
     @Environment(\.sheetMode) private var mode
+    @Environment(\.inputGroup) private var inputGroup
 
     var body: some View {
         if mode == .structure {
@@ -261,10 +268,12 @@ struct RowView: View {
     private var columns: some View {
         ColumnsLayout(weights: row.columnWeights, spacing: 16, minColumnWidth: 300) {
             ForEach(0..<row.columnCount, id: \.self) { column in
+                let sections = row.displayedSections(inColumn: column)
                 VStack(spacing: 16) {
-                    ForEach(row.displayedSections(inColumn: column)) { section in
+                    ForEach(sections) { section in
                         SectionCard(section: section)
                             .id(section.persistentModelID)
+                            .environment(\.inputGroup, inputGroup + [column, sections.firstIndex(of: section) ?? 0])
                     }
                     if mode == .structure {
                         ColumnAddZone(row: row, column: column)

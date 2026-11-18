@@ -7,6 +7,7 @@ struct TableSectionView: View {
     let section: SheetSection
 
     @Environment(\.sheetMode) private var mode
+    @Environment(\.inputGroup) private var inputGroup
     @State private var width: CGFloat = 0
 
     /// Nombre de colonnes d'affichage qui tiennent dans la largeur disponible
@@ -28,6 +29,8 @@ struct TableSectionView: View {
                 ForEach(buckets.indices, id: \.self) { index in
                     TableGrid(section: section, groups: buckets[index], columns: columns)
                         .frame(maxWidth: .infinity, alignment: .topLeading)
+                        // Tab : une colonne du tableau après l'autre.
+                        .environment(\.inputGroup, inputGroup + [index])
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -242,7 +245,7 @@ private struct RowLabel: View {
         HStack(spacing: 4) {
             if indented {
                 if mode == .fill {
-                    TextField("", text: specialization, prompt: Text("précision"))
+                    SheetTextField(text: specialization, prompt: "précision")
                         .frame(minWidth: 90)
                         .inputBackground()
                         .accessibilityLabel("Précision de \(row.label)")
@@ -259,13 +262,13 @@ private struct RowLabel: View {
                 if row.isFromTemplate {
                     Text(row.label).lineLimit(1)
                 } else {
-                    TextField("", text: $row.label, prompt: Text("Nom"))
+                    SheetTextField(text: $row.label, prompt: "Nom")
                         .frame(minWidth: 80)
                         .inputBackground()
                         .accessibilityLabel("Nom de la ligne")
                 }
                 if row.allowsSpecialization {
-                    TextField("", text: specialization, prompt: Text("précision"))
+                    SheetTextField(text: specialization, prompt: "précision")
                         .frame(minWidth: 70)
                         .inputBackground()
                         .accessibilityLabel("Précision de \(row.label)")
@@ -324,7 +327,7 @@ private struct CellView: View {
         switch column.kind {
         case .text:
             if editable {
-                TextField("", text: Binding(
+                SheetTextField(text: Binding(
                     get: { cell.textValue ?? "" },
                     set: { cell.textValue = $0.isEmpty ? nil : $0 }
                 ))

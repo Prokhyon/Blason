@@ -95,8 +95,9 @@ private struct RetouchBubble: View {
         }
         .padding(20)
         .frame(minWidth: 240, maxWidth: 340)
-        // La saisie de Remplir, dans la bulle seulement.
+        // La saisie de Remplir, dans la bulle seulement ; Tab ne sort pas de la bulle.
         .environment(\.sheetMode, .fill)
+        .environment(\.inputNavigator, nil)
     }
 
     private var title: String {
