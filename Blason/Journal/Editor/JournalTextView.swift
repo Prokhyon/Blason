@@ -17,6 +17,8 @@ struct JournalTextView: View {
     /// En-tête posé au-dessus du récit, qui défile avec lui (iOS) ; sur Mac, il reste au-dessus.
     var header: AnyView?
 
+    @Environment(\.sheetTheme) private var theme
+
     #if canImport(UIKit)
     /// Zone sûre (sous les barres, au-dessus du clavier), dans la fenêtre.
     @State private var safeFrame: CGRect = .zero
@@ -31,7 +33,7 @@ struct JournalTextView: View {
             .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { safeFrame = $0 }
             .overlay {
                 JournalTextRepresentable(controller: controller, initialText: initialText, allowsScribble: allowsScribble,
-                                         header: header, safeFrame: safeFrame)
+                                         style: theme.journal, header: header, safeFrame: safeFrame)
                     .accessibilityLabel(Text(placeholder))
                     .ignoresSafeArea()
             }
@@ -45,7 +47,8 @@ struct JournalTextView: View {
                     .frame(maxWidth: .infinity)
                 Divider()
             }
-            JournalTextRepresentable(controller: controller, initialText: initialText, allowsScribble: allowsScribble)
+            JournalTextRepresentable(controller: controller, initialText: initialText, allowsScribble: allowsScribble,
+                                     style: theme.journal)
                 .accessibilityLabel(Text(placeholder))
         }
         #endif
@@ -61,6 +64,7 @@ private struct JournalTextRepresentable: UIViewRepresentable {
     let controller: JournalEditorController
     let initialText: JournalText
     let allowsScribble: Bool
+    let style: JournalStyle
     let header: AnyView?
     let safeFrame: CGRect
 
@@ -76,6 +80,8 @@ private struct JournalTextRepresentable: UIViewRepresentable {
         view.contentInsetAdjustmentBehavior = .never
         view.adjustsFontForContentSizeCategory = false
         view.textContainer.lineFragmentPadding = 0
+        controller.style = style
+        view.tintColor = style.accent.map { UIColor($0) }
         view.attributedText = controller.initialText(for: initialText)
         view.typingAttributes = JournalTypography.typingAttributes(from: [:])
         view.delegate = context.coordinator
@@ -103,6 +109,10 @@ private struct JournalTextRepresentable: UIViewRepresentable {
     func updateUIView(_ view: JournalUITextView, context: Context) {
         context.coordinator.allowsScribble = allowsScribble
         view.safeFrame = safeFrame
+        if style != controller.style {
+            view.tintColor = style.accent.map { UIColor($0) }
+            controller.applyStyle(style)
+        }
         if let header, let host = context.coordinator.header {
             host.rootView = measured(header, in: view)
         }
@@ -266,6 +276,7 @@ private struct JournalTextRepresentable: NSViewRepresentable {
     let controller: JournalEditorController
     let initialText: JournalText
     let allowsScribble: Bool
+    let style: JournalStyle
 
     func makeCoordinator() -> Coordinator { Coordinator(controller: controller) }
 
@@ -290,6 +301,8 @@ private struct JournalTextRepresentable: NSViewRepresentable {
         view.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         view.textContainer?.widthTracksTextView = true
         view.textContainer?.lineFragmentPadding = 0
+        controller.style = style
+        view.insertionPointColor = style.accent.map { NSColor($0) } ?? .textInsertionPointColor
         view.textStorage?.setAttributedString(controller.initialText(for: initialText))
         view.typingAttributes = JournalTypography.typingAttributes(from: [:])
         view.delegate = context.coordinator
@@ -298,7 +311,11 @@ private struct JournalTextRepresentable: NSViewRepresentable {
         return scroll
     }
 
-    func updateNSView(_ scroll: NSScrollView, context: Context) {}
+    func updateNSView(_ scroll: NSScrollView, context: Context) {
+        guard style != controller.style, let view = scroll.documentView as? NSTextView else { return }
+        view.insertionPointColor = style.accent.map { NSColor($0) } ?? .textInsertionPointColor
+        controller.applyStyle(style)
+    }
 
     @MainActor
     final class Coordinator: NSObject, NSTextViewDelegate {

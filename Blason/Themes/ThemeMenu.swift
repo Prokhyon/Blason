@@ -24,9 +24,9 @@ struct ThemeMenu: View {
         }
         .pickerStyle(.menu)
 
-        if SheetThemes.descriptor(effective.themeID)?.usesColor == true {
-            Picker(selection: colorSelection) {
-                ForEach(ThemePalette.all) { color in
+        if let descriptor = SheetThemes.descriptor(effective.themeID), descriptor.usesColor {
+            Picker(selection: colorSelection(descriptor)) {
+                ForEach(descriptor.palette) { color in
                     Label { Text(color.name) } icon: { ThemePalette.swatch(color.color) }
                         .tag(color.id)
                 }
@@ -54,9 +54,10 @@ struct ThemeMenu: View {
     }
 
     /// Changer la couleur d'un personnage qui suit son template lui donne sa propre apparence.
-    private var colorSelection: Binding<String> {
+    /// Une couleur d'une autre palette (thème changé) s'affiche comme la première de celle-ci.
+    private func colorSelection(_ descriptor: SheetThemeDescriptor) -> Binding<String> {
         Binding(
-            get: { sheet.appearance(in: context).colorID },
+            get: { descriptor.color(sheet.appearance(in: context).colorID).id },
             set: { colorID in
                 sheet.ownAppearance = SheetAppearance(themeID: sheet.appearance(in: context).themeID, colorID: colorID)
             }

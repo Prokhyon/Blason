@@ -17,48 +17,52 @@ struct CodexEntryView: View {
 
     var body: some View {
         Form {
-            Section {
-                TextField("Nom", text: $entry.name, prompt: Text("Nom"))
-                    .font(.title3.weight(.semibold))
-                    .focused($nameFocused)
-                Picker("Genre", selection: $entry.kind) {
-                    ForEach(CodexKind.allCases, id: \.self) { kind in
-                        Label(kind.title, systemImage: kind.symbol).tag(kind)
+            Group {
+                Section {
+                    TextField("Nom", text: $entry.name, prompt: Text("Nom"))
+                        .font(.title3.weight(.semibold))
+                        .focused($nameFocused)
+                    Picker("Genre", selection: $entry.kind) {
+                        ForEach(CodexKind.allCases, id: \.self) { kind in
+                            Label(kind.title, systemImage: kind.symbol).tag(kind)
+                        }
+                    }
+                    TextField("État", text: $entry.status, prompt: Text("vivant, disparu, résolu…"))
+                }
+                Section("Image") {
+                    image
+                }
+                Section("Description") {
+                    TextField("Description", text: $entry.summary, prompt: Text("Qui, quoi, où ; ce qu'on en sait"),
+                              axis: .vertical)
+                        .lineLimit(3...12)
+                }
+                Section("Sessions") {
+                    let sessions = entry.sortedSessions
+                    if sessions.isEmpty {
+                        Text("N'apparaît dans aucune session.")
+                            .foregroundStyle(.secondary)
+                    }
+                    ForEach(sessions) { session in
+                        JournalLink(route: .session(session)) { SessionRow(session: session) }
                     }
                 }
-                TextField("État", text: $entry.status, prompt: Text("vivant, disparu, résolu…"))
-            }
-            Section("Image") {
-                image
-            }
-            Section("Description") {
-                TextField("Description", text: $entry.summary, prompt: Text("Qui, quoi, où ; ce qu'on en sait"),
-                          axis: .vertical)
-                    .lineLimit(3...12)
-            }
-            Section("Sessions") {
-                let sessions = entry.sortedSessions
-                if sessions.isEmpty {
-                    Text("N'apparaît dans aucune session.")
-                        .foregroundStyle(.secondary)
+                Section("Documents") {
+                    ForEach(entry.sortedDocuments) { document in
+                        JournalLink(route: .document(document)) { DocumentRow(document: document) }
+                    }
+                    DocumentAddMenu(journal: journal, entry: entry)
                 }
-                ForEach(sessions) { session in
-                    JournalLink(route: .session(session)) { SessionRow(session: session) }
+                Section {
+                    Button("Supprimer la fiche", systemImage: "trash", role: .destructive) {
+                        confirmingDelete = true
+                    }
                 }
             }
-            Section("Documents") {
-                ForEach(entry.sortedDocuments) { document in
-                    JournalLink(route: .document(document)) { DocumentRow(document: document) }
-                }
-                DocumentAddMenu(journal: journal, entry: entry)
-            }
-            Section {
-                Button("Supprimer la fiche", systemImage: "trash", role: .destructive) {
-                    confirmingDelete = true
-                }
-            }
+            .themedRows()
         }
         .formStyle(.grouped)
+        .themedList()
         .task(id: entry.persistentModelID) {
             // Fiche tout juste créée : le curseur va dans le nom.
             guard entry.name.isEmpty else { return }

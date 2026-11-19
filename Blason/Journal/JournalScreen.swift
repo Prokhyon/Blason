@@ -19,6 +19,7 @@ struct JournalScreen: View {
     @Environment(\.modelContext) private var context
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.paneControl) private var pane
+    @Environment(\.sheetTheme) private var theme
 
     var body: some View {
         Group {
@@ -159,7 +160,7 @@ struct JournalScreen: View {
             Button("Session du jour") { newSession(in: journal) }
                 .buttonStyle(.borderedProminent)
         }
-        .background { Color.writingBackground.ignoresSafeArea() }
+        .background { theme.pageBackground().ignoresSafeArea() }
     }
 
     // MARK: iPhone
@@ -173,10 +174,13 @@ struct JournalScreen: View {
                     .toolbar {
                         ToolbarItem(placement: .primaryAction) { libraryButton }
                     }
+                    // La vue poussée reçoit l'environnement de la pile, pas celui de cet écran.
+                    .sheetTheme(theme)
             }
             .sheet(isPresented: $showsLibrary) {
                 library(journal)
                     .presentationDetents([.medium, .large])
+                    .sheetTheme(theme)
             }
     }
 
@@ -274,6 +278,8 @@ struct SessionSidebar: View {
     @Binding var query: String
     let onNew: () -> Void
 
+    @Environment(\.sheetTheme) private var theme
+
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: 10) {
@@ -297,7 +303,7 @@ struct SessionSidebar: View {
                 JournalSearchResultsView(results: journal.search(query), query: query)
             }
         }
-        .background(Color.groupedBackground)
+        .background { theme.panelBackground().ignoresSafeArea() }
     }
 
     @ViewBuilder
@@ -312,7 +318,9 @@ struct SessionSidebar: View {
                     SessionRow(session: session)
                         .tag(session)
                 }
+                .themedRows()
             }
+            .themedList()
         }
     }
 }
@@ -320,12 +328,15 @@ struct SessionSidebar: View {
 struct SessionRow: View {
     let session: JournalSession
 
+    @Environment(\.sheetTheme) private var theme
+
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(alignment: .firstTextBaseline) {
+                // Numéro dans la couleur des titres du thème (rubrique de l'enluminure).
                 Text(session.numberTitle)
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(theme.headingColor ?? .secondary)
                 Spacer(minLength: 8)
                 Text(session.date, format: .dateTime.day().month(.abbreviated).year())
                     .font(.caption)

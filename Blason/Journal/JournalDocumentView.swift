@@ -18,60 +18,64 @@ struct JournalDocumentView: View {
 
     var body: some View {
         Form {
-            Section {
-                Button {
-                    viewing = document
-                } label: {
-                    DocumentPreview(document: document)
+            Group {
+                Section {
+                    Button {
+                        viewing = document
+                    } label: {
+                        DocumentPreview(document: document)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Ouvrir \(document.displayTitle)")
+                    Button("Ouvrir", systemImage: "arrow.up.left.and.arrow.down.right") {
+                        viewing = document
+                    }
+                    if document.isDrawing {
+                        Button("Modifier le croquis", systemImage: "pencil.tip.crop.circle") {
+                            drawing = DrawingRequest(kind: document.kind, title: document.title,
+                                                     isListed: document.isListed, document: document)
+                        }
+                    }
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Ouvrir \(document.displayTitle)")
-                Button("Ouvrir", systemImage: "arrow.up.left.and.arrow.down.right") {
-                    viewing = document
+                Section {
+                    TextField("Titre", text: $document.title, prompt: Text("Titre du document"))
+                        .font(.title3.weight(.semibold))
+                    LabeledContent("Genre", value: document.kindTitle)
+                    LabeledContent("Ajouté le", value: document.createdAt.formatted(date: .abbreviated, time: .omitted))
+                    if document.kind == .sketch {
+                        Toggle("Classer dans les documents", isOn: $document.isListed)
+                    }
                 }
-                if document.isDrawing {
-                    Button("Modifier le croquis", systemImage: "pencil.tip.crop.circle") {
-                        drawing = DrawingRequest(kind: document.kind, title: document.title,
-                                                 isListed: document.isListed, document: document)
+                Section {
+                    if let session = document.session {
+                        JournalLink(route: .session(session)) {
+                            LabeledContent("Session", value: session.displayTitle)
+                        }
+                    } else {
+                        LabeledContent("Session", value: String(localized: "Aucune"))
+                            .foregroundStyle(.secondary)
+                    }
+                    Picker("Fiche", selection: $document.entry) {
+                        Text("Aucune").tag(CodexEntry?.none)
+                        ForEach(journal.sortedEntries) { entry in
+                            Label(entry.displayName, systemImage: entry.kind.symbol).tag(Optional(entry))
+                        }
+                    }
+                } header: {
+                    Text("Rattachement")
+                } footer: {
+                    Text("Un document joint dans le récit d'une session y est rattaché.")
+                }
+                Section {
+                    Button("Supprimer le document", systemImage: "trash", role: .destructive) {
+                        confirmingDelete = true
                     }
                 }
             }
-            Section {
-                TextField("Titre", text: $document.title, prompt: Text("Titre du document"))
-                    .font(.title3.weight(.semibold))
-                LabeledContent("Genre", value: document.kindTitle)
-                LabeledContent("Ajouté le", value: document.createdAt.formatted(date: .abbreviated, time: .omitted))
-                if document.kind == .sketch {
-                    Toggle("Classer dans les documents", isOn: $document.isListed)
-                }
-            }
-            Section {
-                if let session = document.session {
-                    JournalLink(route: .session(session)) {
-                        LabeledContent("Session", value: session.displayTitle)
-                    }
-                } else {
-                    LabeledContent("Session", value: String(localized: "Aucune"))
-                        .foregroundStyle(.secondary)
-                }
-                Picker("Fiche", selection: $document.entry) {
-                    Text("Aucune").tag(CodexEntry?.none)
-                    ForEach(journal.sortedEntries) { entry in
-                        Label(entry.displayName, systemImage: entry.kind.symbol).tag(Optional(entry))
-                    }
-                }
-            } header: {
-                Text("Rattachement")
-            } footer: {
-                Text("Un document joint dans le récit d'une session y est rattaché.")
-            }
-            Section {
-                Button("Supprimer le document", systemImage: "trash", role: .destructive) {
-                    confirmingDelete = true
-                }
-            }
+            .themedRows()
         }
         .formStyle(.grouped)
+        .themedList()
         .documentViewer(item: $viewing)
         .drawingEditor(item: $drawing) { _, result in
             document.data = result.data

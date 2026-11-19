@@ -13,6 +13,7 @@ struct JournalLibrary: View {
     let onClose: () -> Void
 
     @State private var query = ""
+    @Environment(\.sheetTheme) private var theme
 
     var body: some View {
         VStack(spacing: 0) {
@@ -31,7 +32,7 @@ struct JournalLibrary: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .clipped()
         }
-        .background(Color.groupedBackground)
+        .background { theme.panelBackground() }
         .animation(.snappy(duration: 0.25), value: path)
         .onChange(of: path) { _, _ in
             // Un élément supprimé peut encore figurer dans le chemin.
@@ -218,6 +219,8 @@ struct JournalSearchField: View {
     var prompt: LocalizedStringKey = "Rechercher dans le journal"
     var focus: FocusState<Bool>.Binding?
 
+    @Environment(\.sheetTheme) private var theme
+
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: "magnifyingglass")
@@ -238,7 +241,7 @@ struct JournalSearchField: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 7)
-        .background(Color.tertiaryFill, in: RoundedRectangle(cornerRadius: 10))
+        .background(theme.inputFill, in: RoundedRectangle(cornerRadius: 10))
     }
 
     @ViewBuilder
@@ -260,28 +263,32 @@ struct JournalSearchResultsView: View {
             ContentUnavailableView.search(text: query)
         } else {
             List {
-                if !results.sessions.isEmpty {
-                    Section("Sessions") {
-                        ForEach(results.sessions) { session in
-                            JournalLink(route: .session(session)) { SessionRow(session: session) }
+                Group {
+                    if !results.sessions.isEmpty {
+                        Section("Sessions") {
+                            ForEach(results.sessions) { session in
+                                JournalLink(route: .session(session)) { SessionRow(session: session) }
+                            }
+                        }
+                    }
+                    if !results.entries.isEmpty {
+                        Section("Carnet") {
+                            ForEach(results.entries) { entry in
+                                JournalLink(route: .entry(entry)) { CodexEntryRow(entry: entry, showsKind: true) }
+                            }
+                        }
+                    }
+                    if !results.documents.isEmpty {
+                        Section("Documents") {
+                            ForEach(results.documents) { document in
+                                JournalLink(route: .document(document)) { DocumentRow(document: document) }
+                            }
                         }
                     }
                 }
-                if !results.entries.isEmpty {
-                    Section("Carnet") {
-                        ForEach(results.entries) { entry in
-                            JournalLink(route: .entry(entry)) { CodexEntryRow(entry: entry, showsKind: true) }
-                        }
-                    }
-                }
-                if !results.documents.isEmpty {
-                    Section("Documents") {
-                        ForEach(results.documents) { document in
-                            JournalLink(route: .document(document)) { DocumentRow(document: document) }
-                        }
-                    }
-                }
+                .themedRows()
             }
+            .themedList()
         }
     }
 }
@@ -296,37 +303,41 @@ struct CodexList: View {
 
     var body: some View {
         List {
-            Section {
-                Menu {
-                    ForEach(CodexKind.allCases, id: \.self) { kind in
-                        Button {
-                            navigator?.open(.entry(journal.addEntry(kind: kind, in: context)))
-                        } label: {
-                            Label(kind.title, systemImage: kind.symbol)
+            Group {
+                Section {
+                    Menu {
+                        ForEach(CodexKind.allCases, id: \.self) { kind in
+                            Button {
+                                navigator?.open(.entry(journal.addEntry(kind: kind, in: context)))
+                            } label: {
+                                Label(kind.title, systemImage: kind.symbol)
+                            }
                         }
+                    } label: {
+                        Label("Nouvelle fiche", systemImage: "plus.circle.fill")
+                            .font(.body.weight(.semibold))
                     }
-                } label: {
-                    Label("Nouvelle fiche", systemImage: "plus.circle.fill")
-                        .font(.body.weight(.semibold))
-                }
-            } footer: {
-                if (journal.entries ?? []).isEmpty {
-                    Text("PNJ, lieux, indices, factions : les fiches citées dans les sessions, et celles ajoutées ici.")
-                }
-            }
-            ForEach(CodexKind.allCases, id: \.self) { kind in
-                let entries = journal.entries(of: kind)
-                if !entries.isEmpty {
-                    Section {
-                        ForEach(entries) { entry in
-                            JournalLink(route: .entry(entry)) { CodexEntryRow(entry: entry) }
-                        }
-                    } header: {
-                        Label(kind.pluralTitle, systemImage: kind.symbol)
+                } footer: {
+                    if (journal.entries ?? []).isEmpty {
+                        Text("PNJ, lieux, indices, factions : les fiches citées dans les sessions, et celles ajoutées ici.")
                     }
                 }
+                ForEach(CodexKind.allCases, id: \.self) { kind in
+                    let entries = journal.entries(of: kind)
+                    if !entries.isEmpty {
+                        Section {
+                            ForEach(entries) { entry in
+                                JournalLink(route: .entry(entry)) { CodexEntryRow(entry: entry) }
+                            }
+                        } header: {
+                            Label(kind.pluralTitle, systemImage: kind.symbol)
+                        }
+                    }
+                }
             }
+            .themedRows()
         }
+        .themedList()
     }
 }
 
@@ -388,21 +399,25 @@ struct DocumentList: View {
     var body: some View {
         let documents = journal.listedDocuments
         List {
-            Section {
-                DocumentAddMenu(journal: journal)
-            } footer: {
-                if documents.isEmpty {
-                    Text("Aides de jeu, cartes, lettres du MJ, croquis : ceux joints aux sessions, et ceux ajoutés ici (Fichiers, Photos, glisser-déposer).")
-                }
-            }
-            if !documents.isEmpty {
+            Group {
                 Section {
-                    ForEach(documents) { document in
-                        JournalLink(route: .document(document)) { DocumentRow(document: document, showsAttachment: true) }
+                    DocumentAddMenu(journal: journal)
+                } footer: {
+                    if documents.isEmpty {
+                        Text("Aides de jeu, cartes, lettres du MJ, croquis : ceux joints aux sessions, et ceux ajoutés ici (Fichiers, Photos, glisser-déposer).")
+                    }
+                }
+                if !documents.isEmpty {
+                    Section {
+                        ForEach(documents) { document in
+                            JournalLink(route: .document(document)) { DocumentRow(document: document, showsAttachment: true) }
+                        }
                     }
                 }
             }
+            .themedRows()
         }
+        .themedList()
         .dropDestination(for: DroppedDocument.self) { dropped, _ in
             for item in dropped {
                 journal.addDocument(title: item.document.title, contentType: item.document.type, data: item.document.data,

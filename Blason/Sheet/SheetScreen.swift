@@ -115,10 +115,16 @@ struct SheetScreen: View {
                             .inlineNavigationTitle()
                             .closesToLibrary(onClose, title: title)
                             .hidesTabBar(isSplit)
+                            .sheetTheme(theme)
                     }
                 }
             }
         }
+    }
+
+    /// Thème de la fiche, que le journal suit aussi.
+    private var theme: SheetTheme {
+        SheetThemes.theme(for: sheet?.appearance(in: sheet?.modelContext) ?? .standard)
     }
 
     // MARK: Côte à côte
@@ -174,6 +180,7 @@ struct SheetScreen: View {
                 JournalScreen(character: character)
                     .paneTitle(title)
                     .inlineNavigationTitle()
+                    .sheetTheme(theme)
             } else {
                 SheetView(title: title, sheet: sheet, tab: kind, editor: editor)
             }

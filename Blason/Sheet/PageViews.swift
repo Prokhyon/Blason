@@ -38,8 +38,10 @@ struct TabbedPages: View {
             if let page = editor.currentPage {
                 ScrollViewReader { proxy in
                     ScrollView {
-                        PageContent(page: page)
-                            .padding()
+                        ThemedPage {
+                            PageContent(page: page)
+                        }
+                        .padding()
                             .deselectsOnBackgroundTap()
                     }
                     .scrollsToSelection(editor, proxy: proxy)
@@ -73,9 +75,11 @@ struct ContinuousPages: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 40) {
                     ForEach(pages.indices, id: \.self) { index in
-                        VStack(alignment: .leading, spacing: 16) {
-                            PageTitle(page: pages[index])
-                            PageContent(page: pages[index])
+                        ThemedPage {
+                            VStack(alignment: .leading, spacing: 16) {
+                                PageTitle(page: pages[index])
+                                PageContent(page: pages[index])
+                            }
                         }
                     }
                 }
@@ -113,12 +117,24 @@ private struct PageTitle: View {
     @Environment(\.sheetTheme) private var theme
 
     var body: some View {
-        Text(page.title.isEmpty ? "Sans titre" : page.title)
+        let title = Text(page.title.isEmpty ? "Sans titre" : page.title)
             .font(theme.pageTitleFont)
             .sheetHeading(theme)
             .opacity(page.title.isEmpty ? 0.5 : 1)
             .accessibilityAddTraits(.isHeader)
+        theme.pageTitle(PageTitleConfiguration(title: AnyView(title), text: page.title))
             .structureItem(.page(page))
+    }
+}
+
+/// Une page dans le cadre du thème.
+private struct ThemedPage<Content: View>: View {
+    @ViewBuilder let content: Content
+
+    @Environment(\.sheetTheme) private var theme
+
+    var body: some View {
+        theme.pageFrame(AnyView(content))
     }
 }
 

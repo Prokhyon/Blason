@@ -29,61 +29,17 @@ enum PaperTheme {
     static let ink = Color(red: 0.17, green: 0.15, blue: 0.13)
     static let paper = Color(red: 0.955, green: 0.93, blue: 0.865)
 
-    /// Grain du papier : une tuile dessinée une fois (points et fibres, tirage reproductible).
-    /// Dessinée avec Core Graphics, à 3 pixels par point, identique sur iOS et macOS.
-    @MainActor static let texture: CGImage? = {
-        let side: CGFloat = 256
-        var random = SplitMix64(seed: 0x5EED)
-        func srgb(_ red: CGFloat, _ green: CGFloat, _ blue: CGFloat, _ alpha: CGFloat = 1) -> CGColor {
-            CGColor(srgbRed: red, green: green, blue: blue, alpha: alpha)
-        }
-        // Tuile opaque, points mélangés au papier (et non copiés : ils feraient des trous).
-        return DrawnImage.make(width: side, height: side, opaque: true) { context in
-            context.setFillColor(srgb(0.955, 0.93, 0.865))
-            context.fill(CGRect(x: 0, y: 0, width: side, height: side))
-            for _ in 0..<7000 {
-                let dark = Bool.random(using: &random)
-                let alpha = CGFloat.random(in: 0.015...0.06, using: &random)
-                context.setFillColor(dark ? srgb(0.35, 0.28, 0.18, alpha) : srgb(1, 1, 1, alpha * 1.5))
-                let size = CGFloat.random(in: 0.6...1.6, using: &random)
-                context.fill(CGRect(x: .random(in: 0..<side, using: &random), y: .random(in: 0..<side, using: &random),
-                                    width: size, height: size))
-            }
-            context.setLineWidth(0.5)
-            for _ in 0..<45 {
-                context.setStrokeColor(srgb(0.45, 0.36, 0.24, .random(in: 0.04...0.09, using: &random)))
-                let start = CGPoint(x: .random(in: 0..<side, using: &random), y: .random(in: 0..<side, using: &random))
-                let end = CGPoint(x: start.x + .random(in: -14...14, using: &random), y: start.y + .random(in: -14...14, using: &random))
-                let control = CGPoint(x: start.x + .random(in: -8...8, using: &random), y: start.y + .random(in: -8...8, using: &random))
-                context.move(to: start)
-                context.addQuadCurve(to: end, control: control)
-                context.strokePath()
-            }
-        }
-    }()
-}
-
-/// Générateur reproductible : la texture est la même à chaque lancement.
-private struct SplitMix64: RandomNumberGenerator {
-    var state: UInt64
-    init(seed: UInt64) { state = seed }
-    mutating func next() -> UInt64 {
-        state &+= 0x9E37_79B9_7F4A_7C15
-        var z = state
-        z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
-        z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
-        return z ^ (z >> 31)
-    }
+    /// Grain du papier : points et fibres brunes (voir `Grain`).
+    @MainActor static let texture: CGImage? = Grain.tile(
+        base: .init(red: 0.955, green: 0.93, blue: 0.865),
+        fleck: .init(red: 0.35, green: 0.28, blue: 0.18),
+        fibre: .init(red: 0.45, green: 0.36, blue: 0.24),
+        seed: 0x5EED)
 }
 
 private struct PaperBackground: View {
     var body: some View {
-        if let texture = PaperTheme.texture {
-            Image(decorative: texture, scale: 3)
-                .resizable(resizingMode: .tile)
-        } else {
-            PaperTheme.paper
-        }
+        GrainBackground(tile: PaperTheme.texture, fallback: PaperTheme.paper)
     }
 }
 

@@ -31,6 +31,7 @@ struct JournalSessionEditor: View {
     @Environment(\.modelContext) private var context
     @Environment(\.journalNavigator) private var navigator
     @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.sheetTheme) private var theme
 
     init(session: JournalSession, journal: Journal, onDelete: @escaping () -> Void) {
         self.session = session
@@ -49,10 +50,11 @@ struct JournalSessionEditor: View {
     }
 
     var body: some View {
+        // L'en-tête est posé dans la vue de texte (UIKit) : il reçoit le thème lui-même.
         JournalTextView(controller: controller, initialText: initialText, allowsScribble: allowsScribble,
-                        header: AnyView(header))
+                        header: AnyView(header.sheetTheme(theme)))
         // Le fond passe sous les barres et sous le clavier, comme le texte.
-        .background { Color.writingBackground.ignoresSafeArea() }
+        .background { theme.pageBackground().ignoresSafeArea() }
         // Au-dessus du récit (qui garde une marge en bas pour qu'on puisse y écrire), et du clavier.
         .overlay(alignment: .bottom) { toolbox }
         .background { shortcuts }
@@ -131,7 +133,7 @@ struct JournalSessionEditor: View {
             HStack(spacing: 10) {
                 Text(session.numberTitle)
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(theme.headingColor ?? .secondary)
                 DatePicker("Date", selection: $session.date, displayedComponents: .date)
                     .labelsHidden()
                     .fixedSize()
@@ -149,10 +151,7 @@ struct JournalSessionEditor: View {
                 .buttonStyle(.borderless)
                 .accessibilityValue(showsDetails ? Text("Affichés") : Text("Masqués"))
             }
-            TextField("Titre", text: $session.title, prompt: Text("Titre de la session"))
-                .font(.title.weight(.bold))
-                .textFieldStyle(.plain)
-                .onSubmit { controller.host?.journalFocus() }
+            theme.pageTitle(PageTitleConfiguration(title: AnyView(titleField), text: session.title))
             TextField("Date en jeu", text: $session.gameDate, prompt: Text("Date en jeu"))
                 .font(.subheadline.italic())
                 .foregroundStyle(.secondary)
@@ -162,6 +161,15 @@ struct JournalSessionEditor: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
+    }
+
+    /// Titre de la session, comme un titre de page : police et ornement du thème.
+    private var titleField: some View {
+        TextField("Titre", text: $session.title, prompt: Text("Titre de la session"))
+            .font(theme.sessionTitleFont)
+            .foregroundStyle(theme.headingColor ?? .primary)
+            .textFieldStyle(.plain)
+            .onSubmit { controller.host?.journalFocus() }
     }
 
     private var details: some View {
@@ -183,7 +191,7 @@ struct JournalSessionEditor: View {
         }
         .textFieldStyle(.plain)
         .padding(12)
-        .background(Color.tertiaryFill, in: RoundedRectangle(cornerRadius: 10))
+        .background(theme.inputFill, in: RoundedRectangle(cornerRadius: 10))
         .padding(.top, 4)
     }
 

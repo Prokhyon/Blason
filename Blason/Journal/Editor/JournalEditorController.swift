@@ -48,6 +48,8 @@ final class JournalEditorController {
     @ObservationIgnored var onChange: () -> Void = {}
     /// Une citation ou une pièce jointe a été touchée.
     @ObservationIgnored var onOpen: (JournalTextItem) -> Void = { _ in }
+    /// Polices et couleurs du thème, installées avant chaque mise en forme (`JournalTypography.use`).
+    @ObservationIgnored var style = JournalStyle()
     /// Gestionnaire d'annulation propre au récit (distinct de celui de la base).
     @ObservationIgnored let undoManager = UndoManager()
 
@@ -64,7 +66,24 @@ final class JournalEditorController {
     }
 
     func initialText(for text: JournalText) -> NSAttributedString {
-        JournalTypography.attributedString(from: text, content: content)
+        JournalTypography.use(self.style)
+        return JournalTypography.attributedString(from: text, content: content)
+    }
+
+    /// Nouveau thème pendant l'édition : le récit est remis en forme, le curseur reste en place.
+    func applyStyle(_ newStyle: JournalStyle) {
+        guard newStyle != style else { return }
+        style = newStyle
+        guard let host, !host.journalHasMarkedText else { return }
+        let current = text
+        let selection = host.journalSelection
+        JournalTypography.use(style)
+        let storage = host.journalStorage
+        storage.setAttributedString(initialText(for: current))
+        let length = storage.length
+        let location = min(selection.location, length)
+        host.journalSelection = NSRange(location: location, length: min(selection.length, length - location))
+        selectionDidChange()
     }
 
     // MARK: - Saisie (appelé par la vue de texte)
@@ -72,6 +91,7 @@ final class JournalEditorController {
     /// Avant une modification de l'utilisateur : `false` si l'éditeur s'en charge lui-même
     /// (retour à la ligne dans une liste, effacement d'une citation ou d'une puce).
     func shouldChange(in range: NSRange, replacement: String) -> Bool {
+        JournalTypography.use(self.style)
         guard let host, !host.journalHasMarkedText else { return true }
         let storage = host.journalStorage
         let text = storage.string as NSString
@@ -120,6 +140,7 @@ final class JournalEditorController {
 
     /// Après une modification de l'utilisateur.
     func didChange() {
+        JournalTypography.use(self.style)
         guard let host else { return }
         if !host.journalHasMarkedText, let range = pendingRestyle {
             let selection = host.journalSelection
@@ -132,6 +153,7 @@ final class JournalEditorController {
     }
 
     func selectionDidChange() {
+        JournalTypography.use(self.style)
         guard let host, !host.journalHasMarkedText else { return }
         let selection = host.journalSelection
         // Le curseur ne se place pas avant une puce.
@@ -209,6 +231,7 @@ final class JournalEditorController {
     }
 
     func toggle(_ trait: Trait) {
+        JournalTypography.use(self.style)
         guard let host else { return }
         let selection = host.journalSelection
         if selection.length == 0 {
@@ -236,6 +259,7 @@ final class JournalEditorController {
 
     /// Style des paragraphes sélectionnés (titre, en-tête…).
     func setStyle(_ style: JournalText.Style) {
+        JournalTypography.use(self.style)
         guard let host else { return }
         let paragraphs = paragraphRanges(for: host.journalSelection)
         let nonEmpty = paragraphs.filter {
@@ -266,6 +290,7 @@ final class JournalEditorController {
 
     /// Liste à puces ou à cocher sur les paragraphes sélectionnés ; la même une seconde fois l'enlève.
     func toggleList(_ list: JournalText.List) {
+        JournalTypography.use(self.style)
         guard let host else { return }
         let paragraphs = paragraphRanges(for: host.journalSelection)
         let storage = host.journalStorage
@@ -322,6 +347,7 @@ final class JournalEditorController {
 
     /// Coche ou décoche l'élément de liste qui commence à `start`.
     func toggleCheckbox(at start: Int) {
+        JournalTypography.use(self.style)
         guard let host, let marker = markerRange(at: start, in: host.journalStorage) else { return }
         let storage = host.journalStorage
         let checked = !(storage.attribute(.journalChecked, at: start, effectiveRange: nil) as? Bool ?? false)
@@ -357,6 +383,7 @@ final class JournalEditorController {
 
     /// Cite une fiche du carnet : la sélection devient la citation, sinon le nom de la fiche est inséré.
     func insertReference(to entry: CodexEntry) {
+        JournalTypography.use(self.style)
         guard let host else { return }
         let selection = host.journalSelection
         let storage = host.journalStorage
@@ -393,6 +420,7 @@ final class JournalEditorController {
 
     /// Insère une pièce jointe au curseur, sur sa propre ligne.
     func insertAttachment(_ uid: UUID) {
+        JournalTypography.use(self.style)
         guard let host else { return }
         let selection = host.journalSelection
         edit(String(localized: "Insérer")) { storage in
@@ -417,6 +445,7 @@ final class JournalEditorController {
 
     /// Nouvelle image d'une pièce jointe (dessin modifié).
     func refreshAttachment(_ uid: UUID) {
+        JournalTypography.use(self.style)
         guard let host else { return }
         let storage = host.journalStorage
         let selection = host.journalSelection

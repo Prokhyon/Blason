@@ -11,6 +11,7 @@ struct FieldView: View {
     var valueOnly = false
 
     @Environment(\.sheetMode) private var mode
+    @Environment(\.sheetTheme) private var theme
 
     private var editable: Bool {
         field.kind != .formula && field.kind != .spacer && mode.canEdit(live: field.isLive)
@@ -73,10 +74,17 @@ struct FieldView: View {
                 .font(.subheadline)
                 .foregroundStyle(.tertiary)
         } else {
-            Text(field.label)
+            labelText
                 .font(labelOnTop ? .footnote : .subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(theme.labelColor ?? .secondary)
         }
+    }
+
+    /// Le libellé, précédé du signe du thème s'il en a un (lu sans lui par VoiceOver).
+    private var labelText: Text {
+        guard let mark = theme.labelMark else { return Text(field.label) }
+        let sign = Text(mark).foregroundStyle(theme.headingColor ?? theme.accent)
+        return Text("\(sign) \(field.label)").accessibilityLabel(field.label)
     }
 
     @ViewBuilder

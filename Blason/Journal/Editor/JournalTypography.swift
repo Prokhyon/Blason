@@ -83,14 +83,78 @@ nonisolated final class JournalCheckbox: NSTextAttachment {
     var checked = false
 }
 
+/// Polices et couleurs du récit, données par le thème de la fiche (`SheetTheme.journal`).
+/// Le format enregistré (`JournalText`) n'en garde rien : changer de thème ne touche pas au texte.
+struct JournalStyle: Equatable {
+    /// Corps de texte avec empattements (New York) ; sinon la police du système.
+    var serif = false
+    /// Police du style Titre ; nil : celle du système, en gras.
+    var titleFontName: String?
+    /// Police des styles En-tête et Sous-en-tête ; nil : celle du système.
+    var headingFontName: String?
+    /// Texte ; nil : couleur du système.
+    var text: Color?
+    /// Titres et en-têtes (rubriques) ; nil : couleur du texte.
+    var heading: Color?
+    /// Citations et cases cochées ; nil : couleur d'accent du système.
+    var accent: Color?
+}
+
 enum JournalTypography {
     static let listIndent: CGFloat = 24
+
+    // MARK: Thème
+
+    /// Style du récit en cours d'édition. Les fonctions de mise en forme le lisent ; le contrôleur
+    /// l'installe avant chaque modification (deux fenêtres peuvent montrer deux thèmes).
+    private(set) static var theme = JournalStyle()
+    private static var colors = Colors(JournalStyle())
+
+    /// Installe un style ; `true` s'il change (le texte affiché est alors à remettre en forme).
+    @discardableResult
+    static func use(_ style: JournalStyle) -> Bool {
+        guard style != theme else { return false }
+        theme = style
+        colors = Colors(style)
+        return true
+    }
+
+    /// Couleurs du style, converties une fois pour la vue de texte.
+    private struct Colors {
+        let text, secondary, tertiary, heading, accent: PlatformColor
+
+        init(_ style: JournalStyle) {
+            #if canImport(UIKit)
+            let text = style.text.map { UIColor($0) }
+            self.text = text ?? .label
+            secondary = text?.withAlphaComponent(0.6) ?? .secondaryLabel
+            tertiary = text?.withAlphaComponent(0.35) ?? .tertiaryLabel
+            accent = style.accent.map { UIColor($0) } ?? .tintColor
+            #else
+            let text = style.text.map { NSColor($0) }
+            self.text = text ?? .labelColor
+            secondary = text?.withAlphaComponent(0.6) ?? .secondaryLabelColor
+            tertiary = text?.withAlphaComponent(0.35) ?? .tertiaryLabelColor
+            accent = style.accent.map { NSColor($0) } ?? .controlAccentColor
+            #endif
+            heading = style.heading.map { PlatformColor($0) } ?? self.text
+        }
+    }
+
+    /// Police propre au thème pour ce style de paragraphe, s'il en donne une.
+    private static func themeFontName(for style: JournalText.Style) -> String? {
+        switch style {
+        case .title: theme.titleFontName
+        case .heading, .subheading: theme.headingFontName
+        case .body, .monospaced: nil
+        }
+    }
 
     // MARK: Polices et couleurs
 
     static func font(style: JournalText.Style, bold: Bool, italic: Bool) -> PlatformFont {
         #if canImport(UIKit)
-        let base: UIFont
+        var base: UIFont
         var traits: UIFontDescriptor.SymbolicTraits = []
         switch style {
         case .body: base = .preferredFont(forTextStyle: .body)
@@ -100,6 +164,12 @@ enum JournalTypography {
         case .monospaced:
             base = .monospacedSystemFont(ofSize: UIFont.preferredFont(forTextStyle: .body).pointSize, weight: .regular)
         }
+        if let name = themeFontName(for: style), let custom = UIFont(name: name, size: base.pointSize) {
+            base = custom
+            traits.remove(.traitBold)
+        } else if theme.serif, style != .monospaced, let serif = base.fontDescriptor.withDesign(.serif) {
+            base = UIFont(descriptor: serif, size: 0)
+        }
         if bold { traits.insert(.traitBold) }
         if italic { traits.insert(.traitItalic) }
         guard !traits.isEmpty,
@@ -107,7 +177,7 @@ enum JournalTypography {
         else { return base }
         return UIFont(descriptor: descriptor, size: 0)
         #else
-        let base: NSFont
+        var base: NSFont
         var traits: NSFontDescriptor.SymbolicTraits = []
         switch style {
         case .body: base = .preferredFont(forTextStyle: .body)
@@ -117,6 +187,13 @@ enum JournalTypography {
         case .monospaced:
             base = .monospacedSystemFont(ofSize: NSFont.preferredFont(forTextStyle: .body).pointSize, weight: .regular)
         }
+        if let name = themeFontName(for: style), let custom = NSFont(name: name, size: base.pointSize) {
+            base = custom
+            traits.remove(.bold)
+        } else if theme.serif, style != .monospaced, let serif = base.fontDescriptor.withDesign(.serif),
+                  let font = NSFont(descriptor: serif, size: 0) {
+            base = font
+        }
         if bold { traits.insert(.bold) }
         if italic { traits.insert(.italic) }
         guard !traits.isEmpty else { return base }
@@ -125,29 +202,9 @@ enum JournalTypography {
         #endif
     }
 
-    static var textColor: PlatformColor {
-        #if canImport(UIKit)
-        .label
-        #else
-        .labelColor
-        #endif
-    }
-
-    static var secondaryColor: PlatformColor {
-        #if canImport(UIKit)
-        .secondaryLabel
-        #else
-        .secondaryLabelColor
-        #endif
-    }
-
-    static var referenceColor: PlatformColor {
-        #if canImport(UIKit)
-        .tintColor
-        #else
-        .controlAccentColor
-        #endif
-    }
+    static var textColor: PlatformColor { colors.text }
+    static var secondaryColor: PlatformColor { colors.secondary }
+    static var referenceColor: PlatformColor { colors.accent }
 
     static func paragraphStyle(style: JournalText.Style, list: JournalText.List?) -> NSParagraphStyle {
         let paragraph = NSMutableParagraphStyle()
@@ -186,10 +243,10 @@ enum JournalTypography {
         #if canImport(UIKit)
         let configuration = UIImage.SymbolConfiguration(pointSize: side, weight: .regular)
         attachment.image = UIImage(systemName: name, withConfiguration: configuration)?
-            .withTintColor(checked ? .tintColor : .tertiaryLabel, renderingMode: .alwaysOriginal)
+            .withTintColor(checked ? colors.accent : colors.tertiary, renderingMode: .alwaysOriginal)
         #else
         let configuration = NSImage.SymbolConfiguration(pointSize: side, weight: .regular)
-            .applying(.init(paletteColors: [checked ? .controlAccentColor : .tertiaryLabelColor]))
+            .applying(.init(paletteColors: [checked ? colors.accent : colors.tertiary]))
         attachment.image = NSImage(systemSymbolName: name, accessibilityDescription: nil)?
             .withSymbolConfiguration(configuration)
         #endif
@@ -220,9 +277,10 @@ enum JournalTypography {
         -> [NSAttributedString.Key: Any] {
         var attributes = paragraphAttributes(style: style, list: list, checked: checked)
         attributes[.font] = font(style: style, bold: bold || reference != nil && style == .body, italic: italic)
+        let isHeading = style == .title || style == .heading || style == .subheading
         attributes[.foregroundColor] = reference != nil ? referenceColor
             : marker && list == .checklist ? (checked ? referenceColor : secondaryColor)
-            : checked && list == .checklist ? secondaryColor : textColor
+            : checked && list == .checklist ? secondaryColor : isHeading ? colors.heading : textColor
         if bold { attributes[.journalBold] = true }
         if italic { attributes[.journalItalic] = true }
         if underline { attributes[.underlineStyle] = NSUnderlineStyle.single.rawValue }

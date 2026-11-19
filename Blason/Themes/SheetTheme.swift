@@ -6,7 +6,8 @@ import SheetKit
 // Un thème, c'est :
 // - des **couleurs** et des **polices** (valeurs simples) ;
 // - des **pièces** remplaçables, chacune une fonction qui dessine une partie de la fiche :
-//   fond de page, cadre de section, zone de saisie, case à cocher.
+//   fond et cadre de page, titre de page, cadre de section, zone de saisie, case à cocher, tuile.
+//   Les ornements partagés entre thèmes (grain, lettrine, rinceaux) sont dans `Themes/Ornaments`.
 //
 // `SheetTheme.native` fournit tout. Un nouveau thème part du natif et ne change que ce qu'il veut
 // (voir `PaperTheme.swift`), puis s'inscrit dans `SheetThemes.all`. Les vues de la fiche ne
@@ -49,12 +50,42 @@ struct SheetTheme: Equatable {
     var sectionTitleFont: Font = .title3.weight(.bold)
     var sectionTitleCase: Text.Case?
     var sectionTitleTracking: CGFloat = 0
+    /// Titre d'un groupe de tableau.
+    var groupTitleFont: Font = .subheadline.weight(.semibold)
+    /// Titre d'une session du journal, en tête du récit.
+    var sessionTitleFont: Font = .title.weight(.bold)
+
+    // MARK: Libellés
+
+    /// Couleur des libellés de champ ; nil : secondaire.
+    var labelColor: Color?
+    /// Signe posé devant chaque libellé, dans la couleur des titres (pied-de-mouche ¶ de l'enluminure).
+    var labelMark: String?
+
+    // MARK: Journal et panneaux
+
+    /// Récit du journal : polices et couleurs de la vue de texte du système.
+    var journal = JournalStyle()
+    /// Fond d'une ligne de liste (sessions, carnet, documents) ; nil : celui du système.
+    var rowBackground: Color?
 
     // MARK: Pièces
 
     /// Fond derrière les pages : blanc, noir en sombre (les cartes se détachent par leur ombre).
     var pageBackground: @MainActor @Sendable () -> AnyView = {
         AnyView(Color.writingBackground)
+    }
+    /// Fond des panneaux et des listes (sessions, carnet et documents).
+    var panelBackground: @MainActor @Sendable () -> AnyView = {
+        AnyView(Color.groupedBackground)
+    }
+    /// Cadre d'une page : entoure son titre (défilement continu) et ses sections ; rien en natif.
+    var pageFrame: @MainActor @Sendable (AnyView) -> AnyView = { page in
+        page
+    }
+    /// Titre de page déjà mis en forme (police, couleur) : le thème peut l'orner.
+    var pageTitle: @MainActor @Sendable (PageTitleConfiguration) -> AnyView = { configuration in
+        configuration.title
     }
     /// Cadre d'une section : place son titre et son contenu. Chaque thème choisit où va le titre :
     /// au-dessus de la carte (natif), dans un bandeau (couleur), sur le filet du cadre (papier),
@@ -70,6 +101,10 @@ struct SheetTheme: Equatable {
     var checkbox: @MainActor @Sendable (Bool) -> AnyView = { isOn in
         AnyView(NativeCheckbox(isOn: isOn))
     }
+    /// Fond d'une tuile (grand champ sous son libellé, dans la grille).
+    var tileFrame: @MainActor @Sendable (TileConfiguration) -> AnyView = { configuration in
+        AnyView(NativeTileFrame(configuration: configuration))
+    }
 
     /// Thème natif : couleurs et typographie du système (clair / sombre, contraste, taille du texte).
     static let native = SheetTheme()
@@ -79,7 +114,22 @@ struct SheetTheme: Equatable {
 /// et le contenu.
 struct SectionFrameConfiguration {
     let title: AnyView?
+    /// Texte du titre, pour un cadre qui le compose lui-même (lettrine) ; nil sans titre, ou pour
+    /// l'indication « Section sans titre » du mode Structure.
+    var titleText: String?
     let content: AnyView
+}
+
+/// Ce que reçoit le titre d'une page : le titre mis en forme, et son texte (vide si la page n'en a pas).
+struct PageTitleConfiguration {
+    let title: AnyView
+    let text: String
+}
+
+/// Ce que reçoit le fond d'une tuile : la tuile, et si elle est mise en avant (mode Jouer).
+struct TileConfiguration {
+    let content: AnyView
+    let emphasized: Bool
 }
 
 extension EnvironmentValues {
@@ -106,6 +156,34 @@ extension View {
     /// Fond discret qui signale un champ de saisie.
     func inputBackground() -> some View {
         modifier(InputBackground())
+    }
+
+    /// Liste ou formulaire sur le fond des panneaux du thème (ses lignes : `themedRows()`).
+    func themedList() -> some View {
+        modifier(ThemedList())
+    }
+
+    /// Fond des lignes de liste du thème ; à poser sur le contenu d'une liste ou d'une section.
+    func themedRows() -> some View {
+        modifier(ThemedRows())
+    }
+}
+
+private struct ThemedList: ViewModifier {
+    @Environment(\.sheetTheme) private var theme
+
+    func body(content: Content) -> some View {
+        content
+            .scrollContentBackground(.hidden)
+            .background { theme.panelBackground() }
+    }
+}
+
+private struct ThemedRows: ViewModifier {
+    @Environment(\.sheetTheme) private var theme
+
+    func body(content: Content) -> some View {
+        content.listRowBackground(theme.rowBackground)
     }
 }
 
@@ -185,6 +263,18 @@ struct NativeInputFrame: View {
             .padding(.horizontal, 6)
             .padding(.vertical, 3)
             .background(theme.inputFill, in: RoundedRectangle(cornerRadius: 6))
+    }
+}
+
+struct NativeTileFrame: View {
+    let configuration: TileConfiguration
+
+    @Environment(\.sheetTheme) private var theme
+
+    var body: some View {
+        configuration.content
+            .background(theme.inputFill.opacity(configuration.emphasized ? 1 : 0.5),
+                        in: RoundedRectangle(cornerRadius: 14))
     }
 }
 

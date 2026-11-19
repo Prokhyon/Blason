@@ -157,12 +157,17 @@ private struct FieldTile: View {
     }
 
     var body: some View {
+        theme.tileFrame(TileConfiguration(content: AnyView(tile), emphasized: mode == .play))
+            .accessibilityElement(children: mode == .play ? .combine : .contain)
+    }
+
+    private var tile: some View {
         VStack(spacing: 2) {
             if let main {
                 VStack(spacing: 0) {
                     Text(main.label)
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(theme.labelColor ?? .secondary)
                         .lineLimit(1)
                     FieldView(field: main, valueOnly: true)
                         .font(.title2.weight(.semibold))
@@ -173,7 +178,7 @@ private struct FieldTile: View {
                 HStack(spacing: 3) {
                     Text(secondary.label)
                         .lineLimit(1)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(theme.labelColor ?? .secondary)
                     FieldView(field: secondary, valueOnly: true)
                 }
                 .font(.caption)
@@ -190,8 +195,6 @@ private struct FieldTile: View {
         .padding(.vertical, 8)
         .padding(.horizontal, 6)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(theme.inputFill.opacity(mode == .play ? 1 : 0.5), in: RoundedRectangle(cornerRadius: 14))
-        .accessibilityElement(children: mode == .play ? .combine : .contain)
     }
 }
 

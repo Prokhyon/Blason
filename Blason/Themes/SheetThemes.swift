@@ -7,25 +7,35 @@ struct SheetThemeDescriptor: Identifiable {
     let id: String
     let name: LocalizedStringKey
     let symbol: String
-    /// Le thème se teinte de la couleur choisie dans la palette.
+    /// Le thème se teinte de la couleur choisie dans sa palette.
     let usesColor: Bool
+    /// Couleurs proposées : celles du système, ou celles du thème (les émaux de l'enluminure).
+    var palette: [ThemeColor] = ThemePalette.all
     let make: @MainActor (Color) -> SheetTheme
+
+    /// Couleur d'un identifiant ; un identifiant d'une autre palette donne la première couleur.
+    func color(_ id: String) -> ThemeColor {
+        palette.first { $0.id == id } ?? palette[0]
+    }
 }
 
 /// Thèmes disponibles. **Ajouter un thème** : écrire `static func monTheme(…) -> SheetTheme`
-/// dans son propre fichier (en partant de `SheetTheme()`), puis l'inscrire ici.
+/// dans son propre fichier (en partant de `SheetTheme()`), puis l'inscrire ici. Pistes à venir :
+/// `Design/Themes/README.md`.
 enum SheetThemes {
     static let all: [SheetThemeDescriptor] = [
         SheetThemeDescriptor(id: "native", name: "Natif", symbol: "ipad", usesColor: false) { _ in .native },
         SheetThemeDescriptor(id: "templateColor", name: "Couleur du template", symbol: "paintpalette",
                              usesColor: true, make: SheetTheme.templateColor),
         SheetThemeDescriptor(id: "paper", name: "Fiche papier", symbol: "doc.plaintext", usesColor: false) { _ in .paper },
+        SheetThemeDescriptor(id: "illuminated", name: "Enluminure", symbol: "scroll", usesColor: true,
+                             palette: IlluminatedTheme.tinctures, make: SheetTheme.illuminated),
     ]
 
     /// Thème d'une apparence ; un identifiant inconnu (version plus récente) donne le thème natif.
     static func theme(for appearance: SheetAppearance) -> SheetTheme {
         let descriptor = all.first { $0.id == appearance.themeID } ?? all[0]
-        var theme = descriptor.make(ThemePalette.color(appearance.colorID))
+        var theme = descriptor.make(descriptor.color(appearance.colorID).color)
         theme.identity = appearance
         return theme
     }
@@ -58,10 +68,6 @@ enum ThemePalette {
         ThemeColor(id: "brown", name: "Brun", color: .brown),
         ThemeColor(id: "gray", name: "Graphite", color: .gray),
     ]
-
-    static func color(_ id: String) -> Color {
-        all.first { $0.id == id }?.color ?? .blue
-    }
 
     /// Pastille de couleur pour un menu (les menus affichent les images en une seule teinte, sauf celles-ci).
     static func swatch(_ color: Color) -> Image {

@@ -10,7 +10,8 @@ struct SectionCard: View {
     @Environment(\.sheetTheme) private var theme
 
     var body: some View {
-        theme.sectionFrame(SectionFrameConfiguration(title: title, content: AnyView(content)))
+        theme.sectionFrame(SectionFrameConfiguration(
+            title: title, titleText: section.title.isEmpty ? nil : section.title, content: AnyView(content)))
             .structureItem(.section(section))
     }
 
