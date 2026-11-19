@@ -238,6 +238,8 @@ struct ItemPropertyEditor: View {
     let property: ItemProperty
     let engine: FormulaEngine
     var width: CGFloat = 60
+    /// Texte à droite (fiche de l'objet, en face du libellé) ou à gauche (colonne d'un tableau).
+    var textAlignment: TextAlignment = .trailing
 
     @Environment(\.sheetMode) private var mode
     @Environment(\.modelContext) private var context
@@ -252,11 +254,11 @@ struct ItemPropertyEditor: View {
         switch property.kind {
         case .text:
             if editable {
-                TextField("", text: Binding(
+                SheetTextField(text: Binding(
                     get: { value?.textValue ?? "" },
                     set: { item.editableValue(for: property, in: context).textValue = $0.isEmpty ? nil : $0 }
-                ), prompt: property.textValue.map(Text.init))
-                .multilineTextAlignment(.trailing)
+                ), prompt: property.textValue)
+                .multilineTextAlignment(textAlignment)
                 .frame(minWidth: width)
                 .inputBackground()
                 .accessibilityLabel(accessibilityName)

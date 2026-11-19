@@ -9,6 +9,7 @@ struct InventoryViewSection: View {
 
     @Environment(\.sheetMode) private var mode
     @Environment(\.inventoryItemOpener) private var opener
+    @ScaledMetric(relativeTo: .body) private var numberWidth: CGFloat = 60
 
     var body: some View {
         if section.viewedInventory == nil {
@@ -34,37 +35,45 @@ struct InventoryViewSection: View {
         }
     }
 
+    /// Mis en page comme les tableaux de la fiche (`TableLayout`) : les colonnes de texte partagent
+    /// la place avec les noms, les nombres et les cases restent à leur largeur.
     private func grid(_ items: [InventoryItem]) -> some View {
         let codes = section.viewPropertyCodes
         let engine = FormulaEngine(sheet: section.row?.page?.sheet)
-        return Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 6) {
-            GridRow {
+        return TableLayout(columns: codes.map(layoutColumn)) {
+            Group {
                 Text("Objet")
                 ForEach(codes, id: \.self) { code in
                     Text(label(for: code))
-                        .gridColumnAlignment(isText(code) ? .leading : .trailing)
                 }
             }
             .font(.caption)
             .foregroundStyle(.secondary)
             ForEach(items) { item in
-                GridRow {
-                    Button {
-                        opener?.open(item)
-                    } label: {
-                        Label(item.name, systemImage: item.type?.icon ?? "shippingbox")
-                            .lineLimit(1)
-                    }
-                    .buttonStyle(.plain)
-                    ForEach(codes, id: \.self) { code in
-                        if let property = item.type?.property(code: code) {
-                            ItemPropertyEditor(item: item, property: property, engine: engine, width: 60)
-                        } else {
-                            Text("")
-                        }
+                Button {
+                    opener?.open(item)
+                } label: {
+                    Label(item.name, systemImage: item.type?.icon ?? "shippingbox")
+                        .lineLimit(1)
+                }
+                .buttonStyle(.plain)
+                ForEach(codes, id: \.self) { code in
+                    if let property = item.type?.property(code: code) {
+                        ItemPropertyEditor(item: item, property: property, engine: engine,
+                                           width: 60, textAlignment: .leading)
+                    } else {
+                        Color.clear.frame(width: 1, height: 1)
                     }
                 }
             }
+        }
+    }
+
+    private func layoutColumn(_ code: String) -> TableLayout.Column {
+        switch property(for: code)?.kind {
+        case .text: TableLayout.Column(flexible: true, trailing: false)
+        case .checkbox: TableLayout.Column(flexible: false, trailing: true)
+        default: TableLayout.Column(flexible: false, trailing: true, minimumWidth: numberWidth)
         }
     }
 
@@ -79,9 +88,6 @@ struct InventoryViewSection: View {
         return property.label.isEmpty ? code : property.label
     }
 
-    private func isText(_ code: String) -> Bool {
-        property(for: code)?.kind == .text
-    }
 }
 
 /// Inspecteur d'une vue de la Besace : types montrés et propriétés en colonnes.

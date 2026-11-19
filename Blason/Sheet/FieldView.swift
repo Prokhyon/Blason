@@ -381,41 +381,43 @@ struct NumberField: View {
         // Le champ n'existe que pendant la saisie (voir `SheetTextField`).
         Group {
             if isEditing {
-                TextField("", text: $text, selection: $selection, prompt: prompt.map(Text.init))
-                    .focused($isFocused)
-                    .tabNavigation(id: id)
-                    .numericKeyboard(integer: integer)
-                    .onAppear {
-                        text = format(value)
-                        isFocused = true
+                EditingInputFrame(text: text) {
+                    TextField("", text: $text, selection: $selection, prompt: prompt.map(Text.init))
+                        .focused($isFocused)
+                        .tabNavigation(id: id)
+                        .numericKeyboard(integer: integer)
+                }
+                .onAppear {
+                    text = format(value)
+                    isFocused = true
+                }
+                .onChange(of: isFocused) { _, focused in
+                    if focused {
+                        // Tout sélectionné : la frappe remplace le nombre.
+                        selection = TextSelection(range: text.startIndex..<text.endIndex)
+                    } else {
+                        isEditing = false
                     }
-                    .onChange(of: isFocused) { _, focused in
-                        if focused {
-                            // Tout sélectionné : la frappe remplace le nombre.
-                            selection = TextSelection(range: text.startIndex..<text.endIndex)
-                        } else {
-                            isEditing = false
-                        }
+                }
+                .onChange(of: text) { _, newText in
+                    // Touche Tab du clavier à l'écran : elle insère une tabulation.
+                    if newText.contains("\t") {
+                        text = newText.replacingOccurrences(of: "\t", with: "")
+                        navigator?.move(from: id, forward: true)
+                        return
                     }
-                    .onChange(of: text) { _, newText in
-                        // Touche Tab du clavier à l'écran : elle insère une tabulation.
-                        if newText.contains("\t") {
-                            text = newText.replacingOccurrences(of: "\t", with: "")
-                            navigator?.move(from: id, forward: true)
-                            return
-                        }
-                        guard isFocused else { return }
-                        let parsed: Double?
-                        if newText.trimmingCharacters(in: .whitespaces).isEmpty {
-                            parsed = nil
-                        } else if let number = ListImport.number(from: newText) {
-                            parsed = integer ? number.rounded() : number
-                        } else {
-                            return
-                        }
-                        if parsed != value { setValue(parsed) }
+                    guard isFocused else { return }
+                    let parsed: Double?
+                    if newText.trimmingCharacters(in: .whitespaces).isEmpty {
+                        parsed = nil
+                    } else if let number = ListImport.number(from: newText) {
+                        parsed = integer ? number.rounded() : number
+                    } else {
+                        return
                     }
-                    .onSubmit { isFocused = false }
+                    if parsed != value { setValue(parsed) }
+                }
+                .onSubmit { isFocused = false }
             } else {
                 IdleInputLabel(text: format(value), prompt: prompt) { isEditing = true }
             }

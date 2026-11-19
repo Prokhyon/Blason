@@ -34,26 +34,28 @@ struct SheetTextField: View {
     var body: some View {
         Group {
             if isEditing {
-                TextField("", text: $draft, prompt: prompt.map(Text.init), axis: axis)
-                    .focused($isFocused)
-                    .tabNavigation(id: id)
-                    .onAppear {
-                        draft = text
-                        isFocused = true
+                EditingInputFrame(text: draft, multiline: axis == .vertical, minLines: minLines) {
+                    TextField("", text: $draft, prompt: prompt.map(Text.init), axis: axis)
+                        .focused($isFocused)
+                        .tabNavigation(id: id)
+                }
+                .onAppear {
+                    draft = text
+                    isFocused = true
+                }
+                .onChange(of: draft) { _, newValue in
+                    // Touche Tab du clavier à l'écran : elle insère une tabulation.
+                    if newValue.contains("\t") {
+                        draft = newValue.replacingOccurrences(of: "\t", with: "")
+                        navigator?.move(from: id, forward: true)
+                        return
                     }
-                    .onChange(of: draft) { _, newValue in
-                        // Touche Tab du clavier à l'écran : elle insère une tabulation.
-                        if newValue.contains("\t") {
-                            draft = newValue.replacingOccurrences(of: "\t", with: "")
-                            navigator?.move(from: id, forward: true)
-                            return
-                        }
-                        if newValue != text { setText(newValue) }
-                    }
-                    .onChange(of: isFocused) { _, focused in
-                        if !focused { isEditing = false }
-                    }
-                    .onSubmit { isFocused = false }
+                    if newValue != text { setText(newValue) }
+                }
+                .onChange(of: isFocused) { _, focused in
+                    if !focused { isEditing = false }
+                }
+                .onSubmit { isFocused = false }
             } else {
                 IdleInputLabel(text: text, prompt: prompt, multiline: axis == .vertical, minLines: minLines) {
                     isEditing = true
@@ -94,12 +96,16 @@ struct IdleInputLabel: View {
         .accessibilityHint("Toucher deux fois pour modifier")
         .accessibilityAction { activate() }
         #if DEBUG
-        // -demoEdit VALEUR : ouvre la saisie de la première case qui affiche cette valeur (mesures).
+        // -demoEdit VALEUR : ouvre la saisie de la première case qui affiche cette valeur (mesures) ;
+        // -demoEdit @multiline : celle du premier texte long.
         .task {
-            guard let key = UserDefaults.standard.string(forKey: "demoEdit"), key == text,
+            guard let key = UserDefaults.standard.string(forKey: "demoEdit"),
+                  key == text || (key == "@multiline" && multiline),
                   !Self.demoEditDone else { return }
-            Self.demoEditDone = true
+            // La case a pu être recréée entre-temps (une mise en page qui change) : la nouvelle s'en charge.
             try? await Task.sleep(for: .seconds(1.5))
+            guard !Task.isCancelled, !Self.demoEditDone else { return }
+            Self.demoEditDone = true
             activate()
         }
         #endif
@@ -115,6 +121,29 @@ struct IdleInputLabel: View {
         case .center: multiline ? .top : .center
         default: multiline ? .topLeading : .leading
         }
+    }
+}
+
+/// Le champ ouvert prend la taille de la case au repos : un `UITextField` est un peu plus haut que
+/// son texte, et la ligne (avec tout ce qui la suit) bougeait de 2 ou 3 points à l'ouverture.
+/// Le texte invisible fixe la taille, le champ se pose dessus.
+struct EditingInputFrame<Field: View>: View {
+    let text: String
+    var multiline = false
+    var minLines = 1
+    @ViewBuilder let field: () -> Field
+
+    var body: some View {
+        ZStack {
+            if minLines > 1 {
+                Text(String(repeating: "\n", count: minLines - 1))
+            }
+            Text(text.isEmpty ? " " : text)
+                .lineLimit(multiline ? nil : 1)
+        }
+        .hidden()
+        .frame(maxWidth: .infinity)
+        .overlay(content: field)
     }
 }
 
