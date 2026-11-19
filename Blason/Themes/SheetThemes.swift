@@ -34,6 +34,12 @@ enum SheetThemes {
                              palette: Heraldry.tinctures, make: SheetTheme.armorial),
         SheetThemeDescriptor(id: "grimoire", name: "Grimoire", symbol: "book.closed", usesColor: true,
                              palette: GrimoireTheme.inks, make: SheetTheme.grimoire),
+        SheetThemeDescriptor(id: "treasureMap", name: "Carte au trésor", symbol: "map", usesColor: true,
+                             palette: TreasureMapTheme.inks, make: SheetTheme.treasureMap),
+        SheetThemeDescriptor(id: "dossier", name: "Dossier 1920", symbol: "folder", usesColor: true,
+                             palette: DossierTheme.inks, make: SheetTheme.dossier),
+        SheetThemeDescriptor(id: "entrelacs", name: "Entrelacs", symbol: "infinity", usesColor: true,
+                             palette: EntrelacsTheme.dyes, make: SheetTheme.entrelacs),
     ]
 
     /// Thème d'une apparence ; un identifiant inconnu (version plus récente) donne le thème natif.

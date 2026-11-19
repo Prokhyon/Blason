@@ -1,9 +1,12 @@
 # Thèmes décorés (pistes)
 
 Brainstorming du 19 novembre 2026 : des thèmes plus proches des fiches de personnage imprimées,
-avec bordures ornées et enluminures. Six directions, toutes retenues. Réalisées : **Enluminure**
-(`Blason/Themes/IlluminatedTheme.swift`), **Armorial** (`Blason/Themes/ArmorialTheme.swift`) et
-**Grimoire** (`Blason/Themes/GrimoireTheme.swift`).
+avec bordures ornées et enluminures. Six directions, toutes retenues et toutes réalisées :
+**Enluminure** (`Blason/Themes/IlluminatedTheme.swift`), **Armorial** (`Blason/Themes/ArmorialTheme.swift`),
+**Grimoire** (`Blason/Themes/GrimoireTheme.swift`), **Carte au trésor**, la piste « Carte &
+journal de bord » (`Blason/Themes/TreasureMapTheme.swift`), **Dossier 1920**
+(`Blason/Themes/DossierTheme.swift`) et **Entrelacs** (`Blason/Themes/EntrelacsTheme.swift`, un
+triquetra à la place de la rune : pas de police runique sûre sur iOS).
 
 On s'inspire des **genres** (manuscrit, héraldique, Art déco…), jamais d'une fiche officielle
 d'éditeur.
@@ -27,7 +30,7 @@ cadre de tuile (`tileFrame`), séparateur (`divider`), police et couleur des lib
 section reçoit aussi le texte brut du titre et sa place dans la page (lettrine sur la première).
 
 Le kit `Blason/Themes/Ornaments/` réunit ce qui se partage d'un thème à l'autre : grain,
-lettrine, rinceau, cadre en 9 parties dessiné une fois puis étiré (coins fixes, bords étirés),
+lettrine, rinceau, frise tressée et triquetra, cadre en 9 parties dessiné une fois puis étiré (coins fixes, bords étirés),
 cache d'images par émail, émaux et or (`Heraldry`).
 
 Chaque thème peut avoir sa **palette** : les thèmes décorés prennent les émaux des icônes de l'app
@@ -35,8 +38,12 @@ Chaque thème peut avoir sa **palette** : les thèmes décorés prennent les ém
 
 ## Polices
 
-La SPEC (§5.9) s'en tient aux polices d'iOS. Elles suffisent pour la plupart des pistes
-(Copperplate, Baskerville, Big Caslon, Cochin, Snell Roundhand, Optima, American Typewriter,
-Futura). Il n'y a ni gothique ni onciale sur iOS : pour un vrai style manuscrit, il faudrait
+La SPEC (§5.9) s'en tient aux polices présentes sur iOS et macOS. Elles suffisent pour la plupart
+des pistes (Copperplate, Baskerville, Hoefler Text, Cochin, Snell Roundhand, Optima, American
+Typewriter, Futura). Big Caslon n'existe que sur macOS : ne pas l'utiliser.
+
+Une police de titre se pose avec `themeFont(_:)`, jamais `font(_:)` : le dessin de police de la
+fiche (`fontDesign`, avec empattements pour les thèmes papier) remplace sinon toute police nommée
+par New York. Il n'y a ni gothique ni onciale sur iOS : pour un vrai style manuscrit, il faudrait
 embarquer des polices libres (OFL), par exemple Cinzel, IM Fell English, EB Garamond ou
 UnifrakturMaguntia.

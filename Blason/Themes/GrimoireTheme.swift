@@ -12,18 +12,18 @@ extension SheetTheme {
         theme.accent = ink
         theme.colorScheme = .dark
         theme.fontDesign = .serif
-        theme.pageTitleFont = .custom("BigCaslon-Medium", size: 30, relativeTo: .title2)
-        theme.sectionTitleFont = .custom("BigCaslon-Medium", size: 16, relativeTo: .headline)
+        theme.pageTitleFont = .custom("HoeflerText-Regular", size: 30, relativeTo: .title2)
+        theme.sectionTitleFont = .custom("HoeflerText-Regular", size: 16, relativeTo: .headline)
         theme.sectionTitleCase = .uppercase
         theme.sectionTitleTracking = 2.5
-        theme.groupTitleFont = .custom("BigCaslon-Medium", size: 15, relativeTo: .subheadline)
-        theme.sessionTitleFont = .custom("BigCaslon-Medium", size: 32, relativeTo: .title)
+        theme.groupTitleFont = .custom("HoeflerText-Regular", size: 15, relativeTo: .subheadline)
+        theme.sessionTitleFont = .custom("HoeflerText-Regular", size: 32, relativeTo: .title)
         theme.labelColor = text.opacity(0.68)
         theme.cardBackground = .clear
         theme.inputFill = GrimoireTheme.gold.opacity(0.10)
         theme.trackStroke = GrimoireTheme.gold.opacity(0.45)
         theme.rowBackground = Color.white.opacity(0.06)
-        theme.journal = JournalStyle(serif: true, titleFontName: "BigCaslon-Medium", headingFontName: "Cochin-Bold",
+        theme.journal = JournalStyle(serif: true, titleFontName: "HoeflerText-Regular", headingFontName: "Cochin-Bold",
                                      text: text, heading: ink, accent: ink)
         theme.pageBackground = { AnyView(GrainBackground(tile: GrimoireTheme.leather, fallback: GrimoireTheme.leatherColor)) }
         theme.panelBackground = theme.pageBackground

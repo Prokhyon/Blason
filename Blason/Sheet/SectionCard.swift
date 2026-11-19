@@ -19,12 +19,12 @@ struct SectionCard: View {
     private var title: AnyView? {
         if mode == .structure && section.title.isEmpty {
             return AnyView(Text("Section sans titre")
-                .font(theme.sectionTitleFont)
+                .themeFont(theme.sectionTitleFont)
                 .foregroundStyle(.tertiary))
         }
         guard !section.title.isEmpty else { return nil }
         return AnyView(Text(section.title)
-            .font(theme.sectionTitleFont)
+            .themeFont(theme.sectionTitleFont)
             .textCase(theme.sectionTitleCase)
             .tracking(theme.sectionTitleTracking)
             .sheetHeading(theme)

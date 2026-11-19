@@ -146,7 +146,7 @@ struct Banderole: View {
 
     var body: some View {
         Text(text)
-            .font(font)
+            .themeFont(font)
             .textCase(.uppercase)
             .tracking(tracking)
             .foregroundStyle(Gilding.light)

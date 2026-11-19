@@ -9,7 +9,7 @@ struct Lettrine: View {
     /// Or clair (lettre, filet intérieur) et or sombre (filet extérieur, points).
     var gold = Gilding.light
     var goldShade = Gilding.shade
-    var fontName = "BigCaslon-Medium"
+    var fontName = "HoeflerText-Black"
 
     @ScaledMetric(relativeTo: .title3) private var side: CGFloat = 38
 
@@ -20,7 +20,7 @@ struct Lettrine: View {
             Rectangle().strokeBorder(gold.opacity(0.75), lineWidth: 0.6).padding(3.2)
             corners
             Text(letter)
-                .font(.custom(fontName, fixedSize: side * 0.74))
+                .themeFont(.custom(fontName, fixedSize: side * 0.74))
                 .foregroundStyle(gold)
                 .offset(y: side * 0.04)
         }

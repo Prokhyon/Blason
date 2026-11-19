@@ -357,6 +357,15 @@
     "Bleu" : {
 
     },
+    "Bleu encre" : {
+
+    },
+    "Bleu guède" : {
+
+    },
+    "Bleu marine" : {
+
+    },
     "Brun" : {
 
     },
@@ -369,6 +378,9 @@
     "Capacité" : {
 
     },
+    "Carmin" : {
+
+    },
     "Carnet" : {
 
     },
@@ -376,6 +388,9 @@
 
     },
     "Carnet vide" : {
+
+    },
+    "Carte au trésor" : {
 
     },
     "Case à cocher" : {
@@ -490,6 +505,9 @@
 
     },
     "Compteur" : {
+
+    },
+    "CONFIDENTIEL" : {
 
     },
     "Contenant" : {
@@ -624,6 +642,9 @@
     "Documents" : {
 
     },
+    "Dossier 1920" : {
+
+    },
     "Droite" : {
 
     },
@@ -676,6 +697,9 @@
 
     },
     "Entrée dans un libellé : crée l'élément suivant" : {
+
+    },
+    "Entrelacs" : {
 
     },
     "équipé" : {
@@ -1027,6 +1051,9 @@
     "Natif" : {
 
     },
+    "Noir" : {
+
+    },
     "Nom" : {
 
     },
@@ -1103,6 +1130,9 @@
 
     },
     "Objets, argent, emplacements et contenants ; poids et encombrement en option." : {
+
+    },
+    "Ocre" : {
 
     },
     "OK" : {
@@ -1364,6 +1394,12 @@
     "Rouge" : {
 
     },
+    "Rouge garance" : {
+
+    },
+    "Rouge tampon" : {
+
+    },
     "Rubrique" : {
 
     },
@@ -1398,6 +1434,9 @@
 
     },
     "Section sans titre" : {
+
+    },
+    "Sépia" : {
 
     },
     "Session" : {
@@ -1669,6 +1708,15 @@
 
     },
     "Vert" : {
+
+    },
+    "Vert bureau" : {
+
+    },
+    "Vert océan" : {
+
+    },
+    "Vert profond" : {
 
     },
     "vide" : {

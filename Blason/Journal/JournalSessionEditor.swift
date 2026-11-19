@@ -166,7 +166,7 @@ struct JournalSessionEditor: View {
     /// Titre de la session, comme un titre de page : police et ornement du thème.
     private var titleField: some View {
         TextField("Titre", text: $session.title, prompt: Text("Titre de la session"))
-            .font(theme.sessionTitleFont)
+            .themeFont(theme.sessionTitleFont)
             .foregroundStyle(theme.headingColor ?? .primary)
             .textFieldStyle(.plain)
             .onSubmit { controller.host?.journalFocus() }

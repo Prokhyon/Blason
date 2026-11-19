@@ -42,8 +42,12 @@ struct SheetTheme: Equatable {
 
     // MARK: Polices
 
-    /// Dessin des polices du système dans toute la fiche (avec empattements pour le papier).
-    var fontDesign: Font.Design = .default
+    /// Dessin des polices du système dans toute la fiche (avec empattements pour le papier) ; nil :
+    /// celui du système. Les polices de titre ci-dessous n'en dépendent pas (voir `themeFont`).
+    var fontDesign: Font.Design?
+    /// Police du texte courant (valeurs, lignes de tableau) ; nil : celle du système. Une police
+    /// nommée n'est pas compatible avec `fontDesign` (SwiftUI la remplacerait) : laisser celui-ci à nil.
+    var bodyFont: Font?
     var pageTitleFont: Font = .title2.weight(.bold)
     /// Titre de section : il se détache des titres de groupe et des lignes (le cadre du thème
     /// décide où le poser).
@@ -153,6 +157,19 @@ extension View {
         if let color { foregroundStyle(color) } else { self }
     }
 
+    /// Police d'un titre du thème. Elle est complète (police nommée, ou police du système de dessin
+    /// explicite) : elle échappe au dessin de la fiche, que SwiftUI appliquerait sinon aussi aux
+    /// polices nommées (Cochin ou Snell Roundhand devenaient New York).
+    func themeFont(_ font: Font) -> some View {
+        self.font(font).fontDesign(nil)
+    }
+
+    /// Police imposée seulement si elle est donnée : sinon celle héritée reste.
+    @ViewBuilder
+    func font(ifSet font: Font?) -> some View {
+        if let font { self.font(font) } else { self }
+    }
+
     /// Fond discret qui signale un champ de saisie.
     func inputBackground() -> some View {
         modifier(InputBackground())
@@ -196,6 +213,7 @@ private struct SheetThemeModifier: ViewModifier {
         content
             .environment(\.sheetTheme, theme)
             .fontDesign(theme.fontDesign)
+            .font(ifSet: theme.bodyFont)
             .tint(theme.accent)
             .foregroundStyle(ifSet: theme.ink)
             .environment(\.colorScheme, theme.colorScheme ?? systemScheme)

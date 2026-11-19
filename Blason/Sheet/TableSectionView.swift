@@ -195,7 +195,7 @@ private struct GroupHeader: View {
                     .foregroundStyle(.tertiary)
             } else {
                 Text(group.title)
-                    .font(theme.groupTitleFont)
+                    .themeFont(theme.groupTitleFont)
                     .sheetHeading(theme)
             }
             Spacer(minLength: 8)

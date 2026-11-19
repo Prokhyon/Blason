@@ -12,11 +12,11 @@ extension SheetTheme {
         theme.accent = tincture
         theme.colorScheme = .light
         theme.fontDesign = .serif
-        theme.pageTitleFont = .custom("BigCaslon-Medium", size: 30, relativeTo: .title2)
+        theme.pageTitleFont = .custom("HoeflerText-Regular", size: 30, relativeTo: .title2)
         theme.sectionTitleFont = .custom("Cochin-Bold", size: 19, relativeTo: .title3)
         theme.groupTitleFont = .custom("Cochin-Bold", size: 15, relativeTo: .subheadline)
-        theme.sessionTitleFont = .custom("BigCaslon-Medium", size: 32, relativeTo: .title)
-        theme.journal = JournalStyle(serif: true, titleFontName: "BigCaslon-Medium", headingFontName: "Cochin-Bold",
+        theme.sessionTitleFont = .custom("HoeflerText-Regular", size: 32, relativeTo: .title)
+        theme.journal = JournalStyle(serif: true, titleFontName: "HoeflerText-Regular", headingFontName: "Cochin-Bold",
                                      text: ink, heading: tincture, accent: tincture)
         theme.rowBackground = Color.white.opacity(0.32)
         theme.labelColor = ink.opacity(0.78)
@@ -117,7 +117,7 @@ private struct IlluminatedSectionFrame: View {
                 Lettrine(letter: parts.initial, field: tincture)
                     .alignmentGuide(.lastTextBaseline) { $0[.bottom] - 2 }
                 Text(parts.rest)
-                    .font(theme.sectionTitleFont)
+                    .themeFont(theme.sectionTitleFont)
                     .foregroundStyle(tincture)
                     .lineLimit(2)
                 Rectangle()

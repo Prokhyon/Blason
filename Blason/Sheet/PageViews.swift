@@ -118,7 +118,7 @@ private struct PageTitle: View {
 
     var body: some View {
         let title = Text(page.title.isEmpty ? "Sans titre" : page.title)
-            .font(theme.pageTitleFont)
+            .themeFont(theme.pageTitleFont)
             .sheetHeading(theme)
             .opacity(page.title.isEmpty ? 0.5 : 1)
             .accessibilityAddTraits(.isHeader)

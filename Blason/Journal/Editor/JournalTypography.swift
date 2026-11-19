@@ -88,10 +88,15 @@ nonisolated final class JournalCheckbox: NSTextAttachment {
 struct JournalStyle: Equatable {
     /// Corps de texte avec empattements (New York) ; sinon la police du système.
     var serif = false
+    /// Police du corps de texte ; nil : celle du système (avec empattements si `serif`).
+    var bodyFontName: String?
     /// Police du style Titre ; nil : celle du système, en gras.
     var titleFontName: String?
     /// Police des styles En-tête et Sous-en-tête ; nil : celle du système.
     var headingFontName: String?
+    /// Taille des polices de titre et d'en-tête par rapport au style : une écriture manuscrite paraît
+    /// plus petite qu'une police de texte de même corps.
+    var fontScale: CGFloat = 1
     /// Texte ; nil : couleur du système.
     var text: Color?
     /// Titres et en-têtes (rubriques) ; nil : couleur du texte.
@@ -146,7 +151,8 @@ enum JournalTypography {
         switch style {
         case .title: theme.titleFontName
         case .heading, .subheading: theme.headingFontName
-        case .body, .monospaced: nil
+        case .body: theme.bodyFontName
+        case .monospaced: nil
         }
     }
 
@@ -164,7 +170,7 @@ enum JournalTypography {
         case .monospaced:
             base = .monospacedSystemFont(ofSize: UIFont.preferredFont(forTextStyle: .body).pointSize, weight: .regular)
         }
-        if let name = themeFontName(for: style), let custom = UIFont(name: name, size: base.pointSize) {
+        if let name = themeFontName(for: style), let custom = UIFont(name: name, size: base.pointSize * (style == .body ? 1 : theme.fontScale)) {
             base = custom
             traits.remove(.traitBold)
         } else if theme.serif, style != .monospaced, let serif = base.fontDescriptor.withDesign(.serif) {
@@ -187,7 +193,7 @@ enum JournalTypography {
         case .monospaced:
             base = .monospacedSystemFont(ofSize: NSFont.preferredFont(forTextStyle: .body).pointSize, weight: .regular)
         }
-        if let name = themeFontName(for: style), let custom = NSFont(name: name, size: base.pointSize) {
+        if let name = themeFontName(for: style), let custom = NSFont(name: name, size: base.pointSize * (style == .body ? 1 : theme.fontScale)) {
             base = custom
             traits.remove(.bold)
         } else if theme.serif, style != .monospaced, let serif = base.fontDescriptor.withDesign(.serif),
