@@ -50,9 +50,3 @@ struct Lettrine: View {
         return (String(first).uppercased(), String(trimmed.dropFirst()))
     }
 }
-
-/// Or des enluminures.
-enum Gilding {
-    static let light = Color(red: 0.98, green: 0.78, blue: 0.46)    // #FAC775, or des icônes
-    static let shade = Color(red: 0.73, green: 0.46, blue: 0.09)    // #BA7517
-}

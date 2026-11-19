@@ -1,8 +1,8 @@
 # Thèmes décorés (pistes)
 
 Brainstorming du 19 novembre 2026 : des thèmes plus proches des fiches de personnage imprimées,
-avec bordures ornées et enluminures. Six directions, toutes retenues ; **Enluminure** est la
-première réalisée (`Blason/Themes/IlluminatedTheme.swift`).
+avec bordures ornées et enluminures. Six directions, toutes retenues. Réalisées : **Enluminure**
+(`Blason/Themes/IlluminatedTheme.swift`) et **Armorial** (`Blason/Themes/ArmorialTheme.swift`).
 
 On s'inspire des **genres** (manuscrit, héraldique, Art déco…), jamais d'une fiche officielle
 d'éditeur.
@@ -25,8 +25,9 @@ cadre de page (`pageFrame`), titre de page (`pageTitle`), en-tête de groupe (`g
 cadre de tuile (`tileFrame`), séparateur (`divider`), police et couleur des libellés. Le cadre de
 section reçoit aussi le texte brut du titre et sa place dans la page (lettrine sur la première).
 
-Le kit `Blason/Themes/Ornaments/` réunit ce qui se partage d'un thème à l'autre : cadre en
-9 parties dessiné une fois puis étiré (coins fixes, bords répétés), lettrine, fleurons, rinceaux.
+Le kit `Blason/Themes/Ornaments/` réunit ce qui se partage d'un thème à l'autre : grain,
+lettrine, rinceau, cadre en 9 parties dessiné une fois puis étiré (coins fixes, bords étirés),
+cache d'images par émail, émaux et or (`Heraldry`).
 
 Chaque thème peut avoir sa **palette** : les thèmes décorés prennent les émaux des icônes de l'app
 (Gueules, Azur, Sinople, Pourpre, Sable…), mêmes couleurs que `Design/Blason/make.py`.

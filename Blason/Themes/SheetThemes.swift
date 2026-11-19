@@ -29,7 +29,9 @@ enum SheetThemes {
                              usesColor: true, make: SheetTheme.templateColor),
         SheetThemeDescriptor(id: "paper", name: "Fiche papier", symbol: "doc.plaintext", usesColor: false) { _ in .paper },
         SheetThemeDescriptor(id: "illuminated", name: "Enluminure", symbol: "scroll", usesColor: true,
-                             palette: IlluminatedTheme.tinctures, make: SheetTheme.illuminated),
+                             palette: Heraldry.tinctures, make: SheetTheme.illuminated),
+        SheetThemeDescriptor(id: "armorial", name: "Armorial", symbol: "shield.lefthalf.filled", usesColor: true,
+                             palette: Heraldry.tinctures, make: SheetTheme.armorial),
     ]
 
     /// Thème d'une apparence ; un identifiant inconnu (version plus récente) donne le thème natif.

@@ -48,17 +48,6 @@ enum IlluminatedTheme {
         fleck: .init(red: 0.45, green: 0.30, blue: 0.12),
         fibre: .init(red: 0.55, green: 0.40, blue: 0.20),
         seed: 0x7E11, fibres: 70)
-
-    /// Les émaux, aux couleurs des icônes de l'app (`Design/Blason/make.py`), en version foncée :
-    /// lisibles en texte sur le vélin. L'or et l'argent sont des métaux : ils ne s'écrivent pas sur
-    /// le vélin, l'or est réservé aux lettrines.
-    static let tinctures: [ThemeColor] = [
-        ThemeColor(id: "gueules", name: "Gueules", color: Color(red: 0.64, green: 0.18, blue: 0.18)),   // #A32D2D
-        ThemeColor(id: "azur", name: "Azur", color: Color(red: 0.09, green: 0.37, blue: 0.65)),        // #185FA5
-        ThemeColor(id: "sinople", name: "Sinople", color: Color(red: 0.23, green: 0.43, blue: 0.07)),  // #3B6D11
-        ThemeColor(id: "pourpre", name: "Pourpre", color: Color(red: 0.33, green: 0.29, blue: 0.72)),  // #534AB7
-        ThemeColor(id: "sable", name: "Sable", color: Color(red: 0.17, green: 0.17, blue: 0.16)),      // #2C2C2A
-    ]
 }
 
 /// Page : un rinceau dans la marge de gauche, sur toute sa hauteur.

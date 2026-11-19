@@ -39,14 +39,10 @@ struct VineBorder: View {
 
     private static let stem = Color(red: 0.23, green: 0.43, blue: 0.07)    // sinople #3B6D11
     private static let tileHeight: CGFloat = 72
-    @MainActor private static var tiles: [Color.Resolved: CGImage] = [:]
+    @MainActor private static let tiles = TintedImageCache(draw: drawTile(berry:))
 
     @MainActor static func tile(for tint: Color) -> CGImage? {
-        let key = tint.resolve(in: EnvironmentValues())
-        if let tile = tiles[key] { return tile }
-        let tile = drawTile(berry: key.cgColor)
-        tiles[key] = tile
-        return tile
+        tiles.image(for: tint)
     }
 
     /// La tige fait une période entière sur la hauteur de la tuile : les tuiles se raccordent.
