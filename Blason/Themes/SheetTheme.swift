@@ -44,7 +44,9 @@ struct SheetTheme: Equatable {
     /// Dessin des polices du système dans toute la fiche (avec empattements pour le papier).
     var fontDesign: Font.Design = .default
     var pageTitleFont: Font = .title2.weight(.bold)
-    var sectionTitleFont: Font = .headline
+    /// Titre de section : il se détache des titres de groupe et des lignes (le cadre du thème
+    /// décide où le poser).
+    var sectionTitleFont: Font = .title3.weight(.bold)
     var sectionTitleCase: Text.Case?
     var sectionTitleTracking: CGFloat = 0
 
@@ -54,7 +56,9 @@ struct SheetTheme: Equatable {
     var pageBackground: @MainActor @Sendable () -> AnyView = {
         AnyView(Color.writingBackground)
     }
-    /// Cadre d'une section : place son titre et son contenu.
+    /// Cadre d'une section : place son titre et son contenu. Chaque thème choisit où va le titre :
+    /// au-dessus de la carte (natif), dans un bandeau (couleur), sur le filet du cadre (papier),
+    /// ou dans un cadre collé à la section.
     var sectionFrame: @MainActor @Sendable (SectionFrameConfiguration) -> AnyView = { configuration in
         AnyView(NativeSectionFrame(configuration: configuration))
     }
@@ -130,10 +134,28 @@ private struct InputBackground: ViewModifier {
 
 // MARK: - Pièces natives
 
-/// Carte flottante (S1) : blanche, ombre douce et filet très fin sur fond blanc ; en sombre, gris
-/// surélevé sans ombre.
+/// Section du thème natif : le titre au-dessus de la carte, comme les rubriques de Santé ou de
+/// Forme ; la carte ne porte que le contenu.
 struct NativeSectionFrame: View {
     let configuration: SectionFrameConfiguration
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let title = configuration.title {
+                title.padding(.horizontal, 4)
+            }
+            NativeCard {
+                configuration.content
+                    .padding(16)
+            }
+        }
+    }
+}
+
+/// Carte flottante (S1) : blanche, ombre douce et filet très fin sur fond blanc ; en sombre, gris
+/// surélevé sans ombre.
+struct NativeCard<Content: View>: View {
+    @ViewBuilder let content: Content
 
     @Environment(\.sheetTheme) private var theme
     @Environment(\.colorScheme) private var colorScheme
@@ -141,17 +163,15 @@ struct NativeSectionFrame: View {
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: 20, style: .continuous)
         let dark = colorScheme == .dark
-        VStack(alignment: .leading, spacing: 10) {
-            configuration.title
-            configuration.content
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            shape.fill(theme.cardBackground)
-                .shadow(color: .black.opacity(dark ? 0 : 0.06), radius: 10, y: 3)
-        }
-        .overlay(shape.strokeBorder(Color.primary.opacity(dark ? 0.08 : 0.06), lineWidth: 0.5))
+        content
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(theme.cardBackground)
+            .clipShape(shape)
+            .background {
+                shape.fill(theme.cardBackground)
+                    .shadow(color: .black.opacity(dark ? 0 : 0.06), radius: 10, y: 3)
+            }
+            .overlay(shape.strokeBorder(Color.primary.opacity(dark ? 0.08 : 0.06), lineWidth: 0.5))
     }
 }
 

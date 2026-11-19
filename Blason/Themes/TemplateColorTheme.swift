@@ -6,8 +6,8 @@ import AppKit
 #endif
 
 extension SheetTheme {
-    /// « Couleur du template » : la fiche native, teintée de la couleur choisie (titres, en-têtes
-    /// de section, fond de page, valeurs mises en avant).
+    /// « Couleur du template » : la fiche native (fond blanc, cartes flottantes), teintée de la
+    /// couleur choisie : bandeau de titre des sections, titres, valeurs mises en avant.
     static func templateColor(_ tint: Color) -> SheetTheme {
         var theme = SheetTheme()
         // Texte et pleins en version plus contrastée : la sarcelle ou l'orange purs se lisent mal sur fond clair.
@@ -15,12 +15,6 @@ extension SheetTheme {
         theme.accent = strong
         theme.headingColor = strong
         theme.inputFill = tint.opacity(0.10)
-        theme.pageBackground = {
-            AnyView(ZStack {
-                Color.groupedBackground
-                tint.opacity(0.07)
-            })
-        }
         theme.sectionFrame = { configuration in
             AnyView(TintedSectionFrame(configuration: configuration, tint: tint))
         }
@@ -63,27 +57,26 @@ private extension UIColor {
 }
 #endif
 
-/// Section avec un bandeau de titre teinté et un liseré.
+/// Carte flottante dont le titre occupe un bandeau teinté.
 private struct TintedSectionFrame: View {
     let configuration: SectionFrameConfiguration
     let tint: Color
 
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: 14)
-        VStack(alignment: .leading, spacing: 0) {
-            if let title = configuration.title {
-                title
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(tint.opacity(0.14))
+        NativeCard {
+            VStack(alignment: .leading, spacing: 0) {
+                if let title = configuration.title {
+                    title
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(tint.opacity(colorScheme == .dark ? 0.22 : 0.12))
+                }
+                configuration.content
+                    .padding(16)
             }
-            configuration.content
-                .padding(14)
-                .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(Color.secondaryGroupedBackground)
-        .clipShape(shape)
-        .overlay(shape.strokeBorder(tint.opacity(0.35), lineWidth: 1))
     }
 }
