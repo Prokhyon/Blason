@@ -199,6 +199,11 @@ private struct SheetThemeModifier: ViewModifier {
             .tint(theme.accent)
             .foregroundStyle(ifSet: theme.ink)
             .environment(\.colorScheme, theme.colorScheme ?? systemScheme)
+            #if os(iOS)
+            // La barre de navigation suit la pile, pas l'environnement : on lui impose aussi le mode
+            // du thème (titre lisible sur le cuir du Grimoire, sur le papier en mode sombre).
+            .toolbarColorScheme(theme.colorScheme, for: .navigationBar)
+            #endif
     }
 }
 

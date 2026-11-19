@@ -2,7 +2,8 @@
 
 Brainstorming du 19 novembre 2026 : des thèmes plus proches des fiches de personnage imprimées,
 avec bordures ornées et enluminures. Six directions, toutes retenues. Réalisées : **Enluminure**
-(`Blason/Themes/IlluminatedTheme.swift`) et **Armorial** (`Blason/Themes/ArmorialTheme.swift`).
+(`Blason/Themes/IlluminatedTheme.swift`), **Armorial** (`Blason/Themes/ArmorialTheme.swift`) et
+**Grimoire** (`Blason/Themes/GrimoireTheme.swift`).
 
 On s'inspire des **genres** (manuscrit, héraldique, Art déco…), jamais d'une fiche officielle
 d'éditeur.

@@ -32,6 +32,8 @@ enum SheetThemes {
                              palette: Heraldry.tinctures, make: SheetTheme.illuminated),
         SheetThemeDescriptor(id: "armorial", name: "Armorial", symbol: "shield.lefthalf.filled", usesColor: true,
                              palette: Heraldry.tinctures, make: SheetTheme.armorial),
+        SheetThemeDescriptor(id: "grimoire", name: "Grimoire", symbol: "book.closed", usesColor: true,
+                             palette: GrimoireTheme.inks, make: SheetTheme.grimoire),
     ]
 
     /// Thème d'une apparence ; un identifiant inconnu (version plus récente) donne le thème natif.
